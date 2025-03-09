@@ -1,3 +1,3 @@
-Two-player game
-roguelite
+Two-player game / 
+roguelite / 
 game theory
