@@ -20,11 +20,23 @@ public class ChessLogic : MonoBehaviour
     private Vector3 originalPos;
     private Quaternion originalRot;
 
+    public enum Belonging
+    {
+        Player1,
+        Player2
+    }
+
+    public Belonging belonging;
+
     // Start is called before the first frame update
     void Start()
     {
         originalPos = transform.position;
         originalRot = transform.rotation;
+        if(belonging == Belonging.Player1)
+        {
+            GameManager.Instance.chess1 = this;
+        }
     }
 
     // Update is called once per frame
@@ -40,14 +52,6 @@ public class ChessLogic : MonoBehaviour
             if(t >= 1f)
             {
                 state = 2;
-                timer = 0f;
-            }
-        }
-        else if(state == 2)
-        {
-            if(Input.GetMouseButtonDown(0))
-            {
-                state = 3;
                 timer = 0f;
             }
         }
@@ -70,5 +74,19 @@ public class ChessLogic : MonoBehaviour
             timer = 0f;
         }
         Debug.Log("Mouse Down");
+    }
+
+    public void SetClickPoint(Transform transform)
+    {
+        clickPoint = transform;
+    }
+
+    public void Move()
+    {
+        if(state == 2)
+        {
+            state = 3;
+            timer = 0f;
+        }
     }
 }
