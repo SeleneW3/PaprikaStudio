@@ -33,10 +33,7 @@ public class ChessLogic : MonoBehaviour
     {
         originalPos = transform.position;
         originalRot = transform.rotation;
-        if(belonging == Belonging.Player1)
-        {
-            GameManager.Instance.chess1 = this;
-        }
+        // GameManager.Instance.chessComponents.Add(this);
     }
 
     // Update is called once per frame

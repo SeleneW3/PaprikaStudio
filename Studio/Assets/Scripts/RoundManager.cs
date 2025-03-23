@@ -6,10 +6,22 @@ public class RoundManager : MonoBehaviour
 {
     public float baseBet = 1f;
     public float betMultiplier = 2f;
+    public PlayerLogic player1;
+    public PlayerLogic player2;
 
     void Start()
     {
-        
+        foreach (var player in GameManager.Instance.playerComponents)
+        {
+            if (player.playerID == 1)
+            {
+                player1 = player;
+            }
+            else if (player.playerID == 2)
+            {
+                player2 = player;
+            }
+        }
     }
 
     void Update()
@@ -30,19 +42,19 @@ public class RoundManager : MonoBehaviour
 
     void CalculatePoint()
     {
-        if(GameManager.Instance.Player1.choice == PlayerLogic.playerChoice.Cooperate && GameManager.Instance.Player2.choice == PlayerLogic.playerChoice.Cooperate)
+        if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
 
         }
-        else if(GameManager.Instance.Player1.choice == PlayerLogic.playerChoice.Cooperate && GameManager.Instance.Player2.choice == PlayerLogic.playerChoice.Cheat)
+        else if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
         {
 
         }
-        else if(GameManager.Instance.Player1.choice == PlayerLogic.playerChoice.Cheat && GameManager.Instance.Player2.choice == PlayerLogic.playerChoice.Cooperate)
+        else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
 
         }
-        else if(GameManager.Instance.Player1.choice == PlayerLogic.playerChoice.Cheat && GameManager.Instance.Player2.choice == PlayerLogic.playerChoice.Cheat)
+        else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
         {
 
         }
