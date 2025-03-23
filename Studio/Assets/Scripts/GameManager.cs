@@ -6,8 +6,6 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public GameObject player1;
-    public GameObject player2;
 
     public enum GameState
     {
@@ -18,11 +16,13 @@ public class GameManager : MonoBehaviour
 
     public GameState currentGameState;
 
-    public PlayerLogic Player1;
-    public PlayerLogic Player2;
+    public List<GameObject> playerObjs = new List<GameObject>();
 
-    public ChessLogic chess1;
-    public ChessLogic chess2;
+    public List<PlayerLogic> playerComponents = new List<PlayerLogic>();
+
+    public List<ChessLogic> chessComponents = new List<ChessLogic>();
+
+
 
     private void Awake()
     {
@@ -49,12 +49,23 @@ public class GameManager : MonoBehaviour
 
     public void SetPlayer1Choice(PlayerLogic.playerChoice playerChoice)
     {
-        Player1.choice = playerChoice;
+        foreach (var player in playerComponents)
+        {
+            if (player.playerID == 1)
+            {
+                player.choice = playerChoice;
+            }
+        }
     }
 
     public void ChangeChess1ClickPoint(Transform clickPoint)
     {
-        chess1.SetClickPoint(clickPoint);
-        chess1.Move();
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player1)
+            {
+                chess.clickPoint = clickPoint;
+            }
+        }
     }
 }

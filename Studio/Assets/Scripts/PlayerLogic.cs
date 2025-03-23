@@ -7,7 +7,8 @@ public class PlayerLogic : MonoBehaviour
     public int playerID;
     public string playerName;
     public int point;
-    public List<GameObject> hand = new List<GameObject>();
+    public List<CardLogic> hand = new List<CardLogic>();
+    public Transform handPos;
     public enum playerChoice
     {
         None,
@@ -19,11 +20,8 @@ public class PlayerLogic : MonoBehaviour
 
     void Start()
     {
-        if(playerID == 1)
-        {
-            GameManager.Instance.player1 = gameObject;
-            GameManager.Instance.Player1 = this;
-        }
+        // GameManager.Instance.playerComponents.Add(this);
+        // GameManager.Instance.playerObjs.Add(gameObject);
     }
 
     void Update()
@@ -31,12 +29,12 @@ public class PlayerLogic : MonoBehaviour
         
     }
 
-    public void AddCard(GameObject card)
+    public void AddCard(CardLogic card)
     {
         hand.Add(card);
     }
 
-    public void RemoveCard(GameObject card)
+    public void RemoveCard(CardLogic card)
     {
         hand.Remove(card);
     }
