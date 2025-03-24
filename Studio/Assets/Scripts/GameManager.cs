@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
@@ -14,6 +16,8 @@ public class GameManager : MonoBehaviour
         CalculateTurn
     }
 
+    public string ip = "127.0.0.1";
+
     public GameState currentGameState;
 
     public List<GameObject> playerObjs = new List<GameObject>();
@@ -21,6 +25,8 @@ public class GameManager : MonoBehaviour
     public List<PlayerLogic> playerComponents = new List<PlayerLogic>();
 
     public List<ChessLogic> chessComponents = new List<ChessLogic>();
+
+
 
 
 
@@ -40,11 +46,21 @@ public class GameManager : MonoBehaviour
     // Start 在第一次更新前调用
     void Start()
     {
+        if(SceneManager.GetActiveScene().name == "Init")
+        {
+            SceneManager.LoadScene("Start");
+        }
     }
 
     void Update()
     {
 
+    }
+
+    public void LoadScene(string sceneName)
+    {
+
+        NetworkManager.SceneManager.LoadScene(sceneName , LoadSceneMode.Single);
     }
 
     public void SetPlayer1Choice(PlayerLogic.playerChoice playerChoice)
