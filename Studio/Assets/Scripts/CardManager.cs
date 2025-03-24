@@ -3,69 +3,71 @@ using System.Collections;
 
 public class CardGameManager : MonoBehaviour
 {
-    public int cardsToDeal = 2;
-    public GameObject cardPrefab;
-    public Transform deckTrans;
-    public float moveDuration = 1f;    // ¿¨ÅÆÒÆ¶¯µÄÊ±¼ä
-    public float cardDelay = 0.2f;     // Ã¿ÕÅ¿¨ÅÆÖ®¼äµÄÑÓ³Ù
+    // åŸºç¡€å±æ€§è®¾ç½®
+    public int cardsToDeal = 2;         // æ¯ä¸ªç©å®¶è¦å‘çš„ç‰Œæ•°
+    public GameObject cardPrefab;        // å¡ç‰Œé¢„åˆ¶ä½“
+    public Transform deckTrans;          // ç‰Œå †çš„ä½ç½®
+    public float moveDuration = 1f;      // å¡ç‰Œç§»åŠ¨çš„æŒç»­æ—¶é—´
+    public float cardDelay = 0.2f;       // æ¯å¼ ç‰Œå‘ç‰Œä¹‹é—´çš„å»¶è¿Ÿ
 
-    private Deck deck;
+    private Deck deck;                   // ç‰Œå †å¯¹è±¡
 
     void Start()
     {
+        // åˆå§‹åŒ–ç‰Œå †å¹¶æ´—ç‰Œ
         deck = new Deck(cardPrefab);
         deck.Shuffle();
 
-        // Æô¶¯Ğ­³Ì·¢ÅÆ
+        // å¼€å§‹å‘ç‰Œåç¨‹
         StartCoroutine(DealCards());
     }
 
-    // ·¢ÅÆĞ­³Ì
+    // å‘ç‰Œåç¨‹
     IEnumerator DealCards()
     {
-        // ±éÀúÃ¿¸öÍæ¼Ò
+        // éå†æ¯ä¸ªç©å®¶
         foreach (PlayerLogic player in GameManager.Instance.playerComponents)
         {
-            // ÎªÃ¿¸öÍæ¼Ò·¢ cardsToDeal ÕÅ¿¨ÅÆ
+            // ä¸ºæ¯ä¸ªç©å®¶å‘ cardsToDeal å¼ ç‰Œ
             for (int i = 0; i < cardsToDeal; i++)
             {
-                // ¼ÆËãÄ¿±êÎ»ÖÃ£¨ÕâÀï¿ÉÒÔÉÔÎ¢×ö¸öÆ«ÒÆ£©
+                // è®¾ç½®ç›®æ ‡ä½ç½®ï¼ˆæ¯å¼ ç‰Œæœ‰å¾®å°çš„å‚ç›´åç§»ï¼‰
                 Vector3 targetPos = player.handPos.position - new Vector3(0, 0.01f * i, 0);
                 Quaternion targetRot = player.handPos.rotation;
 
-                // ÔÚÅÆ¶ÑÎ»ÖÃÊµÀı»¯¿¨ÅÆ
+                // åœ¨ç‰Œå †ä½ç½®å®ä¾‹åŒ–å¡ç‰Œ
                 GameObject cardObj = Instantiate(cardPrefab, deckTrans.position, deckTrans.rotation);
 
-                // »ñÈ¡¿¨ÅÆµÄ CardLogic ×é¼ş
+                // è·å–å¡ç‰Œçš„ CardLogic ç»„ä»¶
                 CardLogic cardComponent = cardObj.GetComponent<CardLogic>();
 
-                // ´ÓÅÆ¶ÑÖĞ»ñÈ¡Ò»ÕÅÅÆµÄÊı¾İ
+                // ä»ç‰Œå †ä¸­è·å–ä¸€å¼ ç‰Œçš„æ•°æ®
                 CardLogic cardData = deck.DealCard();
 
-                // ½«ÅÆ¶ÑÖĞµÄÊı¾İ¸³Öµ¸øÊµÀı»¯µÄ¿¨ÅÆ×é¼ş
+                // å°†ç‰Œå †ä¸­çš„æ•°æ®èµ‹å€¼ç»™å®ä¾‹åŒ–çš„å¡ç‰Œå¯¹è±¡
                 if (cardComponent != null && cardData != null)
                 {
                     cardComponent.effect = cardData.effect;
                 }
                 else
                 {
-                    Debug.LogError("¿¨ÅÆÊı¾İ»ò×é¼ş»ñÈ¡Ê§°Ü£¡");
+                    Debug.LogError("å¡ç‰Œæ•°æ®æˆ–ç»„ä»¶è·å–å¤±è´¥ï¼");
                 }
 
-                // ½«¿¨ÅÆÌí¼Óµ½Íæ¼ÒÊÖÅÆÖĞ£¨Êı¾İ²ãÃæµÄÌí¼Ó£©
+                // å°†å¡ç‰Œæ·»åŠ åˆ°ç©å®¶æ‰‹ç‰Œä¸­
                 player.AddCard(cardComponent);
 
-                // Æô¶¯Ğ­³Ì¶¯»­£¬½«¿¨ÅÆ´ÓÅÆ¶ÑÎ»ÖÃÆ½»¬ÒÆ¶¯µ½Ä¿±êÎ»ÖÃºÍĞı×ª
+                // å¯åŠ¨åç¨‹å°†å¡ç‰Œä»ç‰Œå †å¹³æ»‘ç§»åŠ¨åˆ°ç›®æ ‡ä½ç½®å’Œæ—‹è½¬
                 StartCoroutine(MoveCardToHand(cardObj, player.handPos, targetPos, targetRot, moveDuration));
 
-                // Ã¿·¢ÍêÒ»ÕÅ¿¨ÅÆµÈ´ıÒ»¶ÎÊ±¼ä£¬ÔÙ·¢ÏÂÒ»ÕÅ
+                // æ¯å‘ä¸€å¼ ç‰Œç­‰å¾…ä¸€æ®µæ—¶é—´ï¼Œå†å‘ä¸‹ä¸€å¼ 
                 yield return new WaitForSeconds(cardDelay);
             }
         }
     }
 
     /// <summary>
-    /// ½«¿¨ÅÆ´Óµ±Ç°µÄÎ»ÖÃÒÆ¶¯µ½Ä¿±êÊÖÅÆÎ»ÖÃºÍĞı×ª£¬¶¯»­Íê³Éºó½«¿¨ÅÆÉèÎªÄ¿±êµÄ×ÓÎïÌå¡£
+    /// å°†å¡ç‰Œä»å½“å‰çš„ä½ç½®ç§»åŠ¨åˆ°ç›®æ ‡ç©å®¶ä½ç½®å’Œæ—‹è½¬ï¼Œå®Œæˆåå°†å¡ç‰Œè®¾ä¸ºç›®æ ‡ç©å®¶çš„å­ç‰©ä½“
     /// </summary>
     IEnumerator MoveCardToHand(GameObject card, Transform targetParent, Vector3 targetPosition, Quaternion targetRotation, float duration)
     {
@@ -73,6 +75,7 @@ public class CardGameManager : MonoBehaviour
         Quaternion startRot = card.transform.rotation;
         float elapsed = 0f;
 
+        // å¹³æ»‘ç§»åŠ¨åŠ¨ç”»
         while (elapsed < duration)
         {
             card.transform.position = Vector3.Lerp(startPos, targetPosition, elapsed / duration);
@@ -80,10 +83,12 @@ public class CardGameManager : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
-        // È·±£×îÖÕÎ»ÖÃºÍĞı×ª
+        
+        // ç¡®ä¿æœ€ç»ˆä½ç½®å’Œæ—‹è½¬ç²¾ç¡®
         card.transform.position = targetPosition;
         card.transform.rotation = targetRotation;
-        // ÉèÖÃ¿¨ÅÆÎªÍæ¼ÒÊÖÅÆµÄ×ÓÎïÌå
+        
+        // è®¾ç½®å¡ç‰Œä¸ºç›®æ ‡ç©å®¶çš„å­ç‰©ä½“
         card.transform.SetParent(targetParent);
     }
 }
