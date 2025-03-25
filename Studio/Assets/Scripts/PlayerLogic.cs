@@ -6,7 +6,7 @@ public class PlayerLogic : MonoBehaviour
 {
     public int playerID;
     public string playerName;
-    public int point;
+    public float point;
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;
     public enum playerChoice

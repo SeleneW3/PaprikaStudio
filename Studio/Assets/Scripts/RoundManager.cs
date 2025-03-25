@@ -42,21 +42,33 @@ public class RoundManager : MonoBehaviour
 
     void CalculatePoint()
     {
+        ApplyEffectToAllHandCards();
+
         if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
 
         }
         else if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
         {
-
+            player2.point += baseBet * betMultiplier;
         }
         else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
-
+            player1.point += baseBet * betMultiplier;
         }
         else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
         {
+        }
+    }
 
+    void ApplyEffectToAllHandCards( )
+    {
+        foreach(PlayerLogic player in GameManager.Instance.playerComponents)
+        {
+            foreach(CardLogic card in player.hand)
+            {
+                card.OnEffect();
+            }
         }
     }
 }
