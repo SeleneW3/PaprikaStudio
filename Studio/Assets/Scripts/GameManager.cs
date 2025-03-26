@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
+using System.Linq;
 
 public class GameManager : NetworkBehaviour
 {
@@ -26,7 +28,7 @@ public class GameManager : NetworkBehaviour
 
     public List<ChessLogic> chessComponents = new List<ChessLogic>();
 
-
+    public static event Action OnPlayersReady;
 
 
 
@@ -50,6 +52,7 @@ public class GameManager : NetworkBehaviour
         {
             SceneManager.LoadScene("Start");
         }
+
     }
 
     void Update()
@@ -81,7 +84,30 @@ public class GameManager : NetworkBehaviour
             if (chess.belonging == ChessLogic.Belonging.Player1)
             {
                 chess.clickPoint = clickPoint;
+                chess.Move();
             }
+        }
+    }
+
+    public void AddPlayer(PlayerLogic player)
+    {
+        if (!playerComponents.Contains(player))
+        {
+            if(player.playerID == 1)
+            {
+                GameManager.Instance.playerComponents[0] = player;
+                GameManager.Instance.playerObjs[0] = player.gameObject;
+            }
+            else if(player.playerID == 2)
+            {
+                GameManager.Instance.playerComponents[1] = player;
+                GameManager.Instance.playerObjs[1] = player.gameObject;
+            }
+        }
+
+        if (playerComponents[1] != null && playerComponents[0] != null)
+        {
+            OnPlayersReady?.Invoke();
         }
     }
 }
