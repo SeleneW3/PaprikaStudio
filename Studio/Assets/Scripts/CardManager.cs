@@ -17,11 +17,35 @@ public class CardGameManager : MonoBehaviour
         deck.Shuffle();
 
         // 启动协程发牌
-        StartCoroutine(DealCards());
+        //StartCoroutine(DealCards(deck));
+    }
+
+    private void OnEnable()
+    {
+        GameManager.OnPlayersReady += StartDealCards;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnPlayersReady -= StartDealCards;
+    }
+
+    public void StartDealCards()
+    {
+        StartCoroutine(WaitAndStartDeal());
+    }
+
+    IEnumerator WaitAndStartDeal()
+    {
+        while (deck == null)
+        {
+            yield return null;
+        }
+        StartCoroutine(DealCards(deck));
     }
 
     // 发牌协程
-    IEnumerator DealCards()
+    IEnumerator DealCards(Deck deck)
     {
         // 遍历每个玩家
         foreach (PlayerLogic player in GameManager.Instance.playerComponents)

@@ -15,7 +15,7 @@ public class Deck
         for (int i = 0; i < 10; i++)
         {
             // 随机生成卡牌效果
-            CardLogic.Effect effect = (CardLogic.Effect)rand.Next(0, 2);
+            CardLogic.Effect effect = (CardLogic.Effect)rand.Next(0, 5);
 
             // 通过预制件实例化卡牌
             GameObject cardObj = GameObject.Instantiate(cardPrefab);

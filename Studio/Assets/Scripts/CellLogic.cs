@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -8,6 +9,7 @@ public class CellLogic : MonoBehaviour
     [SerializeField]
     TMP_Text playerName;
     TMP_Text stateText;
+    public OnlinePlayerInfo playerInfo { get; private set; }
     // Start is called before the first frame update
     void Start()
     {
@@ -20,11 +22,16 @@ public class CellLogic : MonoBehaviour
         
     }
 
-    public void Initial(ulong playerID,bool isReady)
+    public void Initial(OnlinePlayerInfo playerInfo)
     {
         playerName = transform.Find("Name").GetComponent<TMP_Text>();
         stateText = transform.Find("State").GetComponent<TMP_Text>();
-        playerName.text = "Player" + playerID.ToString();
-        stateText.text = isReady ? "Ready" : "Not Ready";
+        playerName.text = "Player" + playerInfo.id;
+        stateText.text = playerInfo.isReady ? "Ready" : "Not Ready";
+    }
+
+    internal void SetReady(bool arg0)
+    {
+        stateText.text = arg0 ? "Ready" : "Not Ready";
     }
 }

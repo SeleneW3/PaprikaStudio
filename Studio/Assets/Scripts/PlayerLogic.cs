@@ -7,6 +7,8 @@ public class PlayerLogic : MonoBehaviour
     public int playerID;
     public string playerName;
     public float point;
+    public float coopPoint = 3f;
+    public float cheatPoint = 5f;
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;
     public enum playerChoice
@@ -20,8 +22,9 @@ public class PlayerLogic : MonoBehaviour
 
     void Start()
     {
-        // GameManager.Instance.playerComponents.Add(this);
-        // GameManager.Instance.playerObjs.Add(gameObject);
+        GameManager.Instance.AddPlayer(this);
+        coopPoint = 3f;
+        cheatPoint = 5f;
     }
 
     void Update()
@@ -37,5 +40,11 @@ public class PlayerLogic : MonoBehaviour
     public void RemoveCard(CardLogic card)
     {
         hand.Remove(card);
+    }
+
+    public void ResetToInitial()
+    {
+        coopPoint = 3f;
+        cheatPoint = 5f;
     }
 }

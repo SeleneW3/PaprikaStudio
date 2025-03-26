@@ -6,22 +6,18 @@ public class RoundManager : MonoBehaviour
 {
     public float baseBet = 1f;
     public float betMultiplier = 2f;
+
     public PlayerLogic player1;
     public PlayerLogic player2;
 
-    void Start()
+    private void OnEnable()
     {
-        foreach (var player in GameManager.Instance.playerComponents)
-        {
-            if (player.playerID == 1)
-            {
-                player1 = player;
-            }
-            else if (player.playerID == 2)
-            {
-                player2 = player;
-            }
-        }
+        GameManager.OnPlayersReady += AssignPlayers;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnPlayersReady -= AssignPlayers;
     }
 
     void Update()
@@ -42,22 +38,27 @@ public class RoundManager : MonoBehaviour
 
     void CalculatePoint()
     {
-        ApplyEffectToAllHandCards();
+        //ApplyEffectToAllHandCards();
 
         if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
-
+            player1.point += player1.coopPoint;
+            player2.point += player2.coopPoint;
         }
         else if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
         {
-            player2.point += baseBet * betMultiplier;
+            player1.point += player1.coopPoint;
+            player2.point += player2.cheatPoint;
         }
         else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
-            player1.point += baseBet * betMultiplier;
+            player1.point += player1.cheatPoint;   
+            player2.point += player2.coopPoint;
         }
         else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
         {
+            player1.point += 0f;
+            player2.point += 0f;
         }
     }
 
@@ -68,6 +69,21 @@ public class RoundManager : MonoBehaviour
             foreach(CardLogic card in player.hand)
             {
                 card.OnEffect();
+            }
+        }
+    }
+
+    void AssignPlayers()
+    {
+        foreach (var player in GameManager.Instance.playerComponents)
+        {
+            if (player.playerID == 1)
+            {
+                player1 = player;
+            }
+            else if (player.playerID == 2)
+            {
+                player2 = player;
             }
         }
     }
