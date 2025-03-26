@@ -25,7 +25,7 @@ public class CardLogic : MonoBehaviour
 
     public void ReversePoint()
     {
-        int point = GameManager.Instance.playerComponents[1].point;
+        int point = (int)GameManager.Instance.playerComponents[1].point;
         GameManager.Instance.playerComponents[1].point = GameManager.Instance.playerComponents[0].point;
         GameManager.Instance.playerComponents[0].point = point;
     }
