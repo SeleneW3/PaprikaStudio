@@ -34,6 +34,8 @@ public class RoundManager : MonoBehaviour
         {
             CalculatePoint();
         }
+
+
     }
 
     void CalculatePoint()
@@ -60,6 +62,11 @@ public class RoundManager : MonoBehaviour
             player1.point += 0f;
             player2.point += 0f;
         }
+
+        ResetPlayersChoice();
+        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        GameManager.Instance.chessComponents[0].backToOriginal = true;
+        GameManager.Instance.chessComponents[1].backToOriginal = true;
     }
 
     void ApplyEffectToAllHandCards( )
@@ -86,5 +93,17 @@ public class RoundManager : MonoBehaviour
                 player2 = player;
             }
         }
+    }
+
+    void ResetPlayers()
+    {
+        player1.ResetToInitial();
+        player2.ResetToInitial();
+    }
+
+    void ResetPlayersChoice()
+    {
+        player1.choice = PlayerLogic.playerChoice.None;
+        player2.choice = PlayerLogic.playerChoice.None;
     }
 }

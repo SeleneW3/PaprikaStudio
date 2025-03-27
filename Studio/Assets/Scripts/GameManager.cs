@@ -66,7 +66,21 @@ public class GameManager : NetworkBehaviour
         NetworkManager.SceneManager.LoadScene(sceneName , LoadSceneMode.Single);
     }
 
-    public void SetPlayer1Choice(PlayerLogic.playerChoice playerChoice)
+    [ServerRpc(RequireOwnership = false)]
+    public void SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice playerChoice)
+    {
+        foreach (var player in playerComponents)
+        {
+            if (player.playerID == 1)
+            {
+                player.choice = playerChoice;
+            }
+        }
+        SetPlayer1ChoiceClientRpc(playerChoice);
+    }
+
+    [ClientRpc]
+    public void SetPlayer1ChoiceClientRpc(PlayerLogic.playerChoice playerChoice)
     {
         foreach (var player in playerComponents)
         {
@@ -77,11 +91,49 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    [ClientRpc]
+    public void SetPlayer2ChoiceClientRpc(PlayerLogic.playerChoice playerChoice)
+    {
+        foreach (var player in playerComponents)
+        {
+            if (player.playerID == 2)
+            {
+                player.choice = playerChoice;
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice playerChoice)
+    {
+        foreach (var player in playerComponents)
+        {
+            if (player.playerID == 2)
+            {
+                player.choice = playerChoice;
+            }
+        }
+        SetPlayer2ChoiceClientRpc(playerChoice);
+    }
+
+
     public void ChangeChess1ClickPoint(Transform clickPoint)
     {
         foreach (var chess in chessComponents)
         {
             if (chess.belonging == ChessLogic.Belonging.Player1)
+            {
+                chess.clickPoint = clickPoint;
+                chess.Move();
+            }
+        }
+    }
+
+    public void ChangeChess2ClickPoint(Transform clickPoint)
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player2)
             {
                 chess.clickPoint = clickPoint;
                 chess.Move();

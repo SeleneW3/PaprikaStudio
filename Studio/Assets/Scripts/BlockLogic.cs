@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class BlockLogic : MonoBehaviour
@@ -32,16 +33,36 @@ public class BlockLogic : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if(belonging == Belonging.Player1 && type == Type.Cooperate)
+        if(NetworkManager.Singleton.LocalClientId == 0)
         {
-            GameManager.Instance.SetPlayer1Choice(PlayerLogic.playerChoice.Cooperate);
-            GameManager.Instance.ChangeChess1ClickPoint(transform);
+            if (belonging == Belonging.Player1 && type == Type.Cooperate)
+            {
+                GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
+                GameManager.Instance.ChangeChess1ClickPoint(transform);
+            }
+            else if (belonging == Belonging.Player1 && type == Type.Cheat)
+            {
+                GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
+                GameManager.Instance.ChangeChess1ClickPoint(transform);
+            }
         }
-        else if(belonging == Belonging.Player1 && type == Type.Cheat)
+
+
+
+        if (NetworkManager.Singleton.LocalClientId == 1)
         {
-            GameManager.Instance.SetPlayer1Choice(PlayerLogic.playerChoice.Cheat);
-            GameManager.Instance.ChangeChess1ClickPoint(transform);
+            if (belonging == Belonging.Player2 && type == Type.Cooperate)
+            {
+                GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
+                GameManager.Instance.ChangeChess2ClickPoint(transform);
+            }
+            else if (belonging == Belonging.Player2 && type == Type.Cheat)
+            {
+                GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
+                GameManager.Instance.ChangeChess2ClickPoint(transform);
+            }
         }
+            
 
         
     }
