@@ -15,7 +15,22 @@ public class GameControl : MonoBehaviour
     {
         if (GameManager.Instance.playerComponents[0].choice != PlayerLogic.playerChoice.None && GameManager.Instance.playerComponents[1].choice != PlayerLogic.playerChoice.None)
         {
-            GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+            bool allChessOnGround = true;
+            foreach (var chess in GameManager.Instance.chessComponents)
+            {
+                
+                if (!chess.isOnGround)
+                {
+                    allChessOnGround = false;
+                    break;
+                }
+            }
+
+            if(allChessOnGround)
+            {
+                GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+            }
+            
         }
 
     }

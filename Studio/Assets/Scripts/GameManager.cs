@@ -116,26 +116,125 @@ public class GameManager : NetworkBehaviour
         SetPlayer2ChoiceClientRpc(playerChoice);
     }
 
-
-    public void ChangeChess1ClickPoint(Transform clickPoint)
+    [ServerRpc(RequireOwnership = false)]
+    public void ChangeChess1StateServerRpc()
     {
         foreach (var chess in chessComponents)
         {
             if (chess.belonging == ChessLogic.Belonging.Player1)
             {
-                chess.clickPoint = clickPoint;
-                chess.Move();
+                if(chess.state == 0)
+                {
+                    chess.state = 1;
+                    chess.timer = 0f;
+                }
+            }
+        }
+        ChangeChess1StateClientRpc();
+    }
+
+    [ClientRpc]
+    public void ChangeChess1StateClientRpc()
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player1)
+            {
+                if (chess.state == 0)
+                {
+                    chess.state = 1;
+                    chess.timer = 0f;
+                }
             }
         }
     }
 
-    public void ChangeChess2ClickPoint(Transform clickPoint)
+    [ServerRpc(RequireOwnership = false)]
+    public void ChangeChess2StateServerRpc()
     {
         foreach (var chess in chessComponents)
         {
             if (chess.belonging == ChessLogic.Belonging.Player2)
             {
-                chess.clickPoint = clickPoint;
+                if (chess.state == 0)
+                {
+                    chess.state = 1;
+                    chess.timer = 0f;
+                }
+            }
+        }
+        
+    }
+
+    [ClientRpc]
+    public void ChangeChess2StateClientRpc()
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player2)
+            {
+                if (chess.state == 0)
+                {
+                    chess.state = 1;
+                    chess.timer = 0f;
+                }
+            }
+        }
+    }
+
+    [ServerRpc (RequireOwnership = false)]
+    public void ChangeChess1ClickPointServerRpc(Vector3 clickpointpos, Quaternion clickrot)
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player1)
+            {
+                chess.clickPointRot = clickrot;
+                chess.clickPointPos = clickpointpos;
+                chess.Move();
+            }
+        }
+        ChangeChess1ClickPointClientRpc(clickpointpos, clickrot);
+    }
+
+    [ClientRpc]
+    public void ChangeChess1ClickPointClientRpc(Vector3 clickpointpos, Quaternion clickrot)
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player1)
+            {
+                chess.clickPointRot = clickrot;
+                chess.clickPointPos = clickpointpos;
+                chess.Move();
+            }
+        }
+    }
+
+    [ServerRpc (RequireOwnership = false)]
+    public void ChangeChess2ClickPointServerRpc(Vector3 clickpointpos, Quaternion clickrot)
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player2)
+            {
+                chess.clickPointRot = clickrot;
+                chess.clickPointPos = clickpointpos;
+                chess.Move();
+            }
+        }
+        ChangeChess2ClickPointClientRpc(clickpointpos, clickrot);
+    }
+
+    [ClientRpc]
+    public void ChangeChess2ClickPointClientRpc(Vector3 clickpointpos, Quaternion clickrot)
+    {
+        foreach (var chess in chessComponents)
+        {
+            if (chess.belonging == ChessLogic.Belonging.Player2)
+            {
+                chess.clickPointRot = clickrot;
+                chess.clickPointPos = clickpointpos;
                 chess.Move();
             }
         }

@@ -6,7 +6,9 @@ using UnityEngine;
 public class ChessLogic : MonoBehaviour
 {
     public Transform stateBeingClicked;
-    public Transform clickPoint;
+
+    public Vector3 clickPointPos;
+    public Quaternion clickPointRot;
 
     public float originToBeingClickedDuration = 0.5f;
 
@@ -16,7 +18,7 @@ public class ChessLogic : MonoBehaviour
 
     public int state = 0;
 
-    private float timer = 0f;
+    public float timer = 0f;
 
     public float moveSpeed = 1f;
 
@@ -24,6 +26,7 @@ public class ChessLogic : MonoBehaviour
     private Quaternion originalRot;
 
     public bool backToOriginal = false;
+    public bool isOnGround = false;
 
     public enum Belonging
     {
@@ -68,14 +71,15 @@ public class ChessLogic : MonoBehaviour
         {
             timer += Time.deltaTime;
             float t = Mathf.Clamp01(timer/beingClickedToClickPointDuration);
-            Vector3 linearPos = Vector3.Lerp(stateBeingClicked.position, clickPoint.position, t);
+            Vector3 linearPos = Vector3.Lerp(stateBeingClicked.position, clickPointPos, t);
             float verticalOffset = Mathf.Sin(t * Mathf.PI) * heightOffset;
             transform.position = linearPos + Vector3.up * verticalOffset;
-            transform.rotation = Quaternion.Slerp(stateBeingClicked.rotation, clickPoint.rotation, t);
+            transform.rotation = Quaternion.Slerp(stateBeingClicked.rotation, clickPointRot, t);
             if(t >= 1f)
             {
                 state = 4;
                 timer = 0f;
+                isOnGround = true;
             }
         }
         else if(state == 4 && backToOriginal)
@@ -91,36 +95,19 @@ public class ChessLogic : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if(NetworkManager.Singleton.LocalClientId == 0)
+        if (NetworkManager.Singleton.LocalClientId == 0)
         {
-            if (belonging == Belonging.Player1)
-            {
-                if (state == 0)
-                {
-                    state = 1;
-                    timer = 0f;
-                }
-            }
+            GameManager.Instance.ChangeChess1StateServerRpc();
         }
 
-        if(NetworkManager.Singleton.LocalClientId == 1)
+        if (NetworkManager.Singleton.LocalClientId == 1)
         {
-            if (belonging == Belonging.Player2)
-            {
-                if (state == 0)
-                {
-                    state = 1;
-                    timer = 0f;
-                }
-            }
+            GameManager.Instance.ChangeChess2StateServerRpc();
         }
+
 
     }
 
-    public void SetClickPoint(Transform transform)
-    {
-        clickPoint = transform;
-    }
 
     public void Move()
     {
@@ -156,7 +143,10 @@ public class ChessLogic : MonoBehaviour
             state = 0;
             timer = 0f;
             backToOriginal = false;
+            
         }
 
     }
+
+
 }

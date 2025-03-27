@@ -38,12 +38,12 @@ public class BlockLogic : MonoBehaviour
             if (belonging == Belonging.Player1 && type == Type.Cooperate)
             {
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
-                GameManager.Instance.ChangeChess1ClickPoint(transform);
+                GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
             }
             else if (belonging == Belonging.Player1 && type == Type.Cheat)
             {
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
-                GameManager.Instance.ChangeChess1ClickPoint(transform);
+                GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
             }
         }
 
@@ -54,12 +54,12 @@ public class BlockLogic : MonoBehaviour
             if (belonging == Belonging.Player2 && type == Type.Cooperate)
             {
                 GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
-                GameManager.Instance.ChangeChess2ClickPoint(transform);
+                GameManager.Instance.ChangeChess2ClickPointServerRpc(transform.position,transform.rotation);
             }
             else if (belonging == Belonging.Player2 && type == Type.Cheat)
             {
                 GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
-                GameManager.Instance.ChangeChess2ClickPoint(transform);
+                GameManager.Instance.ChangeChess2ClickPointServerRpc(transform.position, transform.rotation);
             }
         }
             

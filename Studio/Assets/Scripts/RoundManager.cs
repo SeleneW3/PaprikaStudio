@@ -32,7 +32,12 @@ public class RoundManager : MonoBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
+            
             CalculatePoint();
+            ChessMoveBack();
+            ResetChess();
+            ResetPlayersChoice();
+            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         }
 
 
@@ -63,10 +68,6 @@ public class RoundManager : MonoBehaviour
             player2.point += 0f;
         }
 
-        ResetPlayersChoice();
-        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-        GameManager.Instance.chessComponents[0].backToOriginal = true;
-        GameManager.Instance.chessComponents[1].backToOriginal = true;
     }
 
     void ApplyEffectToAllHandCards( )
@@ -105,5 +106,23 @@ public class RoundManager : MonoBehaviour
     {
         player1.choice = PlayerLogic.playerChoice.None;
         player2.choice = PlayerLogic.playerChoice.None;
+    }
+
+    void ChessMoveBack()
+    {
+        foreach (var chess in GameManager.Instance.chessComponents)
+        {
+
+             chess.backToOriginal = true;
+
+        }
+    }
+
+    void ResetChess()
+    {
+        foreach (var chess in GameManager.Instance.chessComponents)
+        {
+            chess.isOnGround = false;
+        }
     }
 }
