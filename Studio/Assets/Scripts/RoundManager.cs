@@ -68,6 +68,11 @@ public class RoundManager : MonoBehaviour
             player2.point += 0f;
         }
 
+       ResetPlayersChoice();
+        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        GameManager.Instance.chessComponents[0].backToOriginal = true;
+        GameManager.Instance.chessComponents[1].backToOriginal = true;
+
     }
 
     void ApplyEffectToAllHandCards( )
