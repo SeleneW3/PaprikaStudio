@@ -8,9 +8,15 @@ public class ChessAnimation : MonoBehaviour
     [SerializeField] private float initialHeight = 5f;    // 初始高度
     [SerializeField] private float additionalForce = 12f; // 额外的向下力
     
+    [Header("Camera Shake Settings")]
+    [SerializeField] private float shakeIntensityOnCollision = 0.05f;  // 碰撞时的抖动强度
+    [SerializeField] private float shakeDurationOnCollision = 0.1f;    // 碰撞时的抖动持续时间
+    
     private Rigidbody rb;
     private Vector3 startPosition;
     private bool hasLanded = false;
+    private float lastShakeTime = 0f;       // 上次触发抖动的时间
+    private float shakeInterval = 0.1f;     // 最小抖动间隔
 
     // Start is called before the first frame update
     void Start()
@@ -52,11 +58,26 @@ public class ChessAnimation : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Table"))
         {
-            // 可以在这里添加碰撞音效或特效
+            // 计算碰撞强度
+            float collisionForce = collision.relativeVelocity.magnitude;
+            
+            // 只有当碰撞力足够大且距离上次抖动有一定间隔时才触发相机抖动
+            if (collisionForce > 0.1f && Time.time - lastShakeTime > shakeInterval)
+            {
+                // 根据碰撞力度调整抖动强度
+                float intensity = Mathf.Clamp(collisionForce * 0.01f, 0, shakeIntensityOnCollision);
+                
+                // 触发相机抖动
+                if (CameraShake.Instance != null)
+                {
+                    CameraShake.Instance.ShakeCamera(intensity, shakeDurationOnCollision);
+                    lastShakeTime = Time.time;
+                }
+            }
+
             if (!hasLanded && rb.velocity.magnitude < 0.1f)
             {
                 hasLanded = true;
-                // 可以在这里触发其他事件
             }
         }
     }

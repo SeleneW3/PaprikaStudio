@@ -45,7 +45,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Start 在第一次更新前调用
+    // Start 锟节碉拷一锟轿革拷锟斤拷前锟斤拷锟斤拷
     void Start()
     {
         if(SceneManager.GetActiveScene().name == "Init")

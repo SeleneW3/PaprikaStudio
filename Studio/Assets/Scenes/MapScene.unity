@@ -745,6 +745,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHeight: 5
   additionalForce: 15
+  shakeIntensityOnCollision: 0.05
+  shakeDurationOnCollision: 0.1
 --- !u!1 &303184780
 GameObject:
   m_ObjectHideFlags: 0
@@ -1410,6 +1412,7 @@ GameObject:
   - component: {fileID: 955254914}
   - component: {fileID: 955254918}
   - component: {fileID: 955254917}
+  - component: {fileID: 955254919}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1568,6 +1571,21 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &955254919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955254913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 054d999fbf8b32a4fa541cf8b6a03325, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shakeIntensity: 0.01
+  shakeDuration: 0.23
+  decreaseFactor: 2
 --- !u!1 &1006173062
 GameObject:
   m_ObjectHideFlags: 0
@@ -2780,6 +2798,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHeight: 5
   additionalForce: 15
+  shakeIntensityOnCollision: 0.05
+  shakeDurationOnCollision: 0.1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
