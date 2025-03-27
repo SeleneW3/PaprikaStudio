@@ -12,7 +12,7 @@ public class ChessLogic : MonoBehaviour
 
     public float originToBeingClickedDuration = 0.5f;
 
-    public float beingClickedToClickPointDuration = 1f;
+    public float beingClickedToClickPointDuration = 0.8f;
 
     public float heightOffset = 1f;
 
@@ -20,7 +20,7 @@ public class ChessLogic : MonoBehaviour
 
     public float timer = 0f;
 
-    public float moveSpeed = 1f;
+    public float moveSpeed = 2f;
 
     private Vector3 originalPos;
     private Quaternion originalRot;
