@@ -645,8 +645,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHeight: 5
   additionalForce: 12
-  shakeIntensityOnCollision: 0.05
-  shakeDurationOnCollision: 0.1
+  startDelay: 2
 --- !u!1001 &912568076
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -743,8 +742,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHeight: 5
   additionalForce: 12
-  shakeIntensityOnCollision: 0.05
-  shakeDurationOnCollision: 0.1
+  startDelay: 2
 --- !u!54 &930783402
 Rigidbody:
   m_ObjectHideFlags: 0
