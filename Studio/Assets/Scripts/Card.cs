@@ -76,4 +76,17 @@ public class CardLogic : MonoBehaviour
     {
         return;
     }
+
+    private void OnMouseEnter()
+    {
+        GetComponentInParent<HandCardLogic>().Open();
+        Debug.Log("Mouse Entered");
+    }
+
+    private void OnMouseExit()
+    {
+        GetComponentInParent<HandCardLogic>().Close();
+        Debug.Log("Mouse Exited");
+    }
+    
 }

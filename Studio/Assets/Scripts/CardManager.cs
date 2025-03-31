@@ -11,6 +11,9 @@ public class CardGameManager : MonoBehaviour
 
     private Deck deck;
 
+    public HandCardLogic handCardLogic1;
+    public HandCardLogic handCardLogic2;
+
     void Start()
     {
         deck = new Deck(cardPrefab);
@@ -82,10 +85,18 @@ public class CardGameManager : MonoBehaviour
                 // 启动协程动画，将卡牌从牌堆位置平滑移动到目标位置和旋转
                 StartCoroutine(MoveCardToHand(cardObj, player.handPos, targetPos, targetRot, moveDuration));
 
+
+
                 // 每发完一张卡牌等待一段时间，再发下一张
                 yield return new WaitForSeconds(cardDelay);
             }
         }
+        WaitForSeconds wait = new WaitForSeconds(1f);
+        yield return wait;
+
+        handCardLogic1.Initialize();
+        handCardLogic2.Initialize();
+
     }
 
     /// <summary>
