@@ -1575,8 +1575,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHeight: 5
   additionalForce: 12
-  shakeIntensityOnCollision: 0.05
-  shakeDurationOnCollision: 0.1
+  startDelay: 0
 --- !u!1 &1553819360
 GameObject:
   m_ObjectHideFlags: 0
@@ -1888,7 +1887,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 88795087}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999958
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2057,8 +2056,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHeight: 5
   additionalForce: 12
-  shakeIntensityOnCollision: 0.05
-  shakeDurationOnCollision: 0.1
+  startDelay: 0
 --- !u!1 &1882599273
 GameObject:
   m_ObjectHideFlags: 0
@@ -2280,7 +2278,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0005398686}
+  m_AnchoredPosition: {x: 0, y: 0.000033782566}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2013375097
