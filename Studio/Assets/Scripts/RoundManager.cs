@@ -10,6 +10,8 @@ public class RoundManager : MonoBehaviour
     public PlayerLogic player1;
     public PlayerLogic player2;
 
+    public DeckLogic deckLogic;
+
     private void OnEnable()
     {
         GameManager.OnPlayersReady += AssignPlayers;
@@ -37,6 +39,7 @@ public class RoundManager : MonoBehaviour
             ChessMoveBack();
             ResetChess();
             ResetPlayersChoice();
+            ResetPlayers();
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         }
 
@@ -45,7 +48,7 @@ public class RoundManager : MonoBehaviour
 
     void CalculatePoint()
     {
-        //ApplyEffectToAllHandCards();
+        ApplyEffect();
 
         if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
         {
@@ -75,13 +78,14 @@ public class RoundManager : MonoBehaviour
 
     }
 
-    void ApplyEffectToAllHandCards( )
+    void ApplyEffect( )
     {
-        foreach(PlayerLogic player in GameManager.Instance.playerComponents)
+        foreach(CardLogic cardLogic in deckLogic.cardLogics)
         {
-            foreach(CardLogic card in player.hand)
+            if(cardLogic.isOut)
             {
-                card.OnEffect();
+                cardLogic.OnEffect();
+                cardLogic.isOut = false;
             }
         }
     }
@@ -111,6 +115,8 @@ public class RoundManager : MonoBehaviour
     {
         player1.choice = PlayerLogic.playerChoice.None;
         player2.choice = PlayerLogic.playerChoice.None;
+        player1.SetSelectCardServerRpc(false);
+        player2.SetSelectCardServerRpc(false);
     }
 
     void ChessMoveBack()

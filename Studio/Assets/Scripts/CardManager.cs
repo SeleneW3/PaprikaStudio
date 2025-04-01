@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
 
-public class CardGameManager : MonoBehaviour
+public class CardGameManager : NetworkBehaviour
 {
     public int cardsToDeal = 2;
     public GameObject cardPrefab;
@@ -18,9 +19,6 @@ public class CardGameManager : MonoBehaviour
     {
         deck = new Deck(cardPrefab);
         deck.Shuffle();
-
-        // 启动协程发牌
-        //StartCoroutine(DealCards(deck));
     }
 
     private void OnEnable()
@@ -35,7 +33,10 @@ public class CardGameManager : MonoBehaviour
 
     public void StartDealCards()
     {
-        StartCoroutine(WaitAndStartDeal());
+        if (NetworkManager.LocalClientId == 0)
+        {
+            StartCoroutine(WaitAndStartDeal());
+        }
     }
 
     IEnumerator WaitAndStartDeal()
@@ -60,18 +61,18 @@ public class CardGameManager : MonoBehaviour
                 Vector3 targetPos = player.handPos.position - new Vector3(0, 0.01f * i, 0);
                 Quaternion targetRot = player.handPos.rotation;
 
-                // 在牌堆位置实例化卡牌
-                GameObject cardObj = Instantiate(cardPrefab, deckTrans.position, deckTrans.rotation);
+                // 使用含父物体的 Instantiate 重载，直接将卡牌生成在玩家手牌下（仅服务器生成）
+                GameObject cardObj = Instantiate(cardPrefab, deckTrans.position, deckTrans.rotation, player.handPos);
+                NetworkObject netObj = cardObj.GetComponent<NetworkObject>();
+                netObj.Spawn();  // 只有服务器执行这行
 
-                // 获取卡牌的 CardLogic 组件
+                // 获取卡牌的 CardLogic 组件，并赋值牌堆中的数据
                 CardLogic cardComponent = cardObj.GetComponent<CardLogic>();
-
-                // 从牌堆中获取一张牌的数据
                 CardLogic cardData = deck.DealCard();
 
-                // 将牌堆中的数据赋值给实例化的卡牌组件
                 if (cardComponent != null && cardData != null)
                 {
+                    // 设置 effect，会自动通过 NetworkVariable 同步到客户端
                     cardComponent.effect = cardData.effect;
                 }
                 else
@@ -81,22 +82,25 @@ public class CardGameManager : MonoBehaviour
 
                 // 将卡牌添加到玩家手牌中（数据层面的添加）
                 player.AddCard(cardComponent);
+                if (player == GameManager.Instance.playerComponents[0])
+                {
+                    cardComponent.belong = CardLogic.Belong.Player1;
+                }
+                else if (player == GameManager.Instance.playerComponents[1])
+                {
+                    cardComponent.belong = CardLogic.Belong.Player2;
+                }
 
                 // 启动协程动画，将卡牌从牌堆位置平滑移动到目标位置和旋转
                 StartCoroutine(MoveCardToHand(cardObj, player.handPos, targetPos, targetRot, moveDuration));
-
-
 
                 // 每发完一张卡牌等待一段时间，再发下一张
                 yield return new WaitForSeconds(cardDelay);
             }
         }
-        WaitForSeconds wait = new WaitForSeconds(1f);
-        yield return wait;
-
+        yield return new WaitForSeconds(1f);
         handCardLogic1.Initialize();
         handCardLogic2.Initialize();
-
     }
 
     /// <summary>

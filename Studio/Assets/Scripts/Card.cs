@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class CardLogic : MonoBehaviour
+public class CardLogic : NetworkBehaviour
 {
     public enum Effect
     {
@@ -12,21 +13,40 @@ public class CardLogic : MonoBehaviour
         DoubleCheatPoint,
         DoubleCoopPoint,
     }
-    public Effect effect;
+    public NetworkVariable<Effect> effectNetwork = new NetworkVariable<Effect>(Effect.None);
+
+    public Effect effect
+    {
+        get { return effectNetwork.Value; }
+        set { effectNetwork.Value = value; }
+    }
 
     public enum Belong
     {
-        Deck,
         Player1,
         Player2,
     }
     public Belong belong;
+
+    public bool isOut = false;
 
     public void OnEffect()
     {
         if (effect == Effect.ReversePoint)
         {
             ReversePoint();
+        }
+        else if (effect == Effect.DoubleCoopPoint)
+        {
+            DoubleCoopPoint();
+        }
+        else if (effect == Effect.DoubleCheatPoint)
+        {
+            DoubleCheatPoint();
+        }
+        else if (effect == Effect.ReverseChoice)
+        {
+            ReverseChoice();
         }
         else
         {
@@ -79,14 +99,61 @@ public class CardLogic : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        GetComponentInParent<HandCardLogic>().Open();
+        if (!isOut)
+        {
+            if(NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+            {
+                Debug.Log("Mouse Entered1");
+                GetComponentInParent<HandCardLogic>().Open();
+            }
+            else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
+            {
+                GetComponentInParent<HandCardLogic>().Open();
+            }
+
+        }
         Debug.Log("Mouse Entered");
     }
 
     private void OnMouseExit()
     {
-        GetComponentInParent<HandCardLogic>().Close();
+        if (!isOut)
+        {
+            if(NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+            {
+                GetComponentInParent<HandCardLogic>().Close();
+            }
+            else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
+            {
+                GetComponentInParent<HandCardLogic>().Close();
+            }
+        }
         Debug.Log("Mouse Exited");
+    }
+
+    private void OnMouseDown()
+    {
+        if(NetworkManager.LocalClientId== 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+        {
+            if (GameManager.Instance.playerComponents[0].selectCard.Value == false)
+            {
+                SendACard();
+                GameManager.Instance.playerComponents[0].SetSelectCardServerRpc(true);
+            }
+        }
+        else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
+        {
+            if (GameManager.Instance.playerComponents[1].selectCard.Value == false)
+            {
+                SendACard();
+                GameManager.Instance.playerComponents[1].SetSelectCardServerRpc(true);
+            }
+        }
+    }
+
+    private void SendACard()
+    {
+        GetComponentInParent<HandCardLogic>().SendCard(transform);
     }
     
 }

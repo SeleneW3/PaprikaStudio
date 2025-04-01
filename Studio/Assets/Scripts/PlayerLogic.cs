@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerLogic : MonoBehaviour
+public class PlayerLogic : NetworkBehaviour
 {
     public int playerID;
     public string playerName;
@@ -11,6 +12,12 @@ public class PlayerLogic : MonoBehaviour
     public float cheatPoint = 5f;
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;
+
+    public NetworkVariable<bool> selectCard = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
     public enum playerChoice
     {
         None,
@@ -46,5 +53,17 @@ public class PlayerLogic : MonoBehaviour
     {
         coopPoint = 3f;
         cheatPoint = 5f;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetSelectCardServerRpc(bool value)
+    {
+        selectCard.Value = value;
+    }
+
+    [ClientRpc]
+    public void SetSelectCardClientRpc(bool value)
+    {
+        selectCard.Value = value;
     }
 }
