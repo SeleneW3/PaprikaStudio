@@ -28,6 +28,8 @@ public class HandCardLogic : NetworkBehaviour
 
     private float transition = 0f;
 
+    public CardLogic selectedCard;
+
     void Start()
     {
 
@@ -53,7 +55,7 @@ public class HandCardLogic : NetworkBehaviour
     }
 
     /// <summary>
-    /// Õ¹¿ª¿¨ÅÆ£¨´ò¿ªÊÖÅÆ£©£¬ÈôÊÇ·şÎñÆ÷Ö±½Ó¸üĞÂ×´Ì¬£¬·ñÔòÍ¨¹ıServerRpcÍ¨ÖªÖ÷»ú
+    /// æ‰“å¼€æ‰‹ç‰Œï¼Œå¦‚æœæ‰‹ç‰Œå·²ç»æ‰“å¼€ï¼Œé‚£ä¹ˆä¸ä¼šæœ‰ä»»ä½•æ•ˆæœ
     /// </summary>
     public void Open()
     {
@@ -70,7 +72,7 @@ public class HandCardLogic : NetworkBehaviour
     }
 
     /// <summary>
-    /// ÊÕ»Ø¿¨ÅÆ£¨¹Ø±ÕÊÖÅÆ£©£¬ÈôÊÇ·şÎñÆ÷Ö±½Ó¸üĞÂ×´Ì¬£¬·ñÔòÍ¨¹ıServerRpcÍ¨ÖªÖ÷»ú
+    /// å…³é—­æ‰‹ç‰Œï¼Œå¦‚æœæ‰‹ç‰Œå·²ç»å…³é—­ï¼Œé‚£ä¹ˆä¸ä¼šæœ‰ä»»ä½•æ•ˆæœ
     /// </summary>
     public void Close()
     {
@@ -106,7 +108,7 @@ public class HandCardLogic : NetworkBehaviour
     }
 
     /// <summary>
-    /// µã»÷¿¨ÅÆÊ±µ÷ÓÃ
+    /// å‘é€ä¸€å¼ å¡ç‰Œ
     /// </summary>
     public void SendCard(Transform card)
     {
@@ -142,7 +144,7 @@ public class HandCardLogic : NetworkBehaviour
         CardLogic cardLogic = card.GetComponent<CardLogic>();
         cardLogic.isOut = true;
 
-        // Æô¶¯Ğ­³ÌÆ½»¬ÒÆ¶¯¿¨ÅÆµ½ÅÆ¶ÑÎ»ÖÃ
+        // ç§»åŠ¨å¡ç‰Œåˆ°ç‰Œå †
         StartCoroutine(MoveCardToDeck(card));
 
         DeckLogic deckLogic = deck.GetComponent<DeckLogic>();
@@ -189,18 +191,21 @@ public class HandCardLogic : NetworkBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
-        // È·±£¿¨ÅÆ×îÖÕµ½´ïÄ¿±êÎ»ÖÃ
+        // ç¡®ä¿ç§»åŠ¨åˆ°ç›®æ ‡ä½ç½®
         card.position = targetPos;
-        // ÒÆ¶¯Íê³Éºó£¬½«¿¨ÅÆÉèÖÃÎªÅÆ¶ÑµÄ×ÓÎïÌå
+        // ç§»åŠ¨å®Œæˆåï¼Œå°†å¡ç‰Œçš„çˆ¶å¯¹è±¡è®¾ç½®ä¸ºç‰Œå †
         card.SetParent(deck.transform, false);
     }
 
+    /// <summary>
+    /// æ›´æ–°æ‰‹ç‰Œçš„ä½ç½®å’Œæ—‹è½¬
+    /// </summary>
     void Update()
     {
         if (cards == null || cards.Count == 0)
             return;
 
-        // ¸ù¾İ desired state µ÷Õû transition Öµ£¨0¡«1Ö®¼ä£©
+        // æ ¹æ® desired state æ›´æ–° transition çš„å€¼ï¼Œä½¿å…¶åœ¨ 0 å’Œ 1 ä¹‹é—´
         if (opened)
         {
             transition += Time.deltaTime / duration;
@@ -218,17 +223,16 @@ public class HandCardLogic : NetworkBehaviour
             float offsetX = 0f;
             if (count > 1)
             {
-                // ¼ÆËãÄ¿±êĞı×ª½Ç¶È£º´Ó fanAngle/2 µ½ -fanAngle/2
+                // è®¡ç®—ç›®æ ‡æ—‹è½¬è§’åº¦ï¼Œä½¿å¾—å¡ç‰Œåœ¨æ‰“å¼€çŠ¶æ€æ—¶ï¼Œå¡ç‰Œçš„æ—‹è½¬è§’åº¦åœ¨ -fanAngle/2 å’Œ fanAngle/2 ä¹‹é—´
                 angle = fanAngle / 2 - (fanAngle / (count - 1)) * i;
-                // ¼ÆËã×óÓÒÆ«ÒÆ£¬ÈÃÖĞ¼äµÄ¿¨ÅÆ±£³Ö²»¶¯£¬Á½²à·Ö±ğÏò×óÓÒÒÆ¶¯
+                // è®¡ç®—å¡ç‰Œçš„æ°´å¹³åç§»é‡ï¼Œä½¿å¾—å¡ç‰Œåœ¨æ‰“å¼€çŠ¶æ€æ—¶ï¼Œå¡ç‰Œçš„ä½ç½®åœ¨ -spread/2 å’Œ spread/2 ä¹‹é—´
                 offsetX = (i - (count - 1) / 2f) * spread;
             }
-            // Èç¹ûÖ»ÓĞÒ»ÕÅ¿¨ÅÆ£¬Ä¬ÈÏ½Ç¶ÈºÍÆ«ÒÆÎª 0
 
             Quaternion targetRot = Quaternion.Euler(0, 0, angle);
             Vector3 targetPos = originalPositions[i] + new Vector3(offsetX, 0, 0);
 
-            // Í¨¹ı²åÖµ¼ÆËãµ±Ç°×´Ì¬
+            // é€šè¿‡æ’å€¼æ›´æ–°å¡ç‰Œçš„ä½ç½®å’Œæ—‹è½¬
             cards[i].localPosition = Vector3.Lerp(originalPositions[i], targetPos, transition);
             cards[i].localRotation = Quaternion.Lerp(originalRotations[i], targetRot, transition);
         }

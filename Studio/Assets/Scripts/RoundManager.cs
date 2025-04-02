@@ -78,17 +78,63 @@ public class RoundManager : MonoBehaviour
 
     }
 
-    void ApplyEffect( )
+
+
+    //###############################################
+
+    void ApplyEffect()
+{
+    // 1. 找到玩家1、玩家2各自打出的那张牌
+    CardLogic p1Card = null;
+    CardLogic p2Card = null;
+
+    foreach (CardLogic cardLogic in deckLogic.cardLogics)
     {
-        foreach(CardLogic cardLogic in deckLogic.cardLogics)
+        if (cardLogic.isOut)
         {
-            if(cardLogic.isOut)
+            if (cardLogic.belong == CardLogic.Belong.Player1)
             {
-                cardLogic.OnEffect();
-                cardLogic.isOut = false;
+                p1Card = cardLogic;
+            }
+            else if (cardLogic.belong == CardLogic.Belong.Player2)
+            {
+                p2Card = cardLogic;
             }
         }
     }
+
+    // 2. 如果两张牌都找到了，就排下序，然后按优先级依次执行
+    if (p1Card != null && p2Card != null)
+    {
+        ApplyCardEffects(p1Card, p2Card);
+
+        // 标记已经使用完
+        p1Card.isOut = false;
+        p2Card.isOut = false;
+    }
+}
+
+
+    private void ApplyCardEffects(CardLogic player1Card, CardLogic player2Card)
+{
+    // 放进 List 准备排序
+    List<CardLogic> cards = new List<CardLogic>() { player1Card, player2Card };
+
+    // 按优先级升序排序（数字小的先执行 => 优先级越高）
+    cards.Sort((cardA, cardB) =>
+        CardLogic.GetEffectPriority(cardA.effect).CompareTo(
+        CardLogic.GetEffectPriority(cardB.effect)));
+
+    // 依次执行排序后的卡牌效果
+    foreach (var card in cards)
+    {
+        card.OnEffect();
+    }
+}
+
+//#########################################
+
+
 
     void AssignPlayers()
     {

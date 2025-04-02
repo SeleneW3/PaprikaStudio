@@ -316,6 +316,46 @@ public void AdjustPayoff()
     }
 
 
+//#################################################
+
+public static int GetEffectPriority(Effect effect)
+{
+    switch (effect)
+    {
+        // 1级优先
+        case Effect.ReverseCoopToCheat:
+        case Effect.ReverseCheatToCoop:
+            return 1;
+
+        // 2级优先
+        case Effect.ReverseOpponentDecision:
+            return 2;
+
+        // 3级优先
+        case Effect.ReverseChoice:
+            return 3;
+
+        // 4级优先
+        case Effect.DoubleCheatPoint:
+        case Effect.DoubleCoopPoint:
+            return 4;
+
+        // 5级优先
+        case Effect.AdjustPayoff:
+            return 5;
+
+        // 6级优先（或无效果）
+        case Effect.ReversePoint:
+        case Effect.None:
+            return 6;
+    }
+
+    // 兜底返回一个较大的值
+    return 999;
+}
+
+
+
 
 
     private void OnMouseEnter()

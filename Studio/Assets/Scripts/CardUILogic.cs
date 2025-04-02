@@ -14,6 +14,8 @@ public class CardUILogic : MonoBehaviour
     private bool transitioningToTarget = false;
     private bool transitioningToOriginal = false;
 
+
+
     void Start()
     {
         transform.position = originalPos;
