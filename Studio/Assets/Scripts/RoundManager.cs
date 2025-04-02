@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class RoundManager : MonoBehaviour
 {
@@ -12,7 +13,9 @@ public class RoundManager : MonoBehaviour
 
     public DeckLogic deckLogic;
 
-    //private int currentRound = 0;  // 当前回合计数器
+    public TMP_Text roundText;
+
+    private int currentRound = 0;  // 当前回合计数器
 
     private void OnEnable()
     {
@@ -36,6 +39,12 @@ public class RoundManager : MonoBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
+            // 在回合结束时检查双方是否已选择放置棋子
+            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
+            {
+                // 如果双方都选择了棋子放置，开始移动棋子
+                MovePiecesToPositions();
+            }
             
             CalculatePoint();
             ChessMoveBack();
@@ -44,8 +53,17 @@ public class RoundManager : MonoBehaviour
             ResetPlayers();
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
 
-            // 增加回合计数
-            //currentRound++;
+            //增加回合计数
+            currentRound++;
+            Debug.Log("Current Round: " + currentRound); 
+
+             if (roundText != null)
+            {
+                roundText.text = "Round " + currentRound;
+            }
+
+            // 设置游戏状态为准备阶段，进入下一回合前的等待
+            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
 
             // 检查是否已经进行了五个回合
             //if (currentRound >= 5)
@@ -63,6 +81,15 @@ public class RoundManager : MonoBehaviour
             //GameManager.Instance.chessComponents[1].backToOriginal = true;
         }
 
+    }
+
+    void MovePiecesToPositions()
+    {
+        // 只要双方都放置了棋子，调用棋子的移动方法
+        foreach (var chess in GameManager.Instance.chessComponents)
+        {
+            chess.Move();  // 触发棋子的移动
+        }
     }
 
     // 结束本轮游戏的逻辑

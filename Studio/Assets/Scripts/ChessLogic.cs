@@ -111,9 +111,11 @@ public class ChessLogic : MonoBehaviour
 
     public void Move()
     {
-        if(state == 2)
+        // 只要 state == 2 且玩家已经选择了放置位置，就触发移动
+        if(state == 2 && GameManager.Instance.playerComponents[0].choice != PlayerLogic.playerChoice.None && 
+                         GameManager.Instance.playerComponents[1].choice != PlayerLogic.playerChoice.None)
         {
-            state = 3;
+            state = 3;  // 开始移动棋子
             timer = 0f;
         }
     }
