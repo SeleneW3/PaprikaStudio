@@ -12,6 +12,8 @@ public class RoundManager : MonoBehaviour
 
     public DeckLogic deckLogic;
 
+    //private int currentRound = 0;  // 当前回合计数器
+
     private void OnEnable()
     {
         GameManager.OnPlayersReady += AssignPlayers;
@@ -41,10 +43,43 @@ public class RoundManager : MonoBehaviour
             ResetPlayersChoice();
             ResetPlayers();
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+
+            // 增加回合计数
+            //currentRound++;
+
+            // 检查是否已经进行了五个回合
+            //if (currentRound >= 5)
+            //{
+            //    EndRound();  // 结束本轮游戏
+            //}
+            //else
+            //{
+                // 继续进行下一个回合，设置游戏状态为准备阶段
+            //    GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+            //}
+
+            // 重置棋子回原位
+            //GameManager.Instance.chessComponents[0].backToOriginal = true;
+            //GameManager.Instance.chessComponents[1].backToOriginal = true;
         }
 
-
     }
+
+    // 结束本轮游戏的逻辑
+    //void EndRound()
+    //{
+    //    Debug.Log("End of Round: 5 turns completed.");
+
+    //    Debug.Log("Player 1 Final Score: " + player1.point);
+    //    Debug.Log("Player 2 Final Score: " + player2.point);
+
+        // 重置回合计数器，为新一轮做准备
+    //    currentRound = 0;
+
+        // 可以在这里进行其他结算操作，比如更新玩家的总分或更换场景等。
+    //}
+
+
 
     void CalculatePoint()
     {
@@ -79,8 +114,7 @@ public class RoundManager : MonoBehaviour
     }
 
 
-
-    //###############################################
+//###############################################
 
     void ApplyEffect()
 {
@@ -114,7 +148,6 @@ public class RoundManager : MonoBehaviour
     }
 }
 
-
     private void ApplyCardEffects(CardLogic player1Card, CardLogic player2Card)
 {
     // 放进 List 准备排序
@@ -133,8 +166,6 @@ public class RoundManager : MonoBehaviour
 }
 
 //#########################################
-
-
 
     void AssignPlayers()
     {

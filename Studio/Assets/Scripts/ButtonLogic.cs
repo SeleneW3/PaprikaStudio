@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
+using System.Net;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -39,12 +42,27 @@ public class ButtonLogic : MonoBehaviour
 
     private void CreateClick()
     {
+        string localIp = GetLocalIPAddress();
+        GameManager.Instance.ip = localIp;
+
         var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
-        transport.SetConnectionData(GameManager.Instance.ip, 7777);
+        transport.SetConnectionData(localIp, 7777);
 
         NetworkManager.Singleton.StartHost();
-
         GameManager.Instance.LoadScene("Lobby");
+    }
+
+    public static string GetLocalIPAddress()
+    {
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                return ip.ToString();
+            }
+        }
+        throw new Exception("系统中没有找到IPv4地址的网络适配器！");
     }
 
     private void JoinClick()
