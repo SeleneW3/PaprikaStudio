@@ -62,7 +62,7 @@ public class ButtonLogic : MonoBehaviour
                 return ip.ToString();
             }
         }
-        throw new Exception("绯荤粺涓病鏈夋壘鍒癐Pv4鍦板潃鐨勭綉缁滈�傞厤鍣紒");
+        throw new Exception("系统中没有找到IPv4地址的网络适配器！");
     }
 
     private void JoinClick()

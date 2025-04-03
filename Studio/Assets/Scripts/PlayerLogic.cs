@@ -7,9 +7,24 @@ public class PlayerLogic : NetworkBehaviour
 {
     public int playerID;
     public string playerName;
-    public float point;
-    public float coopPoint = 3f;
-    public float cheatPoint = 5f;
+    public NetworkVariable<float> point = new NetworkVariable<float>(
+    0f, 
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<float> coopPoint = new NetworkVariable<float>(
+    0f, 
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<float> cheatPoint = new NetworkVariable<float>(
+    0f,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
+
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;
 
@@ -30,8 +45,11 @@ public class PlayerLogic : NetworkBehaviour
     void Start()
     {
         GameManager.Instance.AddPlayer(this);
-        coopPoint = 3f;
-        cheatPoint = 5f;
+        if(NetworkManager.LocalClientId == 0)
+        {
+            coopPoint.Value = 3f;
+            cheatPoint.Value = 5f;
+        }
     }
 
     void Update()
@@ -51,8 +69,11 @@ public class PlayerLogic : NetworkBehaviour
 
     public void ResetToInitial()
     {
-        coopPoint = 3f;
-        cheatPoint = 5f;
+        if (NetworkManager.LocalClientId == 0)
+        {
+            coopPoint.Value = 3f;
+            cheatPoint.Value = 5f;
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]

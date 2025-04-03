@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Unity.Netcode;
 
-public class RoundManager : MonoBehaviour
+public class RoundManager : NetworkBehaviour
 {
     public float baseBet = 1f;
     public float betMultiplier = 2f;
@@ -100,48 +101,51 @@ public class RoundManager : MonoBehaviour
     //    Debug.Log("Player 1 Final Score: " + player1.point);
     //    Debug.Log("Player 2 Final Score: " + player2.point);
 
-        // 重置回合计数器，为新一轮做准备
+    // 重置回合计数器，为新一轮做准备
     //    currentRound = 0;
 
-        // 可以在这里进行其他结算操作，比如更新玩家的总分或更换场景等。
+    // 可以在这里进行其他结算操作，比如更新玩家的总分或更换场景等。
     //}
 
 
 
     void CalculatePoint()
     {
-        ApplyEffect();
+        if (NetworkManager.LocalClientId == 0)
+        {
+            ApplyEffect();
 
-        if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
-        {
-            player1.point += player1.coopPoint;
-            player2.point += player2.coopPoint;
-        }
-        else if(player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
-        {
-            player1.point += player1.coopPoint;
-            player2.point += player2.cheatPoint;
-        }
-        else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
-        {
-            player1.point += player1.cheatPoint;   
-            player2.point += player2.coopPoint;
-        }
-        else if(player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
-        {
-            player1.point += 0f;
-            player2.point += 0f;
+            if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
+            {
+                player1.point.Value += player1.coopPoint.Value;
+                player2.point.Value += player2.coopPoint.Value;
+            }
+            else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
+            {
+                player1.point.Value += player1.coopPoint.Value;
+                player2.point.Value += player2.cheatPoint.Value;
+            }
+            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
+            {
+                player1.point.Value += player1.cheatPoint.Value;
+                player2.point.Value += player2.coopPoint.Value;
+            }
+            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
+            {
+                player1.point.Value += 0f;
+                player2.point.Value += 0f;
+            }
         }
 
-       ResetPlayersChoice();
+        ResetPlayersChoice();
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
-
     }
 
 
-//###############################################
+
+    //###############################################
 
     void ApplyEffect()
 {

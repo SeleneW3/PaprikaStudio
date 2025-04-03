@@ -158,42 +158,45 @@ public class CardLogic : NetworkBehaviour
                 spriteRenderer.sprite = noneEffectSprite;
                 break;
         }
-    }   
+    }
 
 
 
-//具体方法实现
+    //具体方法实现
 
     public void DoubleCheatPoint()
     {
-        if(belong == Belong.Player1)
+        if (belong == Belong.Player1)
         {
-            GameManager.Instance.playerComponents[0].cheatPoint *= 2;
+            GameManager.Instance.playerComponents[0].cheatPoint.Value *= 2;
         }
-        else if(belong == Belong.Player2)
+        else if (belong == Belong.Player2)
         {
-            GameManager.Instance.playerComponents[1].cheatPoint *= 2;
+            GameManager.Instance.playerComponents[1].cheatPoint.Value *= 2;
         }
     }
+
 
     public void DoubleCoopPoint()
     {
         if (belong == Belong.Player1)
         {
-            GameManager.Instance.playerComponents[0].coopPoint *= 2;
+            GameManager.Instance.playerComponents[0].coopPoint.Value *= 2;
         }
         else if (belong == Belong.Player2)
         {
-            GameManager.Instance.playerComponents[1].coopPoint *= 2;
+            GameManager.Instance.playerComponents[1].coopPoint.Value *= 2;
         }
     }
 
+
     public void ReversePoint()
     {
-        float point = GameManager.Instance.playerComponents[1].point;
-        GameManager.Instance.playerComponents[1].point = GameManager.Instance.playerComponents[0].point;
-        GameManager.Instance.playerComponents[0].point = point;
+        float temp = GameManager.Instance.playerComponents[1].point.Value;
+        GameManager.Instance.playerComponents[1].point.Value = GameManager.Instance.playerComponents[0].point.Value;
+        GameManager.Instance.playerComponents[0].point.Value = temp;
     }
+
 
     public void ReverseChoice()
     {
@@ -279,36 +282,37 @@ public void ReverseOpponentDecision()
     }
 }
 
-// 4. 本回合你的合作收益+2，欺骗收益-2
-public void AdjustPayoff()
-{
-    if (belong == Belong.Player1)
+    // 4. 本回合你的合作收益+2，欺骗收益-2
+    public void AdjustPayoff()
     {
-        if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cooperate)
+        if (belong == Belong.Player1)
         {
-            GameManager.Instance.playerComponents[0].coopPoint += 2;
-            Debug.Log("Player1: Cooperation payoff increased by 2");
+            if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cooperate)
+            {
+                GameManager.Instance.playerComponents[0].coopPoint.Value += 2;
+                Debug.Log("Player1: Cooperation payoff increased by 2");
+            }
+            else if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cheat)
+            {
+                GameManager.Instance.playerComponents[0].cheatPoint.Value -= 2;
+                Debug.Log("Player1: Cheat payoff decreased by 2");
+            }
         }
-        else if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cheat)
+        else if (belong == Belong.Player2)
         {
-            GameManager.Instance.playerComponents[0].cheatPoint -= 2;
-            Debug.Log("Player1: Cheat payoff decreased by 2");
+            if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cooperate)
+            {
+                GameManager.Instance.playerComponents[1].coopPoint.Value += 2;
+                Debug.Log("Player2: Cooperation payoff increased by 2");
+            }
+            else if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cheat)
+            {
+                GameManager.Instance.playerComponents[1].cheatPoint.Value -= 2;
+                Debug.Log("Player2: Cheat payoff decreased by 2");
+            }
         }
     }
-    else if (belong == Belong.Player2)
-    {
-        if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cooperate)
-        {
-            GameManager.Instance.playerComponents[1].coopPoint += 2;
-            Debug.Log("Player2: Cooperation payoff increased by 2");
-        }
-        else if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cheat)
-        {
-            GameManager.Instance.playerComponents[1].cheatPoint -= 2;
-            Debug.Log("Player2: Cheat payoff decreased by 2");
-        }
-    }
-}
+
 
     public void NoneEffect()
     {
