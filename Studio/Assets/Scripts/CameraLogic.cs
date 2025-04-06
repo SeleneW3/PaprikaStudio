@@ -4,13 +4,14 @@ using Unity.Netcode;
 using UnityEngine;
 using Cinemachine;
 
+
 public class CameraLogic : MonoBehaviour
 {
     public Camera mainCam;
-    public CinemachineVirtualCamera player1Cam;  // 玩家1的虚拟摄像机
-    public CinemachineVirtualCamera player2Cam;  // 玩家2的虚拟摄像机
-
-    public float smoothSpeed = 5f;
+    public CinemachineStateDrivenCamera player1CameraController_Gun;  
+    public CinemachineStateDrivenCamera player1CameraController_Balance;
+    public CinemachineStateDrivenCamera player2CameraController_Gun;    
+    public CinemachineStateDrivenCamera player2CameraController_Balance;
 
     void Start()
     {
@@ -21,16 +22,11 @@ public class CameraLogic : MonoBehaviour
             Debug.LogWarning("Main Camera was not assigned, attempting to find it automatically.");
         }
 
-        // 确保 CinemachineVirtualCamera 已设置
-        if (player1Cam == null || player2Cam == null)
+        if (player1CameraController_Gun == null || player1CameraController_Balance == null ||player2CameraController_Gun == null || player2CameraController_Balance == null)
         {
-            Debug.LogError("Virtual Cameras for players not assigned!");
+            Debug.LogError("State-Driven Camera references not set in CameraLogic!");
             return;
         }
-
-        // 在开始时禁用两个虚拟摄像机
-        player1Cam.gameObject.SetActive(false);
-        player2Cam.gameObject.SetActive(false);
     }
 
     void Update()
@@ -38,35 +34,36 @@ public class CameraLogic : MonoBehaviour
         // 检查 NetworkManager 是否已初始化
         if (NetworkManager.Singleton == null) return;
 
-        // 检查必要的组件是否都存在
-        if (mainCam == null || player1Cam == null || player2Cam == null)
-        {
-            Debug.LogError("Camera references not set in CameraLogic!");
-            return;
-        }
-
-        // 切换虚拟摄像机
+        // 根据玩家的 LocalClientId 来决定使用哪个摄像机
         if (NetworkManager.Singleton.LocalClientId == 0)
         {
+            // 玩家1使用自己的虚拟摄像机控制器
             SwitchToPlayer1Camera();
         }
         else if (NetworkManager.Singleton.LocalClientId == 1)
         {
+            // 玩家2使用自己的虚拟摄像机控制器
             SwitchToPlayer2Camera();
         }
     }
 
-    // 切换到玩家1的虚拟摄像机
+    // 切换到玩家1的虚拟摄像机控制器
     private void SwitchToPlayer1Camera()
     {
-        player1Cam.gameObject.SetActive(true);  // 激活玩家1的虚拟摄像机
-        player2Cam.gameObject.SetActive(false); // 禁用玩家2的虚拟摄像机
+        player1CameraController_Gun.gameObject.SetActive(true);
+        player1CameraController_Balance.gameObject.SetActive(true);
+
+        player2CameraController_Gun.gameObject.SetActive(false);
+        player2CameraController_Balance.gameObject.SetActive(false);
     }
 
-    // 切换到玩家2的虚拟摄像机
+    // 切换到玩家2的虚拟摄像机控制器
     private void SwitchToPlayer2Camera()
     {
-        player1Cam.gameObject.SetActive(false); // 禁用玩家1的虚拟摄像机
-        player2Cam.gameObject.SetActive(true);  // 激活玩家2的虚拟摄像机
+        player2CameraController_Gun.gameObject.SetActive(true);
+        player2CameraController_Balance.gameObject.SetActive(true);
+
+        player1CameraController_Gun.gameObject.SetActive(false);
+        player1CameraController_Balance.gameObject.SetActive(false);
     }
 }
