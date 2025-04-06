@@ -22,6 +22,8 @@ public class RoundManager : NetworkBehaviour
 
     private int currentRound = 0;  // 当前回合计数器
 
+    private bool gameEnded = false;
+
     public DialogManager dialogManager;
     void Start()
     {
@@ -127,6 +129,12 @@ public class RoundManager : NetworkBehaviour
 
     void CalculatePoint()
     {
+
+        if (gameEnded)
+        {
+            return;  // 如果游戏已经结束，则不再执行其他操作
+        }
+
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
@@ -158,12 +166,34 @@ public class RoundManager : NetworkBehaviour
                 Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
                 Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
             }
+
+            // 检查是否有一方死亡
+            if (Gun1.GetComponent<GunController>().gameEnded)
+            {
+                // 玩家2死亡
+                Debug.Log("Player 2 is dead! Game over.");
+                gameEnded = true;
+            }
+            else if (Gun2.GetComponent<GunController>().gameEnded)
+            {
+                // 玩家1死亡
+                Debug.Log("Player 1 is dead! Game over.");
+                gameEnded = true;
+            }
         }
 
         ResetPlayersChoice();
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
+
+    }
+
+    public void ResetRound()
+    {
+        gameEnded = false;
+        Gun1.GetComponent<GunController>().ResetGun();
+        Gun2.GetComponent<GunController>().ResetGun();
     }
 
 

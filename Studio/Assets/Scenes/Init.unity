@@ -263,7 +263,7 @@ MonoBehaviour:
   m_MaxConnectAttempts: 60
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
-    Address: 26.26.26.1
+    Address: 10.20.225.131
     Port: 7777
     ServerListenAddress: 127.0.0.1
   DebugSimulator:
