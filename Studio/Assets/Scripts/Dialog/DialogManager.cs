@@ -15,7 +15,7 @@ public class DialogManager : MonoBehaviour
     public string[] dialogLines;              // 对话文本数组
     public float typingSpeed = 0.05f;         // 文字显示速度
 
-    private int currentLineIndex = 0;         // 当前显示的文本索引
+    public int currentLineIndex = 0;         // 当前显示的文本索引
     private bool isDialogActive = false;      // 对话是否激活
     private bool isTyping = false;            // 是否正在打字
     private string currentLine = "";          // 当前完整的文本行

@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using Cinemachine;
 
 public class CameraLogic : MonoBehaviour
 {
     public Camera mainCam;
-    public Transform player1Cam;
-    public Transform player2Cam;
+    public CinemachineVirtualCamera player1Cam;  // 玩家1的虚拟摄像机
+    public CinemachineVirtualCamera player2Cam;  // 玩家2的虚拟摄像机
 
     public float smoothSpeed = 5f;
 
@@ -19,6 +20,17 @@ public class CameraLogic : MonoBehaviour
             mainCam = Camera.main;
             Debug.LogWarning("Main Camera was not assigned, attempting to find it automatically.");
         }
+
+        // 确保 CinemachineVirtualCamera 已设置
+        if (player1Cam == null || player2Cam == null)
+        {
+            Debug.LogError("Virtual Cameras for players not assigned!");
+            return;
+        }
+
+        // 在开始时禁用两个虚拟摄像机
+        player1Cam.gameObject.SetActive(false);
+        player2Cam.gameObject.SetActive(false);
     }
 
     void Update()
@@ -33,15 +45,28 @@ public class CameraLogic : MonoBehaviour
             return;
         }
 
+        // 切换虚拟摄像机
         if (NetworkManager.Singleton.LocalClientId == 0)
         {
-            mainCam.transform.position = Vector3.Lerp(mainCam.transform.position, player1Cam.position, smoothSpeed * Time.deltaTime);
-            mainCam.transform.rotation = Quaternion.Lerp(mainCam.transform.rotation, player1Cam.rotation, smoothSpeed * Time.deltaTime);
+            SwitchToPlayer1Camera();
         }
         else if (NetworkManager.Singleton.LocalClientId == 1)
         {
-            mainCam.transform.position = Vector3.Lerp(mainCam.transform.position, player2Cam.position, smoothSpeed * Time.deltaTime);
-            mainCam.transform.rotation = Quaternion.Lerp(mainCam.transform.rotation, player2Cam.rotation, smoothSpeed * Time.deltaTime);
+            SwitchToPlayer2Camera();
         }
+    }
+
+    // 切换到玩家1的虚拟摄像机
+    private void SwitchToPlayer1Camera()
+    {
+        player1Cam.gameObject.SetActive(true);  // 激活玩家1的虚拟摄像机
+        player2Cam.gameObject.SetActive(false); // 禁用玩家2的虚拟摄像机
+    }
+
+    // 切换到玩家2的虚拟摄像机
+    private void SwitchToPlayer2Camera()
+    {
+        player1Cam.gameObject.SetActive(false); // 禁用玩家1的虚拟摄像机
+        player2Cam.gameObject.SetActive(true);  // 激活玩家2的虚拟摄像机
     }
 }
