@@ -12,6 +12,10 @@ public class RoundManager : NetworkBehaviour
     public PlayerLogic player1;
     public PlayerLogic player2;
 
+    public GameObject Gun1;  // 玩家1的枪对象
+    public GameObject Gun2;  // 玩家2的枪对象
+
+
     public DeckLogic deckLogic;
 
     public TMP_Text roundText;
@@ -121,7 +125,6 @@ public class RoundManager : NetworkBehaviour
     //}
 
 
-
     void CalculatePoint()
     {
         if (NetworkManager.LocalClientId == 0)
@@ -137,16 +140,23 @@ public class RoundManager : NetworkBehaviour
             {
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
+
+                Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
             {
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
+
+                Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
+
+                Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
+                Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
             }
         }
 

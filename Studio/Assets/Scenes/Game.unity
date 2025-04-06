@@ -493,7 +493,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 12619460}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1442164661}
+  - {fileID: 580588672}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 1442164661}
@@ -3284,7 +3286,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1665797636}
+  - {fileID: 564796209}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -4264,7 +4268,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1558965664}
+  - {fileID: 437392593}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -4765,8 +4771,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseBet: 1
   betMultiplier: 2
-  player1: {fileID: 0}
-  player2: {fileID: 0}
+  player1: {fileID: 1428714012605416748}
+  player2: {fileID: 1209255488}
+  Gun1: {fileID: 2001497636}
+  Gun2: {fileID: 1755964191}
   deckLogic: {fileID: 1132786854}
   roundText: {fileID: 1214295741}
   dialogManager: {fileID: 1504394095}
@@ -5515,6 +5523,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7629217270565313750, guid: e96adec46f2deb040ae26ecc25160fea, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1755964192}
+    - targetCorrespondingSourceObject: {fileID: 7629217270565313750, guid: e96adec46f2deb040ae26ecc25160fea, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1755964193}
   m_SourcePrefab: {fileID: 100100000, guid: e96adec46f2deb040ae26ecc25160fea, type: 3}
 --- !u!1 &1755964191 stripped
 GameObject:
@@ -5536,6 +5547,18 @@ MonoBehaviour:
   animator: {fileID: 12619460}
   dialogManager: {fileID: 1504394095}
   element4Index: 3
+--- !u!114 &1755964193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1755964191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d719d5f5f4c74444a5507f904138e97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1759973140
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6295,6 +6318,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7629217270565313750, guid: e96adec46f2deb040ae26ecc25160fea, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2001497638}
+    - targetCorrespondingSourceObject: {fileID: 7629217270565313750, guid: e96adec46f2deb040ae26ecc25160fea, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2001497639}
   m_SourcePrefab: {fileID: 100100000, guid: e96adec46f2deb040ae26ecc25160fea, type: 3}
 --- !u!1 &2001497636 stripped
 GameObject:
@@ -6321,6 +6347,18 @@ MonoBehaviour:
   animator: {fileID: 2001497637}
   dialogManager: {fileID: 1504394095}
   element4Index: 3
+--- !u!114 &2001497639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2001497636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d719d5f5f4c74444a5507f904138e97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2016835749
 GameObject:
   m_ObjectHideFlags: 0
@@ -6797,6 +6835,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6406bb8febc86f34384bb316ce565460, type: 3}
+--- !u!114 &1428714012605416748 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 150528938042156736, guid: 6406bb8febc86f34384bb316ce565460, type: 3}
+  m_PrefabInstance: {fileID: 1428714012605416747}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f621bcefabb4a9408a28c62308f87eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4477071374913176693
 PrefabInstance:
   m_ObjectHideFlags: 0
