@@ -28,7 +28,7 @@ public class CardLogic : NetworkBehaviour
         DoubleCheatPoint,          //4
         DoubleCoopPoint,           //4
 
-        AdjustPayoff,              // 5本回合你的合作收益+2，欺骗收益-2
+        AdjustPayoff,             // 5本回合你的合作收益+2，欺骗收益-2
 
         ReversePoint,             //6
         None,                     //6空白

@@ -11,8 +11,8 @@ public class UIManager : MonoBehaviour
         // 更新分数显示
         if (GameManager.Instance != null)
         {
-            player1ScoreText.text = $"Player 1: {GameManager.Instance.playerComponents[0].point}";
-            player2ScoreText.text = $"Player 2: {GameManager.Instance.playerComponents[1].point}";
+            player1ScoreText.text = $"Player 1: {GameManager.Instance.playerComponents[0].point.Value}";
+            player2ScoreText.text = $"Player 2: {GameManager.Instance.playerComponents[1].point.Value}";
         }
     }
 } 

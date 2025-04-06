@@ -18,6 +18,20 @@ public class RoundManager : NetworkBehaviour
 
     private int currentRound = 0;  // 当前回合计数器
 
+    public DialogManager dialogManager;
+    void Start()
+    {
+        if (dialogManager != null)
+        {
+            Debug.Log("Dialog Manager found, starting dialog");
+            dialogManager.StartDialog();
+        }
+        else
+        {
+            Debug.LogError("Dialog Manager is not assigned in the inspector!");
+        }
+    }
+
     private void OnEnable()
     {
         GameManager.OnPlayersReady += AssignPlayers;
@@ -56,7 +70,6 @@ public class RoundManager : NetworkBehaviour
 
             //增加回合计数
             currentRound++;
-            Debug.Log("Current Round: " + currentRound); 
 
              if (roundText != null)
             {

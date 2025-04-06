@@ -5,19 +5,19 @@ using UnityEngine;
 public class Deck
 {
     public List<CardLogic> cards = new List<CardLogic>();
-    private GameObject cardPrefab; // ÓÃÓÚÊµÀı»¯¿¨ÅÆµÄÔ¤ÖÆ¼ş
+    private GameObject cardPrefab; // ç”¨äºå®ä¾‹åŒ–å¡ç‰Œçš„é¢„åˆ¶ä½“
 
-    // ¹¹Ôìº¯Êı½ÓÊÕÔ¤ÖÆ¼ş²ÎÊı£¬Éú³ÉÒ»¸±ÅÆ£¨ÀıÈç 10 ÕÅÅÆ£©
+    // æ„é€ å‡½æ•°ï¼Œç”¨äºåˆå§‹åŒ–å¡ç‰Œå †ï¼Œé¢„å…ˆç”Ÿæˆä¸€å®šæ•°é‡çš„å¡ç‰Œ
     public Deck(GameObject cardPrefab)
     {
         this.cardPrefab = cardPrefab;
         System.Random rand = new System.Random();
         for (int i = 0; i < 10; i++)
         {
-            // Ëæ»úÉú³É¿¨ÅÆĞ§¹û
+            // éšæœºé€‰æ‹©ä¸€ç§å¡ç‰Œæ•ˆæœ
             CardLogic.Effect effect = (CardLogic.Effect)rand.Next(0, 5);
 
-            // Í¨¹ıÔ¤ÖÆ¼şÊµÀı»¯¿¨ÅÆ
+            // é€šè¿‡é¢„åˆ¶ä½“å®ä¾‹åŒ–å¡ç‰Œ
             GameObject cardObj = GameObject.Instantiate(cardPrefab);
             CardLogic cardLogic = cardObj.GetComponent<CardLogic>();
             if (cardLogic != null)
@@ -27,12 +27,12 @@ public class Deck
             }
             else
             {
-                Debug.LogError("Ô¤ÖÆ¼şÉÏÃ»ÓĞÕÒµ½ CardLogic ×é¼ş£¡");
+                Debug.LogError("é¢„åˆ¶ä½“ä¸­æœªæ‰¾åˆ° CardLogic ç»„ä»¶");
             }
         }
     }
 
-    // Ï´ÅÆ·½·¨£¨Ê¹ÓÃ Fisher-Yates Ëã·¨£©
+    // æ´—ç‰Œç®—æ³•ï¼Œä½¿ç”¨ Fisher-Yates ç®—æ³•
     public void Shuffle()
     {
         System.Random rand = new System.Random();
@@ -45,7 +45,7 @@ public class Deck
         }
     }
 
-    // ·¢Ò»ÕÅÅÆ£¬²¢´ÓÅÆ¶ÑÖĞÒÆ³ı
+    // æŠ½ä¸€å¼ å¡ç‰Œï¼Œä»å¡ç‰Œå †ä¸­ç§»é™¤å¹¶è¿”å›
     public CardLogic DealCard()
     {
         if (cards.Count == 0)
