@@ -51,6 +51,8 @@ public class CardLogic : NetworkBehaviour
 
     public bool isOut = false;
 
+    public bool isSelected = false;
+
 
 // 在 Start 方法中初始化贴图，并监听 effectNetwork 的变化
     private void Start()
@@ -398,20 +400,60 @@ public static int GetEffectPriority(Effect effect)
 
     private void OnMouseDown()
     {
-        if(NetworkManager.LocalClientId== 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+        HandCardLogic handCardLogic = GetComponentInParent<HandCardLogic>();
+
+        if (NetworkManager.LocalClientId == 0 && handCardLogic.belong == HandCardLogic.Belong.Player1)
         {
-            if (GameManager.Instance.playerComponents[0].selectCard.Value == false)
+            if (GameManager.Instance.playerComponents[0].selectCard != this)
             {
-                SendACard();
-                GameManager.Instance.playerComponents[0].SetSelectCardServerRpc(true);
+                isSelected = true;
+                if (GameManager.Instance.playerComponents[0].selectCard != null)
+                {
+                    GameManager.Instance.playerComponents[0].selectCard.isSelected = false;
+                    //handCardLogic.AddCard(GameManager.Instance.playerComponents[0].selectCard.transform);
+                }
+
+                GameManager.Instance.playerComponents[0].selectCard = this;
+                handCardLogic.hasSelectedCard = true;
+                //handCardLogic.RemoveCard(transform);
             }
-        }
-        else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
-        {
-            if (GameManager.Instance.playerComponents[1].selectCard.Value == false)
+
+            else if (GameManager.Instance.playerComponents[0].selectCard == this)
             {
-                SendACard();
-                GameManager.Instance.playerComponents[1].SetSelectCardServerRpc(true);
+                if (GameManager.Instance.playerComponents[0].usedCard.Value == false)
+                {
+                    SendACard();
+                    GameManager.Instance.playerComponents[0].SetUsedCardServerRpc(true);
+                    GameManager.Instance.playerComponents[0].selectCard = null;
+                    handCardLogic.hasSelectedCard = false;
+                }
+            }
+
+        }
+
+        else if (NetworkManager.LocalClientId == 1 && handCardLogic.belong == HandCardLogic.Belong.Player2)
+        {
+            if (GameManager.Instance.playerComponents[1].selectCard != this)
+            {
+                isSelected = true;
+                if (GameManager.Instance.playerComponents[1].selectCard != null)
+                {
+                    GameManager.Instance.playerComponents[1].selectCard.isSelected = false;
+                    //handCardLogic.AddCard(GameManager.Instance.playerComponents[1].selectCard.transform);
+                }
+                GameManager.Instance.playerComponents[1].selectCard = this;
+                handCardLogic.hasSelectedCard = true;
+                //handCardLogic.RemoveCard(transform);
+            }
+            else if (GameManager.Instance.playerComponents[1].selectCard == this || GameManager.Instance.playerComponents[1].selectCard == null)
+            {
+                if (GameManager.Instance.playerComponents[1].usedCard.Value == false)
+                {
+                    SendACard();
+                    GameManager.Instance.playerComponents[1].SetUsedCardServerRpc(true);
+                    GameManager.Instance.playerComponents[1].selectCard = null;
+                    handCardLogic.hasSelectedCard = false;
+                }
             }
         }
     }

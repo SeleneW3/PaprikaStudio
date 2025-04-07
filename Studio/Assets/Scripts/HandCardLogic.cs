@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -28,7 +29,10 @@ public class HandCardLogic : NetworkBehaviour
 
     private float transition = 0f;
 
-    public CardLogic selectedCard;
+    public Transform selectedCardPos;
+    public float selectMoveDuration = 0.25f;
+    public bool hasSelectedCard = false;
+
 
     void Start()
     {
@@ -48,9 +52,7 @@ public class HandCardLogic : NetworkBehaviour
         for (int i = 0; i < count; i++)
         {
             Transform card = transform.GetChild(i);
-            cards.Add(card);
-            originalPositions.Add(card.localPosition);
-            originalRotations.Add(card.localRotation);
+            AddCard(card);
         }
     }
 
@@ -133,13 +135,7 @@ public class HandCardLogic : NetworkBehaviour
 
     void ProcessSendCard(Transform card)
     {
-        int index = cards.IndexOf(card);
-        if (index >= 0)
-        {
-            cards.RemoveAt(index);
-            originalPositions.RemoveAt(index);
-            originalRotations.RemoveAt(index);
-        }
+        RemoveCard(card);
 
         CardLogic cardLogic = card.GetComponent<CardLogic>();
         cardLogic.isOut = true;
@@ -152,6 +148,24 @@ public class HandCardLogic : NetworkBehaviour
 
         UpdateCardStateClientRpc(card.GetComponent<NetworkObject>().NetworkObjectId, true);
         AddCardToDeckClientRpc(card.GetComponent<NetworkObject>().NetworkObjectId);
+    }
+
+    public void AddCard(Transform card)
+    {
+        cards.Add(card);
+        originalPositions.Add(card.localPosition);
+        originalRotations.Add(card.localRotation);
+    }
+
+    public void RemoveCard(Transform card)
+    {
+        int index = cards.IndexOf(card);
+        if (index >= 0)
+        {
+            cards.RemoveAt(index);
+            originalPositions.RemoveAt(index);
+            originalRotations.RemoveAt(index);
+        }
     }
 
 
@@ -200,42 +214,66 @@ public class HandCardLogic : NetworkBehaviour
     /// <summary>
     /// 更新手牌的位置和旋转
     /// </summary>
+
+
     void Update()
     {
-        if (cards == null || cards.Count == 0)
-            return;
+        if (cards == null || cards.Count == 0) return;
 
-        // 根据 desired state 更新 transition 的值，使其在 0 和 1 之间
-        if (opened)
-        {
-            transition += Time.deltaTime / duration;
-        }
-        else
-        {
-            transition -= Time.deltaTime / duration;
-        }
+        // 0‑1 过渡量：控制扇形开合
+        transition += (opened ? 1 : -1) * Time.deltaTime / duration;
         transition = Mathf.Clamp01(transition);
 
-        int count = cards.Count;
-        for (int i = 0; i < count; i++)
+        /* ---------- 统计未选中牌，用来算扇形 ---------- */
+        int animatedCount = cards.Count(c => !c.GetComponent<CardLogic>().isSelected);
+        int visualIndex = 0;
+
+        for (int i = 0; i < cards.Count; i++)
         {
-            float angle = 0f;
-            float offsetX = 0f;
-            if (count > 1)
+            var logic = cards[i].GetComponent<CardLogic>();
+
+            Vector3 targetPos;
+            Quaternion targetRot;
+
+            if (logic.isSelected)              // ====== 被选中：飞到指定位置 ======
             {
-                // 计算目标旋转角度，使得卡牌在打开状态时，卡牌的旋转角度在 -fanAngle/2 和 fanAngle/2 之间
-                angle = fanAngle / 2 - (fanAngle / (count - 1)) * i;
-                // 计算卡牌的水平偏移量，使得卡牌在打开状态时，卡牌的位置在 -spread/2 和 spread/2 之间
-                offsetX = (i - (count - 1) / 2f) * spread;
+                // 如果 selectedCardPos 跟牌同一个父物体，用 localPosition/Rotation 即可
+                targetPos = selectedCardPos.localPosition;
+                targetRot = selectedCardPos.localRotation;
+            }
+            else                               // ====== 未选中：照常排扇形 ======
+            {
+                float angle = 0f;
+                float offsetX = 0f;
+                if (animatedCount > 1)
+                {
+                    angle = fanAngle / 2f - (fanAngle / (animatedCount - 1)) * visualIndex;
+                    offsetX = (visualIndex - (animatedCount - 1) / 2f) * spread;
+                }
+
+                targetRot = Quaternion.Euler(0, 0, angle);
+                targetPos = originalPositions[i] + new Vector3(offsetX, 0, 0);
+
+                visualIndex++;                 // 只对未选中牌递增
             }
 
-            Quaternion targetRot = Quaternion.Euler(0, 0, angle);
-            Vector3 targetPos = originalPositions[i] + new Vector3(offsetX, 0, 0);
+            /* ---------- 插值移动 / 旋转 ---------- */
+            /* ---------- 插值移动 / 旋转 ---------- */
+            if (logic.isSelected)                         // 选中牌
+            {
+                float tSel = Time.deltaTime / selectMoveDuration;
+                cards[i].localPosition = Vector3.Lerp(cards[i].localPosition, targetPos, tSel);
+                cards[i].localRotation = Quaternion.Lerp(cards[i].localRotation, targetRot, tSel);
+            }
+            else                                           // 其余牌：用 0‑1 的 transition
+            {
+                cards[i].localPosition = Vector3.Lerp(originalPositions[i], targetPos, transition);
+                cards[i].localRotation = Quaternion.Lerp(originalRotations[i], targetRot, transition);
+            }
 
-            // 通过插值更新卡牌的位置和旋转
-            cards[i].localPosition = Vector3.Lerp(originalPositions[i], targetPos, transition);
-            cards[i].localRotation = Quaternion.Lerp(originalRotations[i], targetRot, transition);
         }
     }
+
+
 
 }

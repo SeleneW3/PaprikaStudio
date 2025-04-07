@@ -57,16 +57,15 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.PlayerTurn)
         {
-            
-        }
-        else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
-        {
-            // 在回合结束时检查双方是否已选择放置棋子
             if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
             {
                 // 如果双方都选择了棋子放置，开始移动棋子
                 MovePiecesToPositions();
             }
+        }
+        else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
+        {
+           
             
             CalculatePoint();
             ChessMoveBack();
@@ -260,8 +259,8 @@ public class RoundManager : NetworkBehaviour
     {
         player1.choice = PlayerLogic.playerChoice.None;
         player2.choice = PlayerLogic.playerChoice.None;
-        player1.SetSelectCardServerRpc(false);
-        player2.SetSelectCardServerRpc(false);
+        player1.SetUsedCardServerRpc(false);
+        player2.SetUsedCardServerRpc(false);
     }
 
     void ChessMoveBack()

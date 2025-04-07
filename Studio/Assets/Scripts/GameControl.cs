@@ -13,12 +13,29 @@ public class GameControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(GameManager.Instance.currentGameState == GameManager.GameState.Ready)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
+        }
+        if (GameManager.Instance.playerComponents[0].choice != PlayerLogic.playerChoice.None && GameManager.Instance.playerComponents[1].choice != PlayerLogic.playerChoice.None)
+        {
+
+            GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+
+        }
+
+
+
+    }
+
+    void StateChange()
+    {
         if (GameManager.Instance.playerComponents[0].choice != PlayerLogic.playerChoice.None && GameManager.Instance.playerComponents[1].choice != PlayerLogic.playerChoice.None)
         {
             bool allChessOnGround = true;
             foreach (var chess in GameManager.Instance.chessComponents)
             {
-                
+
                 if (!chess.isOnGround)
                 {
                     allChessOnGround = false;
@@ -26,12 +43,11 @@ public class GameControl : MonoBehaviour
                 }
             }
 
-            if(allChessOnGround)
+            if (allChessOnGround)
             {
                 GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
             }
-            
-        }
 
+        }
     }
 }

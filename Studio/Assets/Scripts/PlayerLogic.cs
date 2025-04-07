@@ -28,7 +28,7 @@ public class PlayerLogic : NetworkBehaviour
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;
 
-    public NetworkVariable<bool> selectCard = new NetworkVariable<bool>(
+    public NetworkVariable<bool> usedCard = new NetworkVariable<bool>(
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
@@ -41,6 +41,8 @@ public class PlayerLogic : NetworkBehaviour
     }
 
     public playerChoice choice = playerChoice.None;
+
+    public CardLogic selectCard = null;
 
     void Start()
     {
@@ -77,14 +79,14 @@ public class PlayerLogic : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SetSelectCardServerRpc(bool value)
+    public void SetUsedCardServerRpc(bool value)
     {
-        selectCard.Value = value;
+        usedCard.Value = value;
     }
 
     [ClientRpc]
-    public void SetSelectCardClientRpc(bool value)
+    public void SetUsedCardClientRpc(bool value)
     {
-        selectCard.Value = value;
+        usedCard.Value = value;
     }
 }

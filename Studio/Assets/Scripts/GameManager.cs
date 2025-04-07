@@ -191,7 +191,6 @@ public class GameManager : NetworkBehaviour
             {
                 chess.clickPointRot = clickrot;
                 chess.clickPointPos = clickpointpos;
-                chess.Move();
             }
         }
         ChangeChess1ClickPointClientRpc(clickpointpos, clickrot);
@@ -206,7 +205,6 @@ public class GameManager : NetworkBehaviour
             {
                 chess.clickPointRot = clickrot;
                 chess.clickPointPos = clickpointpos;
-                chess.Move();
             }
         }
     }
@@ -220,7 +218,6 @@ public class GameManager : NetworkBehaviour
             {
                 chess.clickPointRot = clickrot;
                 chess.clickPointPos = clickpointpos;
-                chess.Move();
             }
         }
         ChangeChess2ClickPointClientRpc(clickpointpos, clickrot);
@@ -235,7 +232,6 @@ public class GameManager : NetworkBehaviour
             {
                 chess.clickPointRot = clickrot;
                 chess.clickPointPos = clickpointpos;
-                chess.Move();
             }
         }
     }
