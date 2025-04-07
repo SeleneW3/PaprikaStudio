@@ -6,17 +6,38 @@ using Unity.Netcode;
 
 public class RoundManager : NetworkBehaviour
 {
+    public DeckLogic deckLogic;
+    public DialogManager dialogManager;
+    public TMP_Text roundText;
     public float baseBet = 1f;
     public float betMultiplier = 2f;
 
     public PlayerLogic player1;
     public PlayerLogic player2;
 
-    public DeckLogic deckLogic;
+    public GameObject Gun1;  // 玩家1的枪对象
+    public GameObject Gun2;  // 玩家2的枪对象
 
-    public TMP_Text roundText;
 
     private int currentRound = 0;  // 当前回合计数器
+    private bool gameEnded = false;
+
+
+    void Start()
+    {
+        // 初始化回合
+        currentRound = 1;
+
+        if (dialogManager != null)
+        {
+            Debug.Log("Dialog Manager found, starting dialog");
+            dialogManager.StartDialog();
+        }
+        else
+        {
+            Debug.LogError("Dialog Manager is not assigned in the inspector!");
+        }
+    }
 
     private void OnEnable()
     {
@@ -54,10 +75,6 @@ public class RoundManager : NetworkBehaviour
             ResetPlayers();
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
 
-            //增加回合计数
-            currentRound++;
-            Debug.Log("Current Round: " + currentRound); 
-
              if (roundText != null)
             {
                 roundText.text = "Round " + currentRound;
@@ -65,23 +82,7 @@ public class RoundManager : NetworkBehaviour
 
             // 设置游戏状态为准备阶段，进入下一回合前的等待
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-
-            // 检查是否已经进行了五个回合
-            //if (currentRound >= 5)
-            //{
-            //    EndRound();  // 结束本轮游戏
-            //}
-            //else
-            //{
-                // 继续进行下一个回合，设置游戏状态为准备阶段
-            //    GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-            //}
-
-            // 重置棋子回原位
-            //GameManager.Instance.chessComponents[0].backToOriginal = true;
-            //GameManager.Instance.chessComponents[1].backToOriginal = true;
         }
-
     }
 
     void MovePiecesToPositions()
@@ -93,24 +94,15 @@ public class RoundManager : NetworkBehaviour
         }
     }
 
-    // 结束本轮游戏的逻辑
-    //void EndRound()
-    //{
-    //    Debug.Log("End of Round: 5 turns completed.");
-
-    //    Debug.Log("Player 1 Final Score: " + player1.point);
-    //    Debug.Log("Player 2 Final Score: " + player2.point);
-
-    // 重置回合计数器，为新一轮做准备
-    //    currentRound = 0;
-
-    // 可以在这里进行其他结算操作，比如更新玩家的总分或更换场景等。
-    //}
-
-
 
     void CalculatePoint()
     {
+
+        if (gameEnded)
+        {
+            return;  // 如果游戏已经结束，则不再执行其他操作
+        }
+
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
@@ -124,28 +116,73 @@ public class RoundManager : NetworkBehaviour
             {
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
+
+                Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
             {
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
+
+                Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
+
+                Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
+                Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
             }
+
+            // 检查是否有一方死亡
+            if (Gun1.GetComponent<GunController>().gameEnded)
+            {
+                // 玩家2死亡
+                Debug.Log("Player 2 is dead! Game over.");
+                gameEnded = true;
+            }
+            else if (Gun2.GetComponent<GunController>().gameEnded)
+            {
+                // 玩家1死亡
+                Debug.Log("Player 1 is dead! Game over.");
+                gameEnded = true;
+            }
+
+            // 检查是否回合数达到 5
+            if (!gameEnded && currentRound >= 5)
+            {
+                Debug.Log("5 rounds completed. Game over.");
+                gameEnded = true;
+            }
+
+            // 如果游戏未结束，则继续进行下一回合
+            if (!gameEnded)
+            {
+                currentRound++;
+                Debug.Log($"Round {currentRound}");
+            }
+
         }
 
         ResetPlayersChoice();
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
+
+    }
+
+    public void ResetRound()
+    {
+        gameEnded = false;
+        currentRound = 1;  // 重置回合计数器
+        Gun1.GetComponent<GunController>().ResetGun();
+        Gun2.GetComponent<GunController>().ResetGun();
     }
 
 
 
-    //###############################################
+    //###############################################卡牌优先级？？？？？？？？？
 
     void ApplyEffect()
 {
