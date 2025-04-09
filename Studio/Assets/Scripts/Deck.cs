@@ -34,9 +34,18 @@ public class Deck
         foreach (var effect in effects)
         {
             GameObject cardObj = GameObject.Instantiate(cardPrefab);
+
+            // 获取并调用 Spawn()，确保网络对象已生成
+            var networkObj = cardObj.GetComponent<Unity.Netcode.NetworkObject>();
+            if (networkObj != null && !networkObj.IsSpawned)
+            {
+                networkObj.Spawn();
+            }
+
             CardLogic cardLogic = cardObj.GetComponent<CardLogic>();
             if (cardLogic != null)
             {
+                // 此时 cardLogic.effect 修改时 NetworkVariable 已有所属的 NetworkBehaviour
                 cardLogic.effect = effect;
                 cards.Add(cardLogic);
             }

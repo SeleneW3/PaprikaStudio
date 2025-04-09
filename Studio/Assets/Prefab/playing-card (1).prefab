@@ -121,11 +121,12 @@ MonoBehaviour:
   reverseCoopToCheatSprite: {fileID: 21300000, guid: aaab05e2af4fac945805d01b4ba0bb14, type: 3}
   reverseCheatToCoopSprite: {fileID: 21300000, guid: 367465c65579fc24f86b902080d3358d, type: 3}
   reverseOpponentDecisionSprite: {fileID: 21300000, guid: 3939cd109c096834d939e750a3efc52d, type: 3}
-  adjustPayoffSprite: {fileID: 21300000, guid: ddb5446808f71474589cd84fe76d6fb0, type: 3}
+  adjustPayoffSprite: {fileID: 21300000, guid: 999bb80e0d6e60d43a804c9592f16c4b, type: 3}
   effectNetwork:
     m_InternalValue: 0
   belong: 0
   isOut: 0
+  isSelected: 0
 --- !u!65 &1033049864494638170
 BoxCollider:
   m_ObjectHideFlags: 0
