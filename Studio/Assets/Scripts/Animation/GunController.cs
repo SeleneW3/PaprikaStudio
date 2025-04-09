@@ -1,14 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class GunController : MonoBehaviour
+public class GunController : NetworkBehaviour
 {
     private Animator gunAnimator;  // 该枪的 Animator
 
-    private int remainingChances = 6;  // 剩余的机会次数
-    private bool isBulletReal = false; // 当前子弹是否为真子弹
-    public bool gameEnded = false;   // 游戏是否结束
+    public NetworkVariable<int> remainingChances = new NetworkVariable<int>(6);  // 剩余的机会次数
+    public NetworkVariable<bool> isBulletReal = new NetworkVariable<bool>(false); // 当前子弹是否为真子弹
+    public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(false);   // 游戏是否结束
 
 
     void Start()
@@ -16,64 +17,71 @@ public class GunController : MonoBehaviour
         // 获取枪的 Animator 组件
         gunAnimator = GetComponent<Animator>();
 
-        // 初始化子弹机会（每次游戏开始时重新随机分配）
-        InitializeBulletChances();
+        if (IsServer) // 只在服务器端初始化
+        {
+            InitializeBulletChances();
+        }
     }
 
     void InitializeBulletChances()
     {
         // 在游戏开始时，随机生成一个机会为真子弹
-        isBulletReal = Random.Range(0, remainingChances) == 0;  // 只有一次机会是 "真子弹"
+        isBulletReal.Value = Random.Range(0, remainingChances.Value) == 0;
         Debug.Log($"Gun initialized with a real bullet: {isBulletReal}");
     }
 
-    // 调用此方法来触发枪的开火动画
     public void FireGun()
     {
-        if (gameEnded)
+        if (gameEnded.Value)
         {
             Debug.Log("The game has already ended.");
             return;
         }
 
-        if (remainingChances <= 0)
+        if (remainingChances.Value <= 0)
         {
             Debug.Log("No remaining chances.");
             return;
         }
 
-        // 消耗一次机会
-        remainingChances--;
-        Debug.Log($"Remaining chances: {remainingChances}");
+        remainingChances.Value--;  // 使用 .Value 访问 NetworkVariable 的值
+        Debug.Log($"Remaining chances: {remainingChances.Value}");
 
-        // 触发枪的动画
         if (gunAnimator != null)
         {
-            gunAnimator.SetTrigger("Grab");  // 设置触发器，开始GrabGun动画
+            gunAnimator.SetTrigger("Grab");
         }
 
-        // 检查是否触发了真子弹
-        if (isBulletReal)
+        if (isBulletReal.Value)
         {
             Debug.Log("Bang! A real bullet! The enemy is dead.");
-            gameEnded = true;
+            gameEnded.Value = true;  // 设置 gameEnded 的值
         }
         else
         {
-            // 如果没有命中真子弹，重新初始化机会
-            if (remainingChances == 0)
+            if (remainingChances.Value == 0)
             {
-                InitializeBulletChances();  // 重新初始化子弹机会
+                InitializeBulletChances();
             }
         }
     }
 
-    // 重置枪的状态（例如回合结束时使用）
+    [ClientRpc]
+    void PlayFireAnimationClientRpc()
+    {
+        if (gunAnimator != null)
+        {
+            gunAnimator.SetTrigger("Grab");
+        }
+    }
+
     public void ResetGun()
     {
-        remainingChances = 6;
-        gameEnded = false;
-        InitializeBulletChances();
+        if (IsServer)
+        {
+            remainingChances.Value = 6;
+            gameEnded.Value = false;
+            InitializeBulletChances();
+        }
     }
-    
 }

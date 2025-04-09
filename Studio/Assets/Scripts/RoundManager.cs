@@ -179,13 +179,13 @@ public class RoundManager : NetworkBehaviour
 
 
             // 检查是否有一方死亡
-            if (Gun1.GetComponent<GunController>().gameEnded)
+            if (Gun1.GetComponent<GunController>().gameEnded.Value)
             {
                 // 玩家2死亡
                 Debug.Log("Player 2 is dead! Game over.");
                 gameEnded = true;
             }
-            else if (Gun2.GetComponent<GunController>().gameEnded)
+            else if (Gun2.GetComponent<GunController>().gameEnded.Value)
             {
                 // 玩家1死亡
                 Debug.Log("Player 1 is dead! Game over.");
