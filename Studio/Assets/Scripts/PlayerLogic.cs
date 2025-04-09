@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using Unity.Collections;
 
 public class PlayerLogic : NetworkBehaviour
 {
@@ -24,6 +25,15 @@ public class PlayerLogic : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
     );
+
+
+//######################新增显示每轮选择和分数########################################
+    public NetworkVariable<FixedString64Bytes> debugInfo = new NetworkVariable<FixedString64Bytes>(
+    new FixedString64Bytes(""),
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
+
 
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;

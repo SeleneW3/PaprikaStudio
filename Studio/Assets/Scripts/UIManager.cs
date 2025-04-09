@@ -17,6 +17,10 @@ public class UIManager : MonoBehaviour
         {
             player1ScoreText.text = $"Player 1: {GameManager.Instance.playerComponents[0].point.Value}";
             player2ScoreText.text = $"Player 2: {GameManager.Instance.playerComponents[1].point.Value}";
+            
+            // 使用网络变量的值来更新调试信息显示
+            player1DebugText.text = GameManager.Instance.playerComponents[0].debugInfo.Value.ToString();
+            player2DebugText.text = GameManager.Instance.playerComponents[1].debugInfo.Value.ToString();
         }
     }
 

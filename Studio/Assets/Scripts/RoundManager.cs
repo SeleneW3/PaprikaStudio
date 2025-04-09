@@ -113,9 +113,10 @@ public class RoundManager : NetworkBehaviour
             return;  // 如果游戏已经结束，则不再执行其他操作
         }
 
-        // 声明调试字符串变量，用于记录本回合两个玩家的选择和加分情况
-        string player1Debug = "";
-        string player2Debug = "";
+        // 计算完成后，构造调试信息字符串
+        string player1Debug = $"Player 1: {player1.choice} +0"; 
+        string player2Debug = $"Player 2: {player2.choice} +0";
+
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -161,12 +162,21 @@ public class RoundManager : NetworkBehaviour
                 Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
             }
 
+
             // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
             UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
                 uiManager.UpdateDebugInfo(player1Debug, player2Debug);
             }
+
+            // 关键部分：在服务器端更新网络变量，让所有客户端同步显示
+            if (NetworkManager.Singleton.IsServer)
+            {
+                GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
+                GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
+            }
+
 
             // 检查是否有一方死亡
             if (Gun1.GetComponent<GunController>().gameEnded)
