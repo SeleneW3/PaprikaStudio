@@ -10,10 +10,6 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI player1DebugText;
     public TextMeshProUGUI player2DebugText;
 
-    // 显示子弹消耗的 UI 文本
-    public TextMeshProUGUI player1BulletText;
-    public TextMeshProUGUI player2BulletText;
-
     void Update()
     {
         // 更新分数显示
@@ -25,10 +21,6 @@ public class UIManager : MonoBehaviour
             // 使用网络变量的值来更新调试信息显示
             player1DebugText.text = GameManager.Instance.playerComponents[0].debugInfo.Value.ToString();
             player2DebugText.text = GameManager.Instance.playerComponents[1].debugInfo.Value.ToString();
-
-            // 更新子弹消耗显示，格式：n/6
-            player1BulletText.text = $"Player 1: {6 - GameManager.Instance.playerComponents[0].gunController.remainingChances.Value}/6";
-            player2BulletText.text = $"Player 2: {6 - GameManager.Instance.playerComponents[1].gunController.remainingChances.Value}/6";
         }
     }
 

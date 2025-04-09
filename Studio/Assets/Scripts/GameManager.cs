@@ -30,9 +30,6 @@ public class GameManager : NetworkBehaviour
 
     public static event Action OnPlayersReady;
 
-    // 用来存储每个玩家的 GunController 引用
-    public GunController player1GunController;
-    public GunController player2GunController;
 
 
     private void Awake()
@@ -247,17 +244,11 @@ public class GameManager : NetworkBehaviour
             {
                 GameManager.Instance.playerComponents[0] = player;
                 GameManager.Instance.playerObjs[0] = player.gameObject;
-
-                // 获取玩家1的 GunController
-                player1GunController = player.gameObject.GetComponent<GunController>();
             }
             else if(player.playerID == 2)
             {
                 GameManager.Instance.playerComponents[1] = player;
                 GameManager.Instance.playerObjs[1] = player.gameObject;
-                
-                // 获取玩家2的 GunController
-                player2GunController = player.gameObject.GetComponent<GunController>();
             }
         }
 

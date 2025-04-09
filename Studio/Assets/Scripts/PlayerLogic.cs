@@ -27,15 +27,12 @@ public class PlayerLogic : NetworkBehaviour
     );
 
 
-    //######################新增显示每轮选择和分数########################################
+//######################新增显示每轮选择和分数########################################
     public NetworkVariable<FixedString64Bytes> debugInfo = new NetworkVariable<FixedString64Bytes>(
     new FixedString64Bytes(""),
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
-    );
-
-    // 新增 GunController 字段
-    public GunController gunController;
+);
 
 
     public List<CardLogic> hand = new List<CardLogic>();
