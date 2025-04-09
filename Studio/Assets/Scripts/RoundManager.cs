@@ -93,6 +93,17 @@ public class RoundManager : NetworkBehaviour
         }
     }
 
+    // 用于清空调试信息的方法
+    // 这个方法将在 Invoke 触发时被调用
+    private void ClearDebug()
+    {
+        UIManager uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.ClearDebugInfo();
+        }
+    }
+
 
     void CalculatePoint()
     {
@@ -102,6 +113,10 @@ public class RoundManager : NetworkBehaviour
             return;  // 如果游戏已经结束，则不再执行其他操作
         }
 
+        // 声明调试字符串变量，用于记录本回合两个玩家的选择和加分情况
+        string player1Debug = "";
+        string player2Debug = "";
+
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
@@ -110,11 +125,17 @@ public class RoundManager : NetworkBehaviour
             {
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
+
+                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
+                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
+
+                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
+                player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
 
                 Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
             }
@@ -123,6 +144,9 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
+                player1Debug = $"Player 1: Cheat +{player1.cheatPoint.Value}";
+                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
+
                 Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
@@ -130,8 +154,18 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
 
+                player1Debug = $"Player 1: Cheat +0";
+                player2Debug = $"Player 2: Cheat +0";
+
                 Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
                 Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
+            }
+
+            // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
+            UIManager uiManager = FindObjectOfType<UIManager>();
+            if (uiManager != null)
+            {
+                uiManager.UpdateDebugInfo(player1Debug, player2Debug);
             }
 
             // 检查是否有一方死亡
