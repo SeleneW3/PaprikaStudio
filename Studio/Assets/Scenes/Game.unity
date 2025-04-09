@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.219834, g: 0.19504339, b: 0.14313114, a: 1}
+  m_IndirectSpecularColor: {r: 0.21924993, g: 0.19442436, b: 0.1426318, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -493,9 +493,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 12619460}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1442164661}
-  - {fileID: 580588672}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 1442164661}
@@ -676,9 +674,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81893739476d1c3488cb7a7647194198, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fanAngle: 60
+  fanAngle: 45
   duration: 0.5
-  spread: 1
+  spread: 0.6
   opened: 0
   belong: 1
   cards: []
@@ -3288,9 +3286,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1665797636}
-  - {fileID: 564796209}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -4271,9 +4267,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1558965664}
-  - {fileID: 437392593}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -4625,12 +4619,12 @@ MonoBehaviour:
     afraid you've already forgotten the rules here......</>
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>Here,
     I\u2019ll give each of you a gun.</>"
-  - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>Look
-    here, a piece on the board, two choices: cooperate or cheat.</>
+  - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>You''ve
+    played Russian roulette, right?.</>
 
 '
-  - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>You''ve
-    played Russian roulette, right?</>
+  - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>Look
+    here, a piece, two choices: cooperate or cheat.</>
 
 '
   - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>In
@@ -4638,15 +4632,9 @@ MonoBehaviour:
 
 '
   - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>If
-    you don''t cooperate... Of course it leads to greater gains.</>
+    you don''t cooperate... Risk is proportional to reward..</>
 
 '
-  - '<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>But
-    accordingly, you will also face punishment.</>
-
-'
-  - <shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>I hope
-    this hasn't scared you.</>
   - <shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>If
     you both choose to cheat...</>
   - <shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>I think
@@ -4945,9 +4933,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81893739476d1c3488cb7a7647194198, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fanAngle: 60
+  fanAngle: 45
   duration: 0.5
-  spread: 1
+  spread: 0.6
   opened: 0
   belong: 0
   cards: []
@@ -6826,6 +6814,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -180
       objectReference: {fileID: 0}
+    - target: {fileID: 4982394057540705401, guid: d053c48d5839a964a85e20fb2c95bc5b, type: 3}
+      propertyPath: adjustPayoffSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 999bb80e0d6e60d43a804c9592f16c4b, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

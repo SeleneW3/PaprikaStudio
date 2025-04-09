@@ -49,7 +49,7 @@ public class GunController : MonoBehaviour
         // 触发枪的动画
         if (gunAnimator != null)
         {
-            gunAnimator.SetTrigger("GrabGun");  // 设置触发器，开始GrabGun动画
+            gunAnimator.SetTrigger("Grab");  // 设置触发器，开始GrabGun动画
         }
 
         // 检查是否触发了真子弹
