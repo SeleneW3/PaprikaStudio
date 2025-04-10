@@ -184,12 +184,20 @@ public class RoundManager : NetworkBehaviour
                 // 玩家2死亡
                 Debug.Log("Player 2 is dead! Game over.");
                 gameEnded = true;
+                if (uiManager != null)
+                {
+                    uiManager.ShowGameOver("Player 2 is dead!");
+                }
             }
             else if (Gun2.GetComponent<GunController>().gameEnded.Value)
             {
                 // 玩家1死亡
                 Debug.Log("Player 1 is dead! Game over.");
                 gameEnded = true;
+                if (uiManager != null)
+                {
+                    uiManager.ShowGameOver("Player 1 is dead!");
+                }
             }
 
             // 检查是否回合数达到 5
@@ -197,6 +205,24 @@ public class RoundManager : NetworkBehaviour
             {
                 Debug.Log("5 rounds completed. Game over.");
                 gameEnded = true;
+                if (uiManager != null)
+                {
+                    // 判断获胜者
+                    string winner = "";
+                    if (player1.point.Value > player2.point.Value)
+                    {
+                        winner = "Player 1 wins!";
+                    }
+                    else if (player2.point.Value > player1.point.Value)
+                    {
+                        winner = "Player 2 wins!";
+                    }
+                    else
+                    {
+                        winner = "It's a tie!";
+                    }
+                    uiManager.ShowGameOver($"5 rounds completed\n{winner}");
+                }
             }
 
             // 如果游戏未结束，则继续进行下一回合
