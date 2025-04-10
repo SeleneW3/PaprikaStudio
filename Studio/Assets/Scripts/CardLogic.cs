@@ -419,14 +419,12 @@ public static int GetEffectPriority(Effect effect)
                 if (GameManager.Instance.playerComponents[0].selectCard != null)
                 {
                     GameManager.Instance.playerComponents[0].selectCard.isSelected = false;
-                    //handCardLogic.AddCard(GameManager.Instance.playerComponents[0].selectCard.transform);
                 }
 
                 GameManager.Instance.playerComponents[0].selectCard = this;
                 handCardLogic.hasSelectedCard = true;
-                //handCardLogic.RemoveCard(transform);
+                handCardLogic.SelectCard(transform);  // 使用新的选择方法
             }
-
             else if (GameManager.Instance.playerComponents[0].selectCard == this)
             {
                 if (GameManager.Instance.playerComponents[0].usedCard.Value == false)
@@ -437,9 +435,7 @@ public static int GetEffectPriority(Effect effect)
                     handCardLogic.hasSelectedCard = false;
                 }
             }
-
         }
-
         else if (NetworkManager.LocalClientId == 1 && handCardLogic.belong == HandCardLogic.Belong.Player2)
         {
             if (GameManager.Instance.playerComponents[1].selectCard != this)
@@ -448,11 +444,10 @@ public static int GetEffectPriority(Effect effect)
                 if (GameManager.Instance.playerComponents[1].selectCard != null)
                 {
                     GameManager.Instance.playerComponents[1].selectCard.isSelected = false;
-                    //handCardLogic.AddCard(GameManager.Instance.playerComponents[1].selectCard.transform);
                 }
                 GameManager.Instance.playerComponents[1].selectCard = this;
                 handCardLogic.hasSelectedCard = true;
-                //handCardLogic.RemoveCard(transform);
+                handCardLogic.SelectCard(transform);  // 使用新的选择方法
             }
             else if (GameManager.Instance.playerComponents[1].selectCard == this || GameManager.Instance.playerComponents[1].selectCard == null)
             {
