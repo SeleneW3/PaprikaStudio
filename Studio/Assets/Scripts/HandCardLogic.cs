@@ -33,8 +33,6 @@ public class HandCardLogic : NetworkBehaviour
     public float selectMoveDuration = 0.25f;
     public bool hasSelectedCard = false;
 
-    // 添加网络变量来跟踪选中的卡牌
-    private NetworkVariable<ulong> selectedCardId = new NetworkVariable<ulong>();
 
     void Start()
     {
@@ -111,59 +109,6 @@ public class HandCardLogic : NetworkBehaviour
         Debug.Log("HandCardLogic UpdateState: " + state);
     }
 
-    public void SelectCard(Transform card)
-    {
-        if (!NetworkManager.Singleton.IsServer)
-        {
-            SelectCardServerRpc(card.GetComponent<NetworkObject>().NetworkObjectId);
-        }
-        else
-        {
-            ProcessSelectCard(card);
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    void SelectCardServerRpc(ulong cardNetworkId)
-    {
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(cardNetworkId, out NetworkObject cardObj))
-        {
-            ProcessSelectCard(cardObj.transform);
-        }
-    }
-
-    void ProcessSelectCard(Transform card)
-    {
-        CardLogic cardLogic = card.GetComponent<CardLogic>();
-        if (!cardLogic.isSelected)
-        {
-            // 如果已经有选中的卡牌，先取消选中
-            if (hasSelectedCard)
-            {
-                foreach (var c in cards)
-                {
-                    c.GetComponent<CardLogic>().isSelected = false;
-                }
-            }
-
-            cardLogic.isSelected = true;
-            hasSelectedCard = true;
-            selectedCardId.Value = card.GetComponent<NetworkObject>().NetworkObjectId;
-            UpdateCardSelectionClientRpc(card.GetComponent<NetworkObject>().NetworkObjectId, true);
-        }
-    }
-
-    [ClientRpc]
-    void UpdateCardSelectionClientRpc(ulong cardNetworkId, bool isSelected)
-    {
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(cardNetworkId, out NetworkObject cardObj))
-        {
-            CardLogic cardLogic = cardObj.GetComponent<CardLogic>();
-            cardLogic.isSelected = isSelected;
-            hasSelectedCard = isSelected;
-        }
-    }
-
     /// <summary>
     /// 发送一张卡牌
     /// </summary>
@@ -193,9 +138,7 @@ public class HandCardLogic : NetworkBehaviour
         RemoveCard(card);
 
         CardLogic cardLogic = card.GetComponent<CardLogic>();
-        cardLogic.isSelected = false;
         cardLogic.isOut = true;
-        hasSelectedCard = false;
 
         // 移动卡牌到牌堆
         StartCoroutine(MoveCardToDeck(card));
@@ -203,7 +146,7 @@ public class HandCardLogic : NetworkBehaviour
         DeckLogic deckLogic = deck.GetComponent<DeckLogic>();
         deckLogic.cardLogics.Add(cardLogic);
 
-        UpdateCardStateClientRpc(card.GetComponent<NetworkObject>().NetworkObjectId, true, false);
+        UpdateCardStateClientRpc(card.GetComponent<NetworkObject>().NetworkObjectId, true);
         AddCardToDeckClientRpc(card.GetComponent<NetworkObject>().NetworkObjectId);
     }
 
@@ -227,14 +170,11 @@ public class HandCardLogic : NetworkBehaviour
 
 
     [ClientRpc]
-    void UpdateCardStateClientRpc(ulong cardNetworkId, bool isOut, bool isSelected)
+    void UpdateCardStateClientRpc(ulong cardNetworkId, bool state)
     {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(cardNetworkId, out NetworkObject cardObj))
         {
-            CardLogic cardLogic = cardObj.GetComponent<CardLogic>();
-            cardLogic.isOut = isOut;
-            cardLogic.isSelected = isSelected;
-            hasSelectedCard = isSelected;
+            cardObj.GetComponent<CardLogic>().isOut = state;
         }
     }
 
