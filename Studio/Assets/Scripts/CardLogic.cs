@@ -31,7 +31,8 @@ public class CardLogic : NetworkBehaviour
         AdjustPayoff,             // 5本回合你的合作收益+2，欺骗收益-2
 
         ReversePoint,             //6
-        None,                     //6空白
+
+        None,                     //7 空白
     }
 
     public NetworkVariable<Effect> effectNetwork = new NetworkVariable<Effect>(Effect.None);
@@ -194,9 +195,15 @@ public class CardLogic : NetworkBehaviour
 
     public void ReversePoint()
     {
-        float temp = GameManager.Instance.playerComponents[1].point.Value;
-        GameManager.Instance.playerComponents[1].point.Value = GameManager.Instance.playerComponents[0].point.Value;
+        float p1Before = GameManager.Instance.playerComponents[0].point.Value;
+        float p2Before = GameManager.Instance.playerComponents[1].point.Value;
+        Debug.Log($"ReversePoint: Before Swap -> P1: {p1Before}, P2: {p2Before}");
+
+        float temp = p2Before;
+        GameManager.Instance.playerComponents[1].point.Value = p1Before;
         GameManager.Instance.playerComponents[0].point.Value = temp;
+
+        Debug.Log($"ReversePoint: After Swap -> P1: {GameManager.Instance.playerComponents[0].point.Value}, P2: {GameManager.Instance.playerComponents[1].point.Value}");
     }
 
 
@@ -350,10 +357,12 @@ public static int GetEffectPriority(Effect effect)
         case Effect.AdjustPayoff:
             return 5;
 
-        // 6级优先（或无效果）
+        // 6级优先
         case Effect.ReversePoint:
-        case Effect.None:
             return 6;
+
+        case Effect.None:
+            return 7;
     }
 
     // 兜底返回一个较大的值

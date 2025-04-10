@@ -1,8 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Netcode;
 using UnityEngine;
 
-public class AnimatorState : MonoBehaviour
+public class AnimatorState : NetworkBehaviour
 {
     public Animator animator;
     public DialogManager dialogManager; // 对话管理器，用于检测当前对话行
