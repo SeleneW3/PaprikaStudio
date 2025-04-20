@@ -18,6 +18,9 @@ public class RoundManager : NetworkBehaviour
     public GameObject Gun1;  // 玩家1的枪对象
     public GameObject Gun2;  // 玩家2的枪对象
 
+    [Header("Balance Scale")]
+    [SerializeField] private BalanceScale balanceScale;  // 天平引用
+
 
     private int currentRound = 0;  // 当前回合计数器
     private bool gameEnded = false;
@@ -129,6 +132,8 @@ public class RoundManager : NetworkBehaviour
 
                 player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
                 player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
+
+                balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
@@ -139,6 +144,8 @@ public class RoundManager : NetworkBehaviour
                 player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
 
                 Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
+
+                balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
             {
@@ -149,6 +156,8 @@ public class RoundManager : NetworkBehaviour
                 player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
 
                 Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
+
+                balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
@@ -160,6 +169,8 @@ public class RoundManager : NetworkBehaviour
 
                 Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
                 Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
+
+                balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
 
 
@@ -247,6 +258,12 @@ public class RoundManager : NetworkBehaviour
         currentRound = 1;  // 重置回合计数器
         Gun1.GetComponent<GunController>().ResetGun();
         Gun2.GetComponent<GunController>().ResetGun();
+
+        // 重置天平到中立位置
+        if (balanceScale != null)
+        {
+            balanceScale.UpdateScore(0, 0);
+        }
     }
 
 

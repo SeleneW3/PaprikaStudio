@@ -20,9 +20,35 @@ public class BlockLogic : MonoBehaviour
     public Belonging belonging;
     public Type type;
 
+    private SpriteRenderer spriteRenderer;
+    private Color originalColor;
+    public Color hoverColor = new Color(1f, 1f, 1f, 0.8f); // 默认悬停颜色，可在Inspector中修改
+    private bool isSelected = false;
+
     void Start()
     {
-        
+        // 获取SpriteRenderer组件并保存原始颜色
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            originalColor = spriteRenderer.color;
+        }
+    }
+
+    void OnMouseEnter()
+    {
+        if (spriteRenderer != null && !isSelected)
+        {
+            spriteRenderer.color = hoverColor;
+        }
+    }
+
+    void OnMouseExit()
+    {
+        if (spriteRenderer != null && !isSelected)
+        {
+            spriteRenderer.color = originalColor;
+        }
     }
 
     // Update is called once per frame
@@ -39,15 +65,15 @@ public class BlockLogic : MonoBehaviour
             {
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
                 GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
+                SetSelected(true);
             }
             else if (belonging == Belonging.Player1 && type == Type.Cheat)
             {
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
                 GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
+                SetSelected(true);
             }
         }
-
-
 
         if (NetworkManager.Singleton.LocalClientId == 1)
         {
@@ -55,15 +81,28 @@ public class BlockLogic : MonoBehaviour
             {
                 GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
                 GameManager.Instance.ChangeChess2ClickPointServerRpc(transform.position,transform.rotation);
+                SetSelected(true);
             }
             else if (belonging == Belonging.Player2 && type == Type.Cheat)
             {
                 GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
                 GameManager.Instance.ChangeChess2ClickPointServerRpc(transform.position, transform.rotation);
+                SetSelected(true);
             }
         }
-            
+    }
 
-        
+    public void SetSelected(bool selected)
+    {
+        isSelected = selected;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = selected ? hoverColor : originalColor;
+        }
+    }
+
+    public void ResetState()
+    {
+        SetSelected(false);
     }
 }
