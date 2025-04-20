@@ -493,9 +493,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 12619460}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1442164661}
-  - {fileID: 580588672}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 1442164661}
@@ -3214,6 +3212,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 1
   type: 1
+  hoverColor: {r: 0.43529412, g: 0.18039216, b: 0.18039216, a: 0.8}
 --- !u!212 &803786843
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3256,7 +3255,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: cf3b4f6e39e5ba74bbe0c195e7e22233, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.14150941, g: 0.121039495, b: 0.121039495, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -4019,7 +4018,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 3ccebe485c8a84c44807bd708c59bb5b, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.14150941, g: 0.121039495, b: 0.121039495, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -4058,6 +4057,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 0
   type: 0
+  hoverColor: {r: 0.43529412, g: 0.18039216, b: 0.18039216, a: 0.8}
 --- !u!65 &960262031
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4156,9 +4156,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1665797636}
-  - {fileID: 564796209}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -5209,9 +5207,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1558965664}
-  - {fileID: 437392593}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -6040,6 +6036,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 1
   type: 1
+  hoverColor: {r: 1, g: 1, b: 1, a: 0.8}
 --- !u!65 &1659879821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6318,6 +6315,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 0
   type: 0
+  hoverColor: {r: 1, g: 1, b: 1, a: 0.8}
 --- !u!1 &1702558040
 GameObject:
   m_ObjectHideFlags: 0
@@ -6845,6 +6843,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 0
   type: 1
+  hoverColor: {r: 1, g: 1, b: 1, a: 0.8}
 --- !u!1 &1825229689
 GameObject:
   m_ObjectHideFlags: 0
@@ -6950,6 +6949,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 1
   type: 0
+  hoverColor: {r: 0.43529412, g: 0.18039216, b: 0.18039216, a: 0.8}
 --- !u!65 &1855218162
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7013,7 +7013,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 3ccebe485c8a84c44807bd708c59bb5b, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.14150941, g: 0.121039495, b: 0.121039495, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -7310,6 +7310,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 1
   type: 0
+  hoverColor: {r: 1, g: 1, b: 1, a: 0.8}
 --- !u!65 &2016835751
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7619,6 +7620,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   belonging: 0
   type: 1
+  hoverColor: {r: 0.43529412, g: 0.18039216, b: 0.18039216, a: 0.8}
 --- !u!212 &2114600144
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -7661,7 +7663,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: cf3b4f6e39e5ba74bbe0c195e7e22233, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.14150941, g: 0.121039495, b: 0.121039495, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
