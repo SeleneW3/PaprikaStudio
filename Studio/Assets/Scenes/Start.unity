@@ -1891,7 +1891,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<shake a=0.1 f=0.6><wave a=0.3 f=0.6>  DIMENSION \nOF DIALOGUE</>"
+  m_text: "<shake a=0.1 f=0.6><wave a=0.3 f=0.6>  \u5BF9\u8BDD\u7684\u7EF4\u5EA6
+    </>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
@@ -1954,7 +1955,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -214.74634, y: -64.53601, z: -80.779816, w: 0}
+  m_margin: {x: -259.8877, y: -64.53601, z: -119.00856, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -1999,7 +2000,7 @@ MonoBehaviour:
   onCharacterVisible:
     m_PersistentCalls:
       m_Calls: []
-  waitForNormalChars: 0.1
+  waitForNormalChars: 0.2
   waitLong: 0.6
   waitMiddle: 0.2
   avoidMultiplePunctuactionWait: 0
