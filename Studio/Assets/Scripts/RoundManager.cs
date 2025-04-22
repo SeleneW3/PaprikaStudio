@@ -21,6 +21,11 @@ public class RoundManager : NetworkBehaviour
     [Header("Balance Scale")]
     [SerializeField] private BalanceScale balanceScale;  // 天平引用
 
+    [Header("Coin Effects")]
+    public GameObject coinPrefab; // 硬币预制体
+    public float coinOffsetY = -10f; // 生成位置的Y轴偏移
+    public Transform player1ScoreAnchor; // 玩家1分数锚点
+    public Transform player2ScoreAnchor; // 玩家2分数锚点
 
     private int currentRound = 0;  // 当前回合计数器
     private bool gameEnded = false;
@@ -110,7 +115,6 @@ public class RoundManager : NetworkBehaviour
 
     void CalculatePoint()
     {
-
         if (gameEnded)
         {
             return;  // 如果游戏已经结束，则不再执行其他操作
@@ -120,15 +124,25 @@ public class RoundManager : NetworkBehaviour
         string player1Debug = $"Player 1: {player1.choice} +0"; 
         string player2Debug = $"Player 2: {player2.choice} +0";
 
-
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
 
             if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
             {
+                float p1PointsBefore = player1.point.Value;
+                float p2PointsBefore = player2.point.Value;
+                
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
+
+                // 计算增加了多少分
+                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
+                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
+                
+                // 生成硬币
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
                 player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
@@ -137,8 +151,19 @@ public class RoundManager : NetworkBehaviour
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
+                float p1PointsBefore = player1.point.Value;
+                float p2PointsBefore = player2.point.Value;
+                
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
+
+                // 计算增加了多少分
+                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
+                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
+                
+                // 生成硬币
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
                 player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
@@ -149,8 +174,19 @@ public class RoundManager : NetworkBehaviour
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
             {
+                float p1PointsBefore = player1.point.Value;
+                float p2PointsBefore = player2.point.Value;
+                
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
+
+                // 计算增加了多少分
+                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
+                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
+                
+                // 生成硬币
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cheat +{player1.cheatPoint.Value}";
                 player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
@@ -161,18 +197,28 @@ public class RoundManager : NetworkBehaviour
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
             {
+                float p1PointsBefore = player1.point.Value;
+                float p2PointsBefore = player2.point.Value;
+                
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
+
+                // 计算增加了多少分
+                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
+                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
+                
+                // 生成硬币 (这里应该是0个硬币，因为分数没有增加)
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cheat +0";
                 player2Debug = $"Player 2: Cheat +0";
 
                 Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
-                Gun2.GetComponent<GunController >().FireGun();  // 触发玩家2的枪动画
+                Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
-
 
             // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
             UIManager uiManager = FindObjectOfType<UIManager>();
@@ -271,55 +317,55 @@ public class RoundManager : NetworkBehaviour
     //###############################################卡牌优先级
 
     void ApplyEffect()
-{
-    // 1. 找到玩家1、玩家2各自打出的那张牌
-    CardLogic p1Card = null;
-    CardLogic p2Card = null;
-
-    foreach (CardLogic cardLogic in deckLogic.cardLogics)
     {
-        if (cardLogic.isOut)
+        // 1. 找到玩家1、玩家2各自打出的那张牌
+        CardLogic p1Card = null;
+        CardLogic p2Card = null;
+
+        foreach (CardLogic cardLogic in deckLogic.cardLogics)
         {
-            if (cardLogic.belong == CardLogic.Belong.Player1)
+            if (cardLogic.isOut)
             {
-                p1Card = cardLogic;
+                if (cardLogic.belong == CardLogic.Belong.Player1)
+                {
+                    p1Card = cardLogic;
+                }
+                else if (cardLogic.belong == CardLogic.Belong.Player2)
+                {
+                    p2Card = cardLogic;
+                }
             }
-            else if (cardLogic.belong == CardLogic.Belong.Player2)
-            {
-                p2Card = cardLogic;
-            }
+        }
+
+        // 2. 如果两张牌都找到了，就排下序，然后按优先级依次执行
+        if (p1Card != null && p2Card != null)
+        {
+            ApplyCardEffects(p1Card, p2Card);
+
+            // 标记已经使用完
+            p1Card.isOut = false;
+            p2Card.isOut = false;
         }
     }
 
-    // 2. 如果两张牌都找到了，就排下序，然后按优先级依次执行
-    if (p1Card != null && p2Card != null)
-    {
-        ApplyCardEffects(p1Card, p2Card);
-
-        // 标记已经使用完
-        p1Card.isOut = false;
-        p2Card.isOut = false;
-    }
-}
-
     private void ApplyCardEffects(CardLogic player1Card, CardLogic player2Card)
-{
-    // 放进 List 准备排序
-    List<CardLogic> cards = new List<CardLogic>() { player1Card, player2Card };
-
-    // 按优先级升序排序（数字小的先执行 => 优先级越高）
-    cards.Sort((cardA, cardB) =>
-        CardLogic.GetEffectPriority(cardA.effect).CompareTo(
-        CardLogic.GetEffectPriority(cardB.effect)));
-
-    // 依次执行排序后的卡牌效果
-    foreach (var card in cards)
     {
-        card.OnEffect();
-    }
-}
+        // 放进 List 准备排序
+        List<CardLogic> cards = new List<CardLogic>() { player1Card, player2Card };
 
-//#########################################
+        // 按优先级升序排序（数字小的先执行 => 优先级越高）
+        cards.Sort((cardA, cardB) =>
+            CardLogic.GetEffectPriority(cardA.effect).CompareTo(
+            CardLogic.GetEffectPriority(cardB.effect)));
+
+        // 依次执行排序后的卡牌效果
+        foreach (var card in cards)
+        {
+            card.OnEffect();
+        }
+    }
+
+    //#########################################
 
     void AssignPlayers()
     {
