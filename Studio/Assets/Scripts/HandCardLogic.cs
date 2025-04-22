@@ -225,7 +225,12 @@ public class HandCardLogic : NetworkBehaviour
         transition = Mathf.Clamp01(transition);
 
         /* ---------- 统计未选中牌，用来算扇形 ---------- */
-        int animatedCount = cards.Count(c => !c.GetComponent<CardLogic>().isSelected);
+        int animatedCount = cards.Count(c =>
+        {
+            var cardLogic = c.GetComponent<CardLogic>();
+            return cardLogic != null && !cardLogic.isSelected;
+        });
+
         int visualIndex = 0;
 
         for (int i = 0; i < cards.Count; i++)
@@ -235,7 +240,7 @@ public class HandCardLogic : NetworkBehaviour
             Vector3 targetPos;
             Quaternion targetRot;
 
-            if (logic.isSelected)              // ====== 被选中：飞到指定位置 ======
+            if (logic!=null && logic.isSelected)              // ====== 被选中：飞到指定位置 ======
             {
                 // 如果 selectedCardPos 跟牌同一个父物体，用 localPosition/Rotation 即可
                 targetPos = selectedCardPos.localPosition;
@@ -259,7 +264,7 @@ public class HandCardLogic : NetworkBehaviour
 
             /* ---------- 插值移动 / 旋转 ---------- */
             /* ---------- 插值移动 / 旋转 ---------- */
-            if (logic.isSelected)                         // 选中牌
+            if (logic != null && logic.isSelected)                         // 选中牌
             {
                 float tSel = Time.deltaTime / selectMoveDuration;
                 cards[i].localPosition = Vector3.Lerp(cards[i].localPosition, targetPos, tSel);
