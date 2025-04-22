@@ -37,6 +37,7 @@ public class BlockLogic : MonoBehaviour
 
     void OnMouseEnter()
     {
+        Debug.Log($"Mouse entered: belonging={belonging}, isSelected={isSelected}");
         if (spriteRenderer != null && !isSelected)
         {
             spriteRenderer.color = hoverColor;
@@ -59,10 +60,14 @@ public class BlockLogic : MonoBehaviour
 
     private void OnMouseDown()
     {
+        Debug.Log($"OnMouseDown - LocalClientId: {NetworkManager.Singleton.LocalClientId}, belonging: {belonging}, type: {type}");
+        
         if(NetworkManager.Singleton.LocalClientId == 0)
         {
+            Debug.Log("Detected as Player1 client");
             if (belonging == Belonging.Player1 && type == Type.Cooperate)
             {
+                Debug.Log("Player1 selecting Cooperate");
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
                 GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
                 SetSelected(true);

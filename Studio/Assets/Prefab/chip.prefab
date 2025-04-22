@@ -76,6 +76,9 @@ PrefabInstance:
     - {fileID: 5800786279165167304, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1511228226087175934}
     - targetCorrespondingSourceObject: {fileID: 9045063046909484619, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7740238515954109011}
@@ -84,8 +87,35 @@ PrefabInstance:
       addedObject: {fileID: 4919809720641918157}
     - targetCorrespondingSourceObject: {fileID: 9045063046909484619, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1621708416918879259}
+      addedObject: {fileID: 4397129261140036170}
   m_SourcePrefab: {fileID: 100100000, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
+--- !u!1 &1901822929083689277 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
+  m_PrefabInstance: {fileID: 1631930554208539756}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &1511228226087175934
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901822929083689277}
+  m_Material: {fileID: 13400000, guid: 567a876d116a97048b93a7b06976d014, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 8134481389599487673, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
 --- !u!1 &7720098686767303207 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9045063046909484619, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
@@ -140,7 +170,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &1621708416918879259
+--- !u!114 &4397129261140036170
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
