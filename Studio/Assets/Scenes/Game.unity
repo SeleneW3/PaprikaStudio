@@ -7187,19 +7187,21 @@ MonoBehaviour:
   dialogPanel: {fileID: 2069194723}
   dialogLines:
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u597D\u4E45\u4E0D\u89C1\u3002\u53C8\u662F\u4F60\u4EEC\u3002</>"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6050\u6015\u4F60\u4EEC\u5DF2\u7ECF\u5FD8\u8BB0\u8FD9\u91CC\u7684\u89C4\u77E9\u4E86.......</>"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6050\u6015\u4F60\u4EEC\u5DF2\u7ECF\u5FD8\u8BB0\u8FD9\u91CC\u7684\u89C4\u77E9\u4E86...</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u4E00\u4E2A\u68CB\u5B50\uFF0C\u4E24\u4E2A\u9009\u62E9\uFF1A\u5408\u4F5C\uFF0C\u6216\u8005\u6B3A\u9A97\u3002</>\n"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8BD5\u8BD5\uFF1F\u6211\u7ED9\u4F60\u4EEC\u4E24\u4E2A\u56DE\u5408\u7684\u673A\u4F1A\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5F88\u597D...\u771F\u662F\u8C01\u4E5F\u4E0D\u8BA9\u7740\u8C01\u554A...</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u54E6\u5BF9\u4E86\uFF0C\u5DEE\u70B9\u5FD8\u4E86\u8981\u7D27\u4E8B\u4E86\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8FD9\u4E9B\u724C\uFF0C\u6BCF\u8F6E\u80FD\u4E14\u4EC5\u80FD\u6253\u51FA\u4E00\u5F20\u3002</>"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5173\u952E\u65F6\u523B\u5B83\u4EEC\u4F1A\u62EF\u6551\u4F60</>\n"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5173\u952E\u65F6\u523B\u5B83\u4EEC\u4F1A\u62EF\u6551\u4F60\u3002</>\n"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5F53\u7136\uFF0C\u4E5F\u53EF\u80FD\u4F1A\u6BD2\u5BB3\u4F60\u3002\u98CE\u9669\u4E0E\u56DE\u62A5\u6210\u6B63\u6BD4\u3002</>\n"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8BD5\u8BD5\u5427\uFF1F\u8FD8\u662F\u4E24\u4E2A\u56DE\u5408\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8F93\u8D62\u5DF2\u89C1\u5206\u6653\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u4E0D\u8FC7\uFF0C\u522B\u62C5\u5FC3\u3002\u4E00\u5207\u90FD\u53EA\u662F\u6682\u65F6\u7684\u3002</>"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8DEF\u8FD8\u957F\u7740\u5462\u3002</>"
-  typingSpeed: 0.03
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8DEF\u8FD8\u957F\u7740\u5462...</>"
+  typingSpeed: 0.1
+  autoAdvance: 1
+  autoAdvanceDelay: 1.5
   currentLineIndex: 0
 --- !u!4 &1504394096
 Transform:
@@ -10387,7 +10389,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 2291698282969936280, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: element4Index
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3439489096721479170, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -10416,7 +10418,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 5127139214669917923, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: element4Index
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5999110756446379251, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: m_Name
