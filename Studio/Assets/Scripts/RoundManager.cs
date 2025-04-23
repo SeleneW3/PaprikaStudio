@@ -12,6 +12,9 @@ public class RoundManager : NetworkBehaviour
     public float baseBet = 1f;
     public float betMultiplier = 2f;
 
+    [Header("Game Settings")]
+    public int totalRounds = 5; // 游戏总回合数
+
     public PlayerLogic player1;
     public PlayerLogic player2;
 
@@ -45,6 +48,20 @@ public class RoundManager : NetworkBehaviour
             Debug.LogError("Dialog Manager is not assigned in the inspector!");
         }
 
+        // 给UIManager设置枪支引用
+        UIManager uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null && Gun1 != null && Gun2 != null)
+        {
+            Debug.Log("正在设置UIManager的枪支引用");
+            
+            // 初始化回合显示
+            uiManager.UpdateRoundText(currentRound, totalRounds);
+        }
+        else if (uiManager == null)
+        {
+            Debug.LogError("UIManager未找到!");
+        }
+        
         // 测试硬币生成
         Debug.Log("Testing coin spawn...");
         if (coinPrefab != null)
@@ -112,9 +129,15 @@ public class RoundManager : NetworkBehaviour
             ResetPlayers();
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
 
-             if (roundText != null)
+            // 使用UIManager更新回合UI
+            UIManager uiManager = FindObjectOfType<UIManager>();
+            if (uiManager != null)
             {
-                roundText.text = "Round " + currentRound;
+                uiManager.UpdateRoundText(currentRound, totalRounds);
+            }
+            else if (roundText != null) // 备用方案：直接更新
+            {
+                roundText.text = $"ROUND {currentRound}/{totalRounds}";
             }
 
             // 设置游戏状态为准备阶段，进入下一回合前的等待
@@ -287,10 +310,10 @@ public class RoundManager : NetworkBehaviour
                 }
             }
 
-            // 检查是否回合数达到 5
-            if (!gameEnded && currentRound >= 5)
+            // 检查是否回合数达到上限
+            if (!gameEnded && currentRound >= totalRounds)
             {
-                Debug.Log("5 rounds completed. Game over.");
+                Debug.Log($"{totalRounds} rounds completed. Game over.");
                 gameEnded = true;
                 if (uiManager != null)
                 {
@@ -308,7 +331,7 @@ public class RoundManager : NetworkBehaviour
                     {
                         winner = "It's a tie!";
                     }
-                    uiManager.ShowGameOver($"5 rounds completed\n{winner}");
+                    uiManager.ShowGameOver($"{totalRounds} rounds completed\n{winner}");
                 }
             }
 
