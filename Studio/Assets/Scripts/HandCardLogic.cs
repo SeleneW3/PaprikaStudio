@@ -72,6 +72,12 @@ public class HandCardLogic : NetworkBehaviour
             Debug.Log("HandCardLogic Open");
             opened = true;
             UpdateState();
+            
+            // 播放卡牌移动音效
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("CardMove");
+            }
         }
         else
         {
@@ -120,6 +126,12 @@ public class HandCardLogic : NetworkBehaviour
     /// </summary>
     public void SendCard(Transform card)
     {
+        // 播放出牌音效（本地播放，确保每个客户端都能听到）
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("CardOut");
+        }
+        
         if (!NetworkManager.Singleton.IsServer)
         {
             SendCardServerRpc(card.GetComponent<NetworkObject>().NetworkObjectId);

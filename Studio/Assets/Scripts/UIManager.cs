@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;  // 用于 CanvasScaler 等 UI 组件
+using Unity.Netcode;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -12,6 +14,16 @@ public class UIManager : MonoBehaviour
     public Transform player1ScoreAnchor; // 天平上的第一个空子物体
     public Transform player2ScoreAnchor; // 天平上的第二个空子物体
 
+    [Header("Bullets UI")]
+    public TextMeshProUGUI player1BulletsText; // 显示玩家1剩余子弹的文本
+    public TextMeshProUGUI player2BulletsText; // 显示玩家2剩余子弹的文本
+    public Transform player1BulletsAnchor; // 玩家1子弹数显示锚点
+    public Transform player2BulletsAnchor; // 玩家2子弹数显示锚点
+
+    [Header("Round UI")]
+    public TextMeshProUGUI roundText; // 回合显示UI
+    public Transform roundAnchor; // 回合显示锚点
+
     [Header("Screen Space UI")]
     public TextMeshProUGUI gameOverText;
     public TextMeshProUGUI player1DebugText;
@@ -21,10 +33,16 @@ public class UIManager : MonoBehaviour
     [Range(1f, 50f)]
     public float smoothSpeed = 15f; // 更高的平滑速度，减少滞后感
     public Vector2 scoreOffset = new Vector2(0, 50); // 位置偏移
+    public Vector2 bulletsOffset = new Vector2(0, 0); // 子弹数显示的位置偏移
+    public Vector2 roundOffset = new Vector2(0, 20); // 回合显示的位置偏移
     
     // 最小移动阈值，低于此值就直接设置到目标位置
     public float snapThreshold = 2.0f; 
     private Canvas parentCanvas;
+
+    // 引用GunController
+    private GunController gun1;
+    private GunController gun2;
 
     void Start()
     {
@@ -45,6 +63,37 @@ public class UIManager : MonoBehaviour
             gameOverText.gameObject.SetActive(false);
         }
         
+        // 获取GunController引用
+        GameObject gun1Obj = GameObject.Find("Gun1");
+        GameObject gun2Obj = GameObject.Find("Gun2");
+        
+        if (gun1Obj) gun1 = gun1Obj.GetComponent<GunController>();
+        if (gun2Obj) gun2 = gun2Obj.GetComponent<GunController>();
+        
+        if (gun1 == null || gun2 == null)
+        {
+            Debug.LogWarning("无法找到枪支控制器引用");
+        }
+        
+        // 检查子弹锚点是否存在
+        if (player1BulletsAnchor == null)
+        {
+            Debug.LogWarning("Player1BulletsAnchor未设置，将使用player1ScoreAnchor作为备用");
+            player1BulletsAnchor = player1ScoreAnchor;
+        }
+        
+        if (player2BulletsAnchor == null)
+        {
+            Debug.LogWarning("Player2BulletsAnchor未设置，将使用player2ScoreAnchor作为备用");
+            player2BulletsAnchor = player2ScoreAnchor;
+        }
+        
+        // 检查回合锚点是否存在
+        if (roundAnchor == null)
+        {
+            Debug.LogWarning("RoundAnchor未设置，回合显示可能不会正确定位");
+        }
+        
         // 强制UI可见性
         ForceUIVisibility();
     }
@@ -58,6 +107,9 @@ public class UIManager : MonoBehaviour
         {
             // 更新分数
             UpdateScoreText();
+            
+            // 更新子弹数
+            UpdateBulletsText();
             
             // 更新调试信息
             if (player1DebugText != null && player2DebugText != null)
@@ -77,6 +129,41 @@ public class UIManager : MonoBehaviour
             player2ScoreText.text = $"Player 2: {GameManager.Instance.playerComponents[1].point.Value}";
         }
     }
+    
+    void UpdateBulletsText()
+    {
+        // 确保我们有所有需要的组件
+        if (player1BulletsText == null || player2BulletsText == null || gun1 == null || gun2 == null)
+            return;
+            
+        // 计算已消耗的机会数（总共6次机会）
+        int gun1UsedChances = 6 - gun1.remainingChances.Value; // 已消耗机会数 = 总机会 - 剩余机会
+        int gun2UsedChances = 6 - gun2.remainingChances.Value;
+        
+        // 显示已消耗机会数/总机会数
+        if (NetworkManager.Singleton != null)
+        {
+            // 判断当前是哪个玩家视角
+            ulong localClientId = NetworkManager.Singleton.LocalClientId;
+            
+            if (localClientId == 0) // 玩家1视角
+            {
+                player1BulletsText.text = $"{gun1UsedChances}/6"; // 显示格式：已消耗/总数
+                player2BulletsText.text = $"{gun1UsedChances}/6"; // 玩家1的子弹数显示在玩家2头顶
+            }
+            else // 玩家2视角
+            {
+                player1BulletsText.text = $"{gun2UsedChances}/6"; // 玩家2的子弹数显示在玩家1头顶
+                player2BulletsText.text = $"{gun2UsedChances}/6";
+            }
+        }
+        else
+        {
+            // 单机测试模式
+            player1BulletsText.text = $"{gun1UsedChances}/6";
+            player2BulletsText.text = $"{gun2UsedChances}/6";
+        }
+    }
 
     // 使用统一的位置更新方法，无论Canvas模式如何
     void UpdateUIPositions()
@@ -92,18 +179,47 @@ public class UIManager : MonoBehaviour
         Vector3 player2ScreenPos = Camera.main.WorldToScreenPoint(player2ScoreAnchor.position);
         
         // 处理玩家1分数文本位置
-        if (player1ScreenPos.z < 0)
+        UpdateTextPosition(player1ScoreText, player1ScreenPos, scoreOffset, player1ScreenPos.z < 0);
+        
+        // 处理玩家2分数文本位置
+        UpdateTextPosition(player2ScoreText, player2ScreenPos, scoreOffset, player2ScreenPos.z < 0);
+        
+        // 更新子弹数文本位置（使用新的锚点）
+        if (player1BulletsText != null && player2BulletsText != null)
         {
-            player1ScoreText.gameObject.SetActive(false);
+            // 使用专门的子弹锚点计算屏幕位置
+            Vector3 bullets1ScreenPos = Camera.main.WorldToScreenPoint(player1BulletsAnchor.position);
+            Vector3 bullets2ScreenPos = Camera.main.WorldToScreenPoint(player2BulletsAnchor.position);
+            
+            UpdateTextPosition(player1BulletsText, bullets1ScreenPos, bulletsOffset, bullets1ScreenPos.z < 0);
+            UpdateTextPosition(player2BulletsText, bullets2ScreenPos, bulletsOffset, bullets2ScreenPos.z < 0);
+        }
+        
+        // 更新回合显示文本位置
+        if (roundText != null && roundAnchor != null)
+        {
+            Vector3 roundScreenPos = Camera.main.WorldToScreenPoint(roundAnchor.position);
+            UpdateTextPosition(roundText, roundScreenPos, roundOffset, roundScreenPos.z < 0);
+        }
+    }
+    
+    // 提取更新UI文本位置的通用方法
+    void UpdateTextPosition(TextMeshProUGUI textElement, Vector3 screenPos, Vector2 offset, bool isBehindCamera)
+    {
+        if (textElement == null) return;
+        
+        if (isBehindCamera)
+        {
+            textElement.gameObject.SetActive(false);
         }
         else
         {
-            player1ScoreText.gameObject.SetActive(true);
+            textElement.gameObject.SetActive(true);
             
             // 创建目标屏幕位置（包括偏移）
             Vector3 targetScreenPos = new Vector3(
-                player1ScreenPos.x + scoreOffset.x, 
-                player1ScreenPos.y + scoreOffset.y,
+                screenPos.x + offset.x, 
+                screenPos.y + offset.y,
                 0);
             
             // 转换为世界坐标（适用于Screen Space - Camera）
@@ -117,8 +233,8 @@ public class UIManager : MonoBehaviour
                 Vector3 worldPos = ray.origin + ray.direction * distance;
                 
                 // 将世界坐标应用到UI元素
-                player1ScoreText.transform.position = Vector3.Lerp(
-                    player1ScoreText.transform.position,
+                textElement.transform.position = Vector3.Lerp(
+                    textElement.transform.position,
                     worldPos,
                     Time.deltaTime * smoothSpeed
                 );
@@ -126,44 +242,8 @@ public class UIManager : MonoBehaviour
             else // Screen Space - Overlay
             {
                 // 直接使用屏幕坐标
-                player1ScoreText.transform.position = Vector3.Lerp(
-                    player1ScoreText.transform.position,
-                    targetScreenPos,
-                    Time.deltaTime * smoothSpeed
-                );
-            }
-        }
-        
-        // 处理玩家2分数文本位置（类似逻辑）
-        if (player2ScreenPos.z < 0)
-        {
-            player2ScoreText.gameObject.SetActive(false);
-        }
-        else
-        {
-            player2ScoreText.gameObject.SetActive(true);
-            
-            Vector3 targetScreenPos = new Vector3(
-                player2ScreenPos.x + scoreOffset.x, 
-                player2ScreenPos.y + scoreOffset.y,
-                0);
-            
-            if (parentCanvas.renderMode == RenderMode.ScreenSpaceCamera)
-            {
-                Ray ray = parentCanvas.worldCamera.ScreenPointToRay(targetScreenPos);
-                float distance = parentCanvas.planeDistance;
-                Vector3 worldPos = ray.origin + ray.direction * distance;
-                
-                player2ScoreText.transform.position = Vector3.Lerp(
-                    player2ScoreText.transform.position,
-                    worldPos,
-                    Time.deltaTime * smoothSpeed
-                );
-            }
-            else
-            {
-                player2ScoreText.transform.position = Vector3.Lerp(
-                    player2ScoreText.transform.position,
+                textElement.transform.position = Vector3.Lerp(
+                    textElement.transform.position,
                     targetScreenPos,
                     Time.deltaTime * smoothSpeed
                 );
@@ -202,7 +282,54 @@ public class UIManager : MonoBehaviour
             }
         }
         
-        // 玩家2同理...
+        // 同样初始化子弹数文本
+        if (player1BulletsText != null)
+        {
+            player1BulletsText.gameObject.SetActive(true);
+            player1BulletsText.text = "0/6";
+            player1BulletsText.color = Color.yellow;
+            
+            if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                player1BulletsText.transform.position = new Vector3(Screen.width / 2, Screen.height / 2 + 120, 0);
+            }
+            else // Screen Space - Camera
+            {
+                Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2 + 120, 0);
+                Ray ray = parentCanvas.worldCamera.ScreenPointToRay(screenCenter);
+                float distance = parentCanvas.planeDistance;
+                Vector3 worldPos = ray.origin + ray.direction * distance;
+                
+                player1BulletsText.transform.position = worldPos;
+            }
+        }
+        
+        // 初始化回合显示文本
+        if (roundText != null)
+        {
+            roundText.gameObject.SetActive(true);
+            roundText.text = "ROUND 1/5";
+            roundText.color = Color.white;
+            
+            if (roundAnchor != null)
+            {
+                // 如果存在锚点，会在Update中更新位置
+            }
+            else if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                // 默认位置（如果没有锚点）
+                roundText.transform.position = new Vector3(Screen.width / 2, Screen.height - 50, 0);
+            }
+            else // Screen Space - Camera
+            {
+                Vector3 screenPos = new Vector3(Screen.width / 2, Screen.height - 50, 0);
+                Ray ray = parentCanvas.worldCamera.ScreenPointToRay(screenPos);
+                float distance = parentCanvas.planeDistance;
+                Vector3 worldPos = ray.origin + ray.direction * distance;
+                
+                roundText.transform.position = worldPos;
+            }
+        }
     }
 
     // 显示游戏结束
@@ -210,8 +337,29 @@ public class UIManager : MonoBehaviour
     {
         if (gameOverText != null)
         {
+            // 存储文本内容供延迟方法使用
             gameOverText.text = "GAME OVER" + (string.IsNullOrEmpty(reason) ? "" : "\n" + reason);
+            
+            // 先隐藏文本
+            gameOverText.gameObject.SetActive(false);
+            
+            // 延迟2秒显示
+            Invoke("DisplayGameOverText", 2f);
+        }
+    }
+    
+    // 延迟调用的方法，显示游戏结束文本
+    private void DisplayGameOverText()
+    {
+        if (gameOverText != null)
+        {
             gameOverText.gameObject.SetActive(true);
+            
+            // 可选：播放游戏结束音效
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("GameOver");
+            }
         }
     }
 
@@ -236,5 +384,14 @@ public class UIManager : MonoBehaviour
     {
         if (player1DebugText != null) player1DebugText.text = "";
         if (player2DebugText != null) player2DebugText.text = "";
+    }
+
+    // 添加更新回合文本的方法
+    public void UpdateRoundText(int currentRound, int totalRounds = 5)
+    {
+        if (roundText != null)
+        {
+            roundText.text = $"ROUND {currentRound}/{totalRounds}";
+        }
     }
 } 

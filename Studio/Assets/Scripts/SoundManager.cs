@@ -12,6 +12,8 @@ public class SoundManager : MonoBehaviour
     {
         public string name;
         public AudioClip clip;
+        [Range(0f, 1f)]
+        public float volume = 1f; // 每个音效的单独音量
     }
 
     [Header("Audio Sources")]
@@ -28,6 +30,7 @@ public class SoundManager : MonoBehaviour
     
     private Dictionary<string, AudioClip> musicDict = new Dictionary<string, AudioClip>();
     private Dictionary<string, AudioClip> sfxDict = new Dictionary<string, AudioClip>();
+    private Dictionary<string, float> sfxVolumeDict = new Dictionary<string, float>(); // 用于存储每个音效的单独音量
 
     private void Awake()
     {
@@ -65,7 +68,13 @@ public class SoundManager : MonoBehaviour
         foreach (Sound s in sfxClips)
         {
             if (s.clip != null)
+            {
                 sfxDict[s.name] = s.clip;
+                
+                // 尝试从PlayerPrefs加载保存的音量，如果没有则使用默认值
+                float savedVolume = PlayerPrefs.GetFloat($"SFXVolume_{s.name}", s.volume);
+                sfxVolumeDict[s.name] = savedVolume;
+            }
         }
     }
 
@@ -89,11 +98,14 @@ public class SoundManager : MonoBehaviour
     {
         if (sfxDict.ContainsKey(name))
         {
-            sfxSource.PlayOneShot(sfxDict[name], sfxVolume);
+            // 使用全局音效音量乘以特定音效的单独音量
+            float individualVolume = sfxVolumeDict.ContainsKey(name) ? sfxVolumeDict[name] : 1f;
+            Debug.Log($"Playing SFX: {name} with volume: {sfxVolume * individualVolume}");
+            sfxSource.PlayOneShot(sfxDict[name], sfxVolume * individualVolume);
         }
         else
         {
-            Debug.LogWarning($"SFX clip {name} not found!");
+            Debug.LogWarning($"SFX clip {name} not found! Available clips: {string.Join(", ", sfxDict.Keys)}");
         }
     }
 
@@ -171,6 +183,35 @@ public class SoundManager : MonoBehaviour
         }
 
         musicSource.Stop();
+    }
+
+    // 设置单个音效的音量
+    public void SetSFXVolumeForClip(string name, float volume)
+    {
+        volume = Mathf.Clamp01(volume); // 确保音量在0到1之间
+        
+        if (sfxVolumeDict.ContainsKey(name))
+        {
+            sfxVolumeDict[name] = volume;
+            
+            // 可选：保存到PlayerPrefs以便在游戏重启后保持设置
+            PlayerPrefs.SetFloat($"SFXVolume_{name}", volume);
+            PlayerPrefs.Save();
+        }
+        else
+        {
+            Debug.LogWarning($"Cannot set volume for SFX clip {name} - not found!");
+        }
+    }
+    
+    // 获取单个音效的音量
+    public float GetSFXVolumeForClip(string name)
+    {
+        if (sfxVolumeDict.ContainsKey(name))
+        {
+            return sfxVolumeDict[name];
+        }
+        return 1f; // 默认音量
     }
 
     // Start is called before the first frame update

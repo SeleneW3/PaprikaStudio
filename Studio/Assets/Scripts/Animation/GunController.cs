@@ -99,6 +99,9 @@ public class GunController : NetworkBehaviour
         remainingChances.Value--;  // 使用 .Value 访问 NetworkVariable 的值
         Debug.Log($"Current position: {currentPosition}, Remaining chances: {remainingChances.Value}, Real Bullet is at position {realBulletPosition.Value}");
 
+        // 延迟播放开枪音效
+        Invoke("PlayGunFireSound", 2f);
+        
         if (gunAnimator != null)
         {
             gunAnimator.SetTrigger("Grab");
@@ -108,14 +111,47 @@ public class GunController : NetworkBehaviour
         {
             Debug.Log("Bang! A real bullet! The enemy is dead.");
             gameEnded.Value = true;  // 设置 gameEnded 的值
+            
+            // 延迟播放击中音效
+            Invoke("PlayBulletHitSound", 2f);
         }
         else
         {
+            // 延迟播放未击中音效
+            Invoke("PlayEmptyShotSound", 2f);
+            
             if (remainingChances.Value == 0)
             {
                 InitializeBulletChancesServerRpc(); // 使用 ServerRpc 来初始化真子弹的位置
                 remainingChances.Value = 6;  // 重置剩余次数
             }
+        }
+    }
+    
+    // 播放开枪音效
+    private void PlayGunFireSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("GunFire");
+        }
+    }
+    
+    // 播放击中音效
+    private void PlayBulletHitSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("BulletHit");
+        }
+    }
+    
+    // 播放未击中音效
+    private void PlayEmptyShotSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("EmptyShot");
         }
     }
 
@@ -127,14 +163,42 @@ public class GunController : NetworkBehaviour
             gunAnimator.SetTrigger("Grab");
         }
     }
-
+    
     public void ResetGun()
     {
+        Debug.Log("ResetGun method called");
         if (NetworkManager.Singleton.IsServer)  // 修改这里也使用 NetworkManager.Singleton.IsServer
         {
             remainingChances.Value = 6;
             gameEnded.Value = false;
             InitializeBulletChancesServerRpc(); // 在重置时重新初始化
+            
+            Debug.Log("About to call PlayResetGunSoundClientRpc");
+            // 播放重置枪音效
+            PlayResetGunSoundClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    void PlayResetGunSoundClientRpc()
+    {
+        Debug.Log("PlayResetGunSoundClientRpc called");
+        // 延迟播放重置枪音效
+        Invoke("PlayGunResetSound", 2f);
+    }
+
+    // 播放重置枪音效
+    private void PlayGunResetSound()
+    {
+        Debug.Log("PlayGunResetSound called");
+        if (SoundManager.Instance != null)
+        {
+            Debug.Log("Attempting to play GunReset sound");
+            SoundManager.Instance.PlaySFX("GunReset");
+        }
+        else
+        {
+            Debug.LogError("SoundManager.Instance is null");
         }
     }
 
