@@ -62,6 +62,12 @@ public class BlockLogic : MonoBehaviour
     {
         Debug.Log($"OnMouseDown - LocalClientId: {NetworkManager.Singleton.LocalClientId}, belonging: {belonging}, type: {type}");
         
+        // 播放Block点击音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("BlockClick");
+        }
+        
         if(NetworkManager.Singleton.LocalClientId == 0)
         {
             Debug.Log("Detected as Player1 client");

@@ -80,6 +80,12 @@ public class ChessLogic : MonoBehaviour
                 state = 4;
                 timer = 0f;
                 isOnGround = true;
+                
+                // 播放棋子放置音效
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX("ChessDown");
+                }
             }
         }
         else if(state == 4 && backToOriginal)
@@ -90,11 +96,16 @@ public class ChessLogic : MonoBehaviour
         {
             ResetBack();
         }
-        
     }
 
     private void OnMouseDown()
     {
+        // 播放棋子悬置音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("ChessUp");
+        }
+
         if (NetworkManager.Singleton.LocalClientId == 0)
         {
             GameManager.Instance.ChangeChess1StateServerRpc();
@@ -104,10 +115,7 @@ public class ChessLogic : MonoBehaviour
         {
             GameManager.Instance.ChangeChess2StateServerRpc();
         }
-
-
     }
-
 
     public void Move()
     {
@@ -131,7 +139,6 @@ public class ChessLogic : MonoBehaviour
             state = 5;
             timer = 0f;
         }
-
     }
 
     public void ResetBack()
@@ -147,8 +154,5 @@ public class ChessLogic : MonoBehaviour
             backToOriginal = false;
             
         }
-
     }
-
-
 }

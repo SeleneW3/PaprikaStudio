@@ -192,6 +192,15 @@ MonoBehaviour:
   - name: CardClick
     clip: {fileID: 8300000, guid: 49180f655fa3c0443a995021d9de13cc, type: 3}
     volume: 1
+  - name: BlockClick
+    clip: {fileID: 8300000, guid: 92872ab693bfdec4f917cbf251a6d9f0, type: 3}
+    volume: 1
+  - name: ChessUp
+    clip: {fileID: 8300000, guid: 51a7b038578885b4aaca68afd0dba826, type: 3}
+    volume: 1
+  - name: ChessDown
+    clip: {fileID: 8300000, guid: c681f573dae27624d85446a147791ee4, type: 3}
+    volume: 1
   musicVolume: 1
   sfxVolume: 1
 --- !u!4 &580606961

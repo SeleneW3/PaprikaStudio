@@ -447,6 +447,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2023957216463375015, guid: 288b586b352fb154281240f507f7d400, type: 3}
+      propertyPath: m_Size.z
+      value: 0.24614987
+      objectReference: {fileID: 0}
+    - target: {fileID: 2023957216463375015, guid: 288b586b352fb154281240f507f7d400, type: 3}
+      propertyPath: m_Center.z
+      value: -0.02307494
+      objectReference: {fileID: 0}
     - target: {fileID: 6142778650335682190, guid: 288b586b352fb154281240f507f7d400, type: 3}
       propertyPath: m_Name
       value: Player2Cheat
@@ -5126,6 +5134,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2396799683662632678, guid: a167d786f454dc946b8599f1950d2c2e, type: 3}
+      propertyPath: m_Size.z
+      value: 0.24532366
+      objectReference: {fileID: 0}
+    - target: {fileID: 2396799683662632678, guid: a167d786f454dc946b8599f1950d2c2e, type: 3}
+      propertyPath: m_Center.z
+      value: -0.005769968
+      objectReference: {fileID: 0}
     - target: {fileID: 6840995554044373027, guid: a167d786f454dc946b8599f1950d2c2e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.571
