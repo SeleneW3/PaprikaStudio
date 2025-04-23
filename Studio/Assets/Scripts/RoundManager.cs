@@ -23,7 +23,6 @@ public class RoundManager : NetworkBehaviour
 
     [Header("Coin Effects")]
     public GameObject coinPrefab; // 硬币预制体
-    public float coinOffsetY = -10f; // 生成位置的Y轴偏移
     public Transform player1ScoreAnchor; // 玩家1分数锚点
     public Transform player2ScoreAnchor; // 玩家2分数锚点
 
@@ -44,6 +43,37 @@ public class RoundManager : NetworkBehaviour
         else
         {
             Debug.LogError("Dialog Manager is not assigned in the inspector!");
+        }
+
+        // 测试硬币生成
+        Debug.Log("Testing coin spawn...");
+        if (coinPrefab != null)
+        {
+            if (player1ScoreAnchor != null)
+            {
+                Debug.Log("测试玩家1金币生成 - 1个金币");
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, 1);
+            }
+            else
+            {
+                Debug.LogError("玩家1锚点未设置!");
+            }
+            
+            if (player2ScoreAnchor != null)
+            {
+                Debug.Log("测试玩家2金币生成 - 3个金币");
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, 1);
+            }
+            else
+            {
+                Debug.LogError("玩家2锚点未设置!");
+            }
+            
+            Debug.Log("金币生成测试完成");
+        }
+        else
+        {
+            Debug.LogError("金币预制体未设置!");
         }
     }
 
@@ -141,8 +171,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
                 player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
@@ -162,8 +192,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
                 player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
@@ -185,8 +215,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cheat +{player1.cheatPoint.Value}";
                 player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
@@ -208,8 +238,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币 (这里应该是0个硬币，因为分数没有增加)
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, coinOffsetY, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, coinOffsetY, p2PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 player1Debug = $"Player 1: Cheat +0";
                 player2Debug = $"Player 2: Cheat +0";
