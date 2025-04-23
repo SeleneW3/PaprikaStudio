@@ -5,6 +5,10 @@ using System.Collections;
 
 public class DialogManager : MonoBehaviour
 {
+    // 单例实例
+    private static DialogManager _instance;
+    public static DialogManager Instance { get { return _instance; } }
+    
     [Header("UI References")]
     public TextMeshProUGUI dialogText;        // 对话文本显示组件
     public GameObject dialogPanel;             // 对话面板
@@ -25,6 +29,21 @@ public class DialogManager : MonoBehaviour
     private bool isTyping = false;            // 是否正在打字
     private string currentLine = "";          // 当前完整的文本行
     private Coroutine autoAdvanceCoroutine;   // 自动前进的协程
+    
+    private void Awake()
+    {
+        // 单例初始化
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        
+        _instance = this;
+        
+        // 如果需要在场景切换时保留，取消注释下面的行
+        // DontDestroyOnLoad(gameObject);
+    }
 
     void Start()
     {

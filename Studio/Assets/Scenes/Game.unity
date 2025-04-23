@@ -850,6 +850,8 @@ MonoBehaviour:
   deck: {fileID: 1132786849}
   selectedCardPos: {fileID: 1607045674}
   selectMoveDuration: 0.25
+  selectedCardIndex:
+    m_InternalValue: -1
   hasSelectedCard: 0
 --- !u!114 &184545264
 MonoBehaviour:
@@ -3396,8 +3398,8 @@ MonoBehaviour:
   m_text: <shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>New
     Text</>
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
+  m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5303,9 +5305,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1665797636}
-  - {fileID: 564796209}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -6453,9 +6453,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1558965664}
-  - {fileID: 437392593}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -7442,6 +7440,8 @@ MonoBehaviour:
   coinPrefab: {fileID: 4274701198760140147, guid: 258b544794366544a8aa69ee8b1432fe, type: 3}
   player1ScoreAnchor: {fileID: 1653025040}
   player2ScoreAnchor: {fileID: 220708796}
+  dialogTimer: 2
+  dialogIndex: 0
 --- !u!4 &1606319024
 Transform:
   m_ObjectHideFlags: 0
@@ -7584,6 +7584,8 @@ MonoBehaviour:
   deck: {fileID: 1132786849}
   selectedCardPos: {fileID: 1401381565}
   selectMoveDuration: 0.25
+  selectedCardIndex:
+    m_InternalValue: -1
   hasSelectedCard: 0
 --- !u!114 &1640231530
 MonoBehaviour:
