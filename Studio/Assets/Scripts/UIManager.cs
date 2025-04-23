@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;  // 用于 CanvasScaler 等 UI 组件
 using Unity.Netcode;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -336,8 +337,29 @@ public class UIManager : MonoBehaviour
     {
         if (gameOverText != null)
         {
+            // 存储文本内容供延迟方法使用
             gameOverText.text = "GAME OVER" + (string.IsNullOrEmpty(reason) ? "" : "\n" + reason);
+            
+            // 先隐藏文本
+            gameOverText.gameObject.SetActive(false);
+            
+            // 延迟2秒显示
+            Invoke("DisplayGameOverText", 2f);
+        }
+    }
+    
+    // 延迟调用的方法，显示游戏结束文本
+    private void DisplayGameOverText()
+    {
+        if (gameOverText != null)
+        {
             gameOverText.gameObject.SetActive(true);
+            
+            // 可选：播放游戏结束音效
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("GameOver");
+            }
         }
     }
 

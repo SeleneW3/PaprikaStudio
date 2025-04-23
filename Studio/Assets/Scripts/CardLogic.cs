@@ -415,6 +415,12 @@ public static int GetEffectPriority(Effect effect)
         {
             if (GameManager.Instance.playerComponents[0].selectCard != this)
             {
+                // 播放点击卡牌前置查看的音效
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX("CardClick");
+                }
+                
                 isSelected = true;
                 if (GameManager.Instance.playerComponents[0].selectCard != null)
                 {
@@ -431,6 +437,12 @@ public static int GetEffectPriority(Effect effect)
             {
                 if (GameManager.Instance.playerComponents[0].usedCard.Value == false)
                 {
+                    // 播放出牌音效
+                    if (SoundManager.Instance != null)
+                    {
+                        SoundManager.Instance.PlaySFX("CardOut");
+                    }
+                    
                     SendACard();
                     GameManager.Instance.playerComponents[0].SetUsedCardServerRpc(true);
                     GameManager.Instance.playerComponents[0].selectCard = null;
@@ -444,6 +456,12 @@ public static int GetEffectPriority(Effect effect)
         {
             if (GameManager.Instance.playerComponents[1].selectCard != this)
             {
+                // 播放点击卡牌前置查看的音效
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX("CardClick");
+                }
+                
                 isSelected = true;
                 if (GameManager.Instance.playerComponents[1].selectCard != null)
                 {
@@ -458,6 +476,12 @@ public static int GetEffectPriority(Effect effect)
             {
                 if (GameManager.Instance.playerComponents[1].usedCard.Value == false)
                 {
+                    // 播放出牌音效
+                    if (SoundManager.Instance != null)
+                    {
+                        SoundManager.Instance.PlaySFX("CardOut");
+                    }
+                    
                     SendACard();
                     GameManager.Instance.playerComponents[1].SetUsedCardServerRpc(true);
                     GameManager.Instance.playerComponents[1].selectCard = null;
