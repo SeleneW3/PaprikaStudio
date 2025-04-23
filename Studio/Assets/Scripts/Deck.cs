@@ -17,7 +17,7 @@ public class Deck
         {
             CardLogic.Effect.None,  // 空白卡牌
             CardLogic.Effect.None,  // 空白卡牌
-            CardLogic.Effect.ReversePoint, 
+            CardLogic.Effect.ReversePoint,
             CardLogic.Effect.ReverseChoice,
             CardLogic.Effect.ReverseCoopToCheat,
             CardLogic.Effect.ReverseCheatToCoop,

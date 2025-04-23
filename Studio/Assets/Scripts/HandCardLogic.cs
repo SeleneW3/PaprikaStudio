@@ -31,6 +31,12 @@ public class HandCardLogic : NetworkBehaviour
 
     public Transform selectedCardPos;
     public float selectMoveDuration = 0.25f;
+
+    public NetworkVariable<int> selectedCardIndex =
+    new(-1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server); 
+
     public bool hasSelectedCard = false;
 
 
@@ -211,73 +217,94 @@ public class HandCardLogic : NetworkBehaviour
         card.SetParent(deck.transform, false);
     }
 
-    /// <summary>
-    /// 更新手牌的位置和旋转
-    /// </summary>
+
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestSelectCardIndexServerRpc(int index,
+                                            ServerRpcParams rpcParams = default)
+    {
+        selectedCardIndex.Value = index;
+    }
 
 
     void Update()
     {
         if (cards == null || cards.Count == 0) return;
 
-        // 0‑1 过渡量：控制扇形开合
-        transition += (opened ? 1 : -1) * Time.deltaTime / duration;
-        transition = Mathf.Clamp01(transition);
-
-        /* ---------- 统计未选中牌，用来算扇形 ---------- */
-        int animatedCount = cards.Count(c =>
+        /* ---------- 若运行中增删或重排了手牌，补齐缓存长度 ---------- */
+        if (originalPositions.Count != cards.Count)
         {
-            var cardLogic = c.GetComponent<CardLogic>();
-            return cardLogic != null && !cardLogic.isSelected;
-        });
+            originalPositions = cards.Select(t => t.localPosition).ToList();
+            originalRotations = cards.Select(t => t.localRotation).ToList();
+        }
+
+        /* ---------- 0‑1 过渡量：控制扇形开合 ---------- */
+        transition = Mathf.MoveTowards(
+            transition,
+            opened ? 1f : 0f,
+            Time.deltaTime / duration);
+
+        /* ---------- 未被选中的牌数量，用来算扇形角 & 位移 ---------- */
+        int animatedCount = (selectedCardIndex.Value >= 0 && selectedCardIndex.Value < cards.Count)
+                            ? cards.Count - 1
+                            : cards.Count;
 
         int visualIndex = 0;
 
         for (int i = 0; i < cards.Count; i++)
         {
-            var logic = cards[i].GetComponent<CardLogic>();
+            if (cards[i] == null) continue;               // 防御式
 
+            bool isSelected = (i == selectedCardIndex.Value);
             Vector3 targetPos;
             Quaternion targetRot;
 
-            if (logic!=null && logic.isSelected)              // ====== 被选中：飞到指定位置 ======
+            /* ===== ① 选中牌：飞到指定空物体 ===== */
+            if (isSelected)
             {
-                // 如果 selectedCardPos 跟牌同一个父物体，用 localPosition/Rotation 即可
                 targetPos = selectedCardPos.localPosition;
                 targetRot = selectedCardPos.localRotation;
+
+                // 把选中状态同步到 GameManager（保持你原有的判断）
+                var selLogic = cards[i].GetComponent<CardLogic>();
+                if (belong == Belong.Player1 && GameManager.Instance.playerComponents[0].selectCard != selLogic)
+                    GameManager.Instance.playerComponents[0].selectCard = selLogic;
+                else if (belong == Belong.Player2 && GameManager.Instance.playerComponents[1].selectCard != selLogic)
+                    GameManager.Instance.playerComponents[1].selectCard = selLogic;
             }
-            else                               // ====== 未选中：照常排扇形 ======
+            /* ===== ② 其它牌：扇形排布（目标始终“完全展开”位置） ===== */
+            else
             {
-                float angle = 0f;
-                float offsetX = 0f;
+                float angle = 0f, offsetX = 0f;
                 if (animatedCount > 1)
                 {
-                    angle = fanAngle / 2f - (fanAngle / (animatedCount - 1)) * visualIndex;
-                    offsetX = (visualIndex - (animatedCount - 1) / 2f) * spread;
+                    angle = fanAngle * 0.5f
+                             - fanAngle * visualIndex / (animatedCount - 1);
+                    offsetX = (visualIndex - (animatedCount - 1) * 0.5f) * spread;
                 }
 
                 targetRot = Quaternion.Euler(0, 0, angle);
-                targetPos = originalPositions[i] + new Vector3(offsetX, 0, 0);
-
-                visualIndex++;                 // 只对未选中牌递增
+                targetPos = originalPositions[i] + new Vector3(offsetX, 0f, 0f);
+                visualIndex++;
             }
 
-            /* ---------- 插值移动 / 旋转 ---------- */
-            /* ---------- 插值移动 / 旋转 ---------- */
-            if (logic != null && logic.isSelected)                         // 选中牌
+            /* ---------- 插值 ---------- */
+            if (isSelected)
             {
-                float tSel = Time.deltaTime / selectMoveDuration;
+                // 选中牌：单独用 selectMoveDuration 做缓动
+                float tSel = Mathf.Clamp01(Time.deltaTime / selectMoveDuration);
                 cards[i].localPosition = Vector3.Lerp(cards[i].localPosition, targetPos, tSel);
-                cards[i].localRotation = Quaternion.Lerp(cards[i].localRotation, targetRot, tSel);
+                cards[i].localRotation = Quaternion.Slerp(cards[i].localRotation, targetRot, tSel);
             }
-            else                                           // 其余牌：用 0‑1 的 transition
+            else
             {
+                // 其它牌：在 [闭合基准, 完全展开] 之间插值
                 cards[i].localPosition = Vector3.Lerp(originalPositions[i], targetPos, transition);
-                cards[i].localRotation = Quaternion.Lerp(originalRotations[i], targetRot, transition);
+                cards[i].localRotation = Quaternion.Slerp(originalRotations[i], targetRot, transition);
             }
-
         }
     }
+
 
 
 
