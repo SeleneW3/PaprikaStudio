@@ -23,6 +23,9 @@ public class DialogManager : MonoBehaviour
     [Header("Auto Advance Settings")]
     public bool autoAdvance = true;           // 是否自动前进到下一个对话
     public float autoAdvanceDelay = 1.5f;     // 打字完成后自动前进的延迟时间
+    
+    [Header("Dialog Behavior")]
+    public bool autoPlayOnStart = false;      // 是否在启动时自动播放对话
 
     public int currentLineIndex = 0;         // 当前显示的文本索引
     private bool isDialogActive = false;      // 对话是否激活
@@ -42,7 +45,7 @@ public class DialogManager : MonoBehaviour
         _instance = this;
         
         // 如果需要在场景切换时保留，取消注释下面的行
-        // DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(gameObject);
     }
 
     void Start()
@@ -70,6 +73,12 @@ public class DialogManager : MonoBehaviour
         {
             // 注册打字完成事件
             textAnimatorPlayer.onTextShowed.AddListener(OnTypewriterComplete);
+        }
+        
+        // 只有在设置了自动播放时才启动对话
+        if (autoPlayOnStart && dialogLines.Length > 0)
+        {
+            StartDialog();
         }
     }
 
@@ -260,4 +269,73 @@ public class DialogManager : MonoBehaviour
             autoAdvanceCoroutine = null;
         }
     }
+
+
+    /// <summary>
+    /// 播放Inspector中定义的一系列对话元素
+    /// 当startIndex与endIndex相同时，只会播放单条对话
+    /// </summary>
+    /// <param name="startIndex">开始索引</param>
+    /// <param name="endIndex">结束索引(包含)</param>
+    public void PlayElementRange(int startIndex, int endIndex)
+    {
+        Debug.Log($"DialogManager: PlayElementRange({startIndex}, {endIndex})被调用");
+        
+        if (startIndex < 0 || startIndex >= dialogLines.Length || 
+            endIndex < startIndex || endIndex >= dialogLines.Length)
+        {
+            Debug.LogError($"对话元素索引范围无效: [{startIndex}-{endIndex}], 最大值: {dialogLines.Length-1}");
+            return;
+        }
+        
+        // 选择指定范围的对话行
+        string[] selectedLines = new string[endIndex - startIndex + 1];
+        for (int i = 0; i < selectedLines.Length; i++)
+        {
+            selectedLines[i] = dialogLines[startIndex + i];
+        }
+        
+        ShowDialog(selectedLines);
+    }
+
+
+
+    /// <summary>
+    /// 播放指定范围的对话行
+    /// 当startIndex与endIndex相同时，只会播放单条对话
+    /// </summary>
+    /// <param name="lines">对话行数组</param>
+    /// <param name="startIndex">开始索引</param>
+    /// <param name="endIndex">结束索引（包含）</param>
+    public void ShowDialogRange(string[] lines, int startIndex, int endIndex)
+    {
+        Debug.Log($"DialogManager: ShowDialogRange被调用，范围[{startIndex}-{endIndex}]");
+        
+        if (startIndex < 0 || startIndex >= lines.Length || 
+            endIndex < startIndex || endIndex >= lines.Length)
+        {
+            Debug.LogError($"对话索引范围无效: [{startIndex}-{endIndex}], 最大值: {lines.Length-1}");
+            return;
+        }
+        
+        string[] selectedLines = new string[endIndex - startIndex + 1];
+        for (int i = 0; i < selectedLines.Length; i++)
+        {
+            selectedLines[i] = lines[startIndex + i];
+        }
+        
+        ShowDialog(selectedLines);
+    }
+    
+    /// <summary>
+    /// 在不显示对话面板的情况下，预加载对话内容
+    /// </summary>
+    /// <param name="lines">对话行数组</param>
+    public void PreloadDialog(string[] lines)
+    {
+        dialogLines = lines;
+        currentLineIndex = 0;
+        isDialogActive = false;
+    }
+    
 }

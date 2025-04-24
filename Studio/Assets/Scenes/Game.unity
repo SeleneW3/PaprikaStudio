@@ -2040,24 +2040,28 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.81438
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.6716
+      value: 1.1309419
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.73246
+      value: 0.5965008
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.06
+      value: 3.3517
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.1
+      value: -0.27592
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -10.32
+      value: -9.7246
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a9e25a6cd1ee4584dad43eaa95b83ab0, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5305,7 +5309,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1665797636}
+  - {fileID: 564796209}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -6453,7 +6459,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1558965664}
+  - {fileID: 437392593}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -7272,6 +7280,7 @@ MonoBehaviour:
   typingSpeed: 0.1
   autoAdvance: 1
   autoAdvanceDelay: 1.5
+  autoPlayOnStart: 0
   currentLineIndex: 0
 --- !u!4 &1504394096
 Transform:
