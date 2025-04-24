@@ -5309,9 +5309,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1665797636}
-  - {fileID: 564796209}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -6459,9 +6457,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1558965664}
-  - {fileID: 437392593}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -10591,7 +10587,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 2291698282969936280, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: element4Index
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3439489096721479170, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -10620,7 +10616,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 5127139214669917923, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: element4Index
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5999110756446379251, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: m_Name

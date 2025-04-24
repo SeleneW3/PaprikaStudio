@@ -302,15 +302,12 @@ public class DialogManager : MonoBehaviour
 
     /// <summary>
     /// 播放指定范围的对话行
-    /// 当startIndex与endIndex相同时，只会播放单条对话
     /// </summary>
     /// <param name="lines">对话行数组</param>
     /// <param name="startIndex">开始索引</param>
     /// <param name="endIndex">结束索引（包含）</param>
     public void ShowDialogRange(string[] lines, int startIndex, int endIndex)
     {
-        Debug.Log($"DialogManager: ShowDialogRange被调用，范围[{startIndex}-{endIndex}]");
-        
         if (startIndex < 0 || startIndex >= lines.Length || 
             endIndex < startIndex || endIndex >= lines.Length)
         {
@@ -325,6 +322,23 @@ public class DialogManager : MonoBehaviour
         }
         
         ShowDialog(selectedLines);
+    }
+    
+    /// <summary>
+    /// 播放指定索引的单条对话
+    /// </summary>
+    /// <param name="lines">对话行数组</param>
+    /// <param name="index">要播放的对话索引</param>
+    public void PlayDialogAtIndex(string[] lines, int index)
+    {
+        if (index < 0 || index >= lines.Length)
+        {
+            Debug.LogError($"对话索引无效: {index}, 最大值: {lines.Length-1}");
+            return;
+        }
+        
+        // 只播放单条对话
+        ShowDialog(new string[] { lines[index] });
     }
     
     /// <summary>

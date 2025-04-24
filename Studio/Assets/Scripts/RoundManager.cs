@@ -43,8 +43,9 @@ public class RoundManager : NetworkBehaviour
 
         if (dialogManager != null)
         {
-            Debug.Log("Dialog Manager found, starting dialog");
-            dialogManager.StartDialog();
+            Debug.Log("Dialog Manager found, but not starting dialog automatically");
+            // 移除自动调用StartDialog的代码
+            // dialogManager.StartDialog();
         }
         else
         {
