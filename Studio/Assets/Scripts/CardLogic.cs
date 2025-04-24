@@ -420,17 +420,10 @@ public static int GetEffectPriority(Effect effect)
                 {
                     SoundManager.Instance.PlaySFX("CardClick");
                 }
-                
-                isSelected = true;
-                if (GameManager.Instance.playerComponents[0].selectCard != null)
-                {
-                    GameManager.Instance.playerComponents[0].selectCard.isSelected = false;
-                    //handCardLogic.AddCard(GameManager.Instance.playerComponents[0].selectCard.transform);
-                }
 
-                GameManager.Instance.playerComponents[0].selectCard = this;
+                handCardLogic.RequestSelectCardIndexServerRpc(transform.GetSiblingIndex());
                 handCardLogic.hasSelectedCard = true;
-                //handCardLogic.RemoveCard(transform);
+                GameManager.Instance.playerComponents[0].selectCard = this;
             }
 
             else if (GameManager.Instance.playerComponents[0].selectCard == this)
@@ -442,10 +435,10 @@ public static int GetEffectPriority(Effect effect)
                     {
                         SoundManager.Instance.PlaySFX("CardOut");
                     }
-                    
+
                     SendACard();
                     GameManager.Instance.playerComponents[0].SetUsedCardServerRpc(true);
-                    GameManager.Instance.playerComponents[0].selectCard = null;
+                    handCardLogic.RequestSelectCardIndexServerRpc(-1);
                     handCardLogic.hasSelectedCard = false;
                 }
             }
@@ -461,16 +454,11 @@ public static int GetEffectPriority(Effect effect)
                 {
                     SoundManager.Instance.PlaySFX("CardClick");
                 }
-                
-                isSelected = true;
-                if (GameManager.Instance.playerComponents[1].selectCard != null)
-                {
-                    GameManager.Instance.playerComponents[1].selectCard.isSelected = false;
-                    //handCardLogic.AddCard(GameManager.Instance.playerComponents[1].selectCard.transform);
-                }
+
+                handCardLogic.RequestSelectCardIndexServerRpc(transform.GetSiblingIndex());
                 GameManager.Instance.playerComponents[1].selectCard = this;
                 handCardLogic.hasSelectedCard = true;
-                //handCardLogic.RemoveCard(transform);
+
             }
             else if (GameManager.Instance.playerComponents[1].selectCard == this || GameManager.Instance.playerComponents[1].selectCard == null)
             {
@@ -481,10 +469,10 @@ public static int GetEffectPriority(Effect effect)
                     {
                         SoundManager.Instance.PlaySFX("CardOut");
                     }
-                    
+
                     SendACard();
                     GameManager.Instance.playerComponents[1].SetUsedCardServerRpc(true);
-                    GameManager.Instance.playerComponents[1].selectCard = null;
+                    handCardLogic.RequestSelectCardIndexServerRpc(-1);
                     handCardLogic.hasSelectedCard = false;
                 }
             }
