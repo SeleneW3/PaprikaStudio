@@ -13,7 +13,9 @@ public class GameManager : NetworkBehaviour
 
     public enum GameState
     {
-        Tutor,
+        TutorReady,
+        TutorPlayerTurn,
+        TutorCalculateTurn,
         Ready,
         PlayerTurn,
         CalculateTurn

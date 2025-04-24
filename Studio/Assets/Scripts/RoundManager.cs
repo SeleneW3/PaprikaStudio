@@ -32,8 +32,10 @@ public class RoundManager : NetworkBehaviour
     private int currentRound = 0;  // 当前回合计数器
     private bool gameEnded = false;
 
-    public int dialogTimer = 2;
+    public int tutorState = 0;
     public int dialogIndex = 0;
+
+    public int breakPoint = 0;
 
 
     void Start()
@@ -110,13 +112,54 @@ public class RoundManager : NetworkBehaviour
 
     void Update()
     {
-        if(GameManager.Instance.currentGameState == GameManager.GameState.Tutor)
+        if(GameManager.Instance.currentGameState == GameManager.GameState.TutorReady)
+        {
+            if(tutorState == 0)
+            {
+                DialogManager.Instance.PlayElementRange(0, 12);
+                DialogManager.Instance.PlayElementRange(0, 3);
+                tutorState++;
+            }
+            else if(tutorState == 1)
+            {
+                tutorState++;
+            }
+            else if(tutorState == 2)
+            {
+                tutorState++;
+                DialogManager.Instance.PlayElementRange(4, 5);
+                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+                return;
+            }
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
+            
+        }
+        else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
+        {
+            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
+            {
+                // 如果双方都选择了棋子放置，开始移动棋子
+                MovePiecesToPositions();
+                GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+            }
+        }
+        else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
         {
             CalculatePointWithoutCardAndGun();
+            
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.Ready)
         {
-            
+            CardManager cardManager = FindObjectOfType<CardManager>();
+            if (cardManager != null)
+            {
+                cardManager.StartDealCards();
+                GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
+            }
+            else
+            {
+                Debug.LogError("CardManager not found!");
+            }
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.PlayerTurn)
         {
@@ -147,9 +190,6 @@ public class RoundManager : NetworkBehaviour
             {
                 roundText.text = $"ROUND {currentRound}/{totalRounds}";
             }
-
-            // 设置游戏状态为准备阶段，进入下一回合前的等待
-            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         }
     }
 
@@ -332,7 +372,7 @@ public class RoundManager : NetworkBehaviour
 
         }
         ResetPlayersChoice();
-        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
 
