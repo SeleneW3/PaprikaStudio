@@ -213,20 +213,25 @@ public class HandCardLogic : NetworkBehaviour
     IEnumerator MoveCardToDeck(Transform card)
     {
         Vector3 startPos = card.position;
+        Quaternion startRot = card.rotation;
         Vector3 targetPos = deck.transform.position;
+        Quaternion targetRot = deck.transform.rotation;
         float duration = 0.5f; 
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
             card.position = Vector3.Lerp(startPos, targetPos, elapsed / duration);
+            card.rotation = Quaternion.Slerp(startRot, targetRot, elapsed / duration);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        // 确保移动到目标位置
-        card.position = targetPos;
+
         // 移动完成后，将卡牌的父对象设置为牌堆
         card.SetParent(deck.transform, false);
+
+        card.localPosition = Vector3.zero;
+        card.localRotation = Quaternion.identity;
     }
 
 
