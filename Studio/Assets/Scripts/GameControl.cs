@@ -7,22 +7,12 @@ public class GameControl : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(GameManager.Instance.currentGameState == GameManager.GameState.Ready)
-        {
-            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
-        }
-        if (GameManager.Instance.playerComponents[0].choice != PlayerLogic.playerChoice.None && GameManager.Instance.playerComponents[1].choice != PlayerLogic.playerChoice.None)
-        {
-
-            GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
-
-        }
 
 
 

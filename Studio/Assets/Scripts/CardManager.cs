@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Unity.Netcode;
 
-public class CardGameManager : NetworkBehaviour
+public class CardManager : NetworkBehaviour
 {
     public int cardsToDeal = 2;
     public GameObject cardPrefab;
@@ -23,12 +23,12 @@ public class CardGameManager : NetworkBehaviour
 
     private void OnEnable()
     {
-        GameManager.OnPlayersReady += StartDealCards;
+        //GameManager.OnPlayersReady += StartDealCards;
     }
 
     private void OnDisable()
     {
-        GameManager.OnPlayersReady -= StartDealCards;
+        //GameManager.OnPlayersReady -= StartDealCards;
     }
 
     public void StartDealCards()

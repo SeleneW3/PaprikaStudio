@@ -7446,7 +7446,7 @@ MonoBehaviour:
   coinPrefab: {fileID: 4274701198760140147, guid: 258b544794366544a8aa69ee8b1432fe, type: 3}
   player1ScoreAnchor: {fileID: 1653025040}
   player2ScoreAnchor: {fileID: 220708796}
-  dialogTimer: 2
+  tutorState: 0
   dialogIndex: 0
 --- !u!4 &1606319024
 Transform:
@@ -10654,7 +10654,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 2291698282969936280, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: element4Index
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3439489096721479170, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -10683,7 +10683,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 5127139214669917923, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: element4Index
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5999110756446379251, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: m_Name
