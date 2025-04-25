@@ -158,19 +158,19 @@ MonoBehaviour:
   sfxClips:
   - name: GunAddBullet
     clip: {fileID: 8300000, guid: 24c19b3ec9732b6489f0e94f0dd8303f, type: 3}
-    volume: 0.333
+    volume: 0.31
   - name: GunFire
     clip: {fileID: 8300000, guid: acd72f1954bcda54286f19626f519c9a, type: 3}
-    volume: 0.578
+    volume: 0.443
   - name: BulletHit
     clip: {fileID: 8300000, guid: 3f3a555eae492bb4a9cebd5254656d36, type: 3}
-    volume: 0.3
+    volume: 0.263
   - name: EmptyShot
     clip: {fileID: 8300000, guid: 86c067f241d50604db4a2c99e8e64b0b, type: 3}
-    volume: 1
+    volume: 0.766
   - name: GunReset
     clip: {fileID: 8300000, guid: 7d5ded592e52f3544bbc622839e43130, type: 3}
-    volume: 0.665
+    volume: 0.557
   - name: PauseMenu
     clip: {fileID: 8300000, guid: f7cabd4ec8356344d88d85106d090ca8, type: 3}
     volume: 1
@@ -185,13 +185,13 @@ MonoBehaviour:
     volume: 1
   - name: CardMove
     clip: {fileID: 8300000, guid: f2377dbf8f8984d4abeee44b93afe732, type: 3}
-    volume: 1
+    volume: 0.443
   - name: CardOut
     clip: {fileID: 8300000, guid: 184de915f7607d64ba04ef98cce0f70f, type: 3}
-    volume: 1
+    volume: 0.453
   - name: CardClick
     clip: {fileID: 8300000, guid: 49180f655fa3c0443a995021d9de13cc, type: 3}
-    volume: 1
+    volume: 0.481
   - name: BlockClick
     clip: {fileID: 8300000, guid: 92872ab693bfdec4f917cbf251a6d9f0, type: 3}
     volume: 1
