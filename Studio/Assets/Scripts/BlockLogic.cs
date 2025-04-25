@@ -25,6 +25,8 @@ public class BlockLogic : MonoBehaviour
     public Color hoverColor = new Color(1f, 1f, 1f, 0.8f); // 默认悬停颜色，可在Inspector中修改
     private bool isSelected = false;
 
+    public Transform targetPoint;
+
     void Start()
     {
         // 获取SpriteRenderer组件并保存原始颜色
@@ -75,13 +77,13 @@ public class BlockLogic : MonoBehaviour
             {
                 Debug.Log("Player1 selecting Cooperate");
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
-                GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
+                GameManager.Instance.ChangeChess1ClickPointServerRpc(targetPoint.position, targetPoint.rotation);
                 SetSelected(true);
             }
             else if (belonging == Belonging.Player1 && type == Type.Cheat)
             {
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
-                GameManager.Instance.ChangeChess1ClickPointServerRpc(transform.position, transform.rotation);
+                GameManager.Instance.ChangeChess1ClickPointServerRpc(targetPoint.position, targetPoint.rotation);
                 SetSelected(true);
             }
         }
@@ -91,13 +93,13 @@ public class BlockLogic : MonoBehaviour
             if (belonging == Belonging.Player2 && type == Type.Cooperate)
             {
                 GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
-                GameManager.Instance.ChangeChess2ClickPointServerRpc(transform.position,transform.rotation);
+                GameManager.Instance.ChangeChess2ClickPointServerRpc(targetPoint.position,targetPoint.rotation);
                 SetSelected(true);
             }
             else if (belonging == Belonging.Player2 && type == Type.Cheat)
             {
                 GameManager.Instance.SetPlayer2ChoiceServerRpc(PlayerLogic.playerChoice.Cheat);
-                GameManager.Instance.ChangeChess2ClickPointServerRpc(transform.position, transform.rotation);
+                GameManager.Instance.ChangeChess2ClickPointServerRpc(targetPoint.position, targetPoint.rotation);
                 SetSelected(true);
             }
         }

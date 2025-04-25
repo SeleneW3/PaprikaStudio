@@ -63,6 +63,8 @@ public class ChessLogic : MonoBehaviour
 
             if(t >= 1f)
             {
+                transform.position = stateBeingClicked.position;
+                transform.rotation = stateBeingClicked.rotation;
                 state = 2;
                 timer = 0f;
             }
@@ -119,13 +121,10 @@ public class ChessLogic : MonoBehaviour
 
     public void Move()
     {
-        // 只要 state == 2 且玩家已经选择了放置位置，就触发移动
-        if(state == 2 && GameManager.Instance.playerComponents[0].choice != PlayerLogic.playerChoice.None && 
-                         GameManager.Instance.playerComponents[1].choice != PlayerLogic.playerChoice.None)
-        {
-            state = 3;  // 开始移动棋子
+
+            state = 3; 
             timer = 0f;
-        }
+
     }
 
     public void ReturnToFloatPoint()

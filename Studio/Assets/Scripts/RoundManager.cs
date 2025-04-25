@@ -124,7 +124,7 @@ public class RoundManager : NetworkBehaviour
             {
                 tutorState++;
             }
-            else if(tutorState == 2)
+            else if(tutorState == 99)
             {
                 tutorState++;
                 DialogManager.Instance.PlayElementRange(4, 5);
@@ -138,10 +138,10 @@ public class RoundManager : NetworkBehaviour
         {
             if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
             {
-                // 如果双方都选择了棋子放置，开始移动棋子
                 MovePiecesToPositions();
                 GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
             }
+
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
         {
@@ -174,8 +174,8 @@ public class RoundManager : NetworkBehaviour
            
             
             CalculatePointWithGunAndCard();
-            ChessMoveBack();
-            ResetChess();
+            //ChessMoveBack();
+            //ResetChess();
             ResetPlayersChoice();
             ResetPlayers();
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
