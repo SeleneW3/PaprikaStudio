@@ -116,18 +116,40 @@ public class RoundManager : NetworkBehaviour
         {
             if(tutorState == 0)
             {
-                DialogManager.Instance.PlayElementRange(0, 12);
-                DialogManager.Instance.PlayElementRange(0, 3);
+                DialogManager.Instance.PlayRange(0, 3);
                 tutorState++;
             }
             else if(tutorState == 1)
             {
                 tutorState++;
             }
-            else if(tutorState == 99)
+            else if(tutorState == 2)
             {
                 tutorState++;
-                DialogManager.Instance.PlayElementRange(4, 5);
+                DialogManager.Instance.PlayRange(4, 5);
+                
+            }
+            else if(tutorState == 3)
+            {
+                tutorState++;
+                CardManager cardManager = FindObjectOfType<CardManager>();
+                if (cardManager != null)
+                {
+                    cardManager.StartDealCards(2);
+                }
+                else
+                {
+                    Debug.LogError("CardManager not found!");
+                }
+                DialogManager.Instance.PlayRange(6, 9);
+            }
+            else if(tutorState == 4)
+            {
+                tutorState++;
+            }
+            else if(tutorState == 5)
+            {
+                DialogManager.Instance.PlayRange(10, 12);
                 GameManager.Instance.currentGameState = GameManager.GameState.Ready;
                 return;
             }
@@ -153,7 +175,7 @@ public class RoundManager : NetworkBehaviour
             CardManager cardManager = FindObjectOfType<CardManager>();
             if (cardManager != null)
             {
-                cardManager.StartDealCards();
+                cardManager.StartDealCards(5);
                 GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
             }
             else
@@ -167,6 +189,7 @@ public class RoundManager : NetworkBehaviour
             {
                 // 如果双方都选择了棋子放置，开始移动棋子
                 MovePiecesToPositions();
+                GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
             }
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
@@ -174,11 +197,11 @@ public class RoundManager : NetworkBehaviour
            
             
             CalculatePointWithGunAndCard();
-            //ChessMoveBack();
-            //ResetChess();
+            ChessMoveBack();
+            ResetChess();
             ResetPlayersChoice();
             ResetPlayers();
-            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
 
             // 使用UIManager更新回合UI
             UIManager uiManager = FindObjectOfType<UIManager>();
@@ -198,7 +221,7 @@ public class RoundManager : NetworkBehaviour
         // 只要双方都放置了棋子，调用棋子的移动方法
         foreach (var chess in GameManager.Instance.chessComponents)
         {
-            chess.Move();  // 触发棋子的移动
+            chess.Move();
         }
     }
 

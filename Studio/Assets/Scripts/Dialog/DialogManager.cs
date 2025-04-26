@@ -1,355 +1,184 @@
 using UnityEngine;
 using TMPro;
-using Febucci.UI;  // 确保添加这个引用
+using Febucci.UI;
 using System.Collections;
 
 public class DialogManager : MonoBehaviour
 {
-    // 单例实例
+    #region Singleton
     private static DialogManager _instance;
-    public static DialogManager Instance { get { return _instance; } }
-    
+    public static DialogManager Instance => _instance;
+    #endregion
+
     [Header("UI References")]
-    public TextMeshProUGUI dialogText;        // 对话文本显示组件
-    public GameObject dialogPanel;             // 对话面板
-    private TextAnimator textAnimator;  // TextAnimator 组件引用
-    private TextAnimatorPlayer textAnimatorPlayer;  // TextAnimatorPlayer 组件引用
+    public TextMeshProUGUI dialogText;
+    public GameObject dialogPanel;
 
-    [Header("Dialog Settings")]
+    [Header("Dialog Content")]
     [TextArea(3, 10)]
-    public string[] dialogLines;              // 对话文本数组
-    public float typingSpeed = 0.05f;         // 文字显示速度
-    
-    [Header("Auto Advance Settings")]
-    public bool autoAdvance = true;           // 是否自动前进到下一个对话
-    public float autoAdvanceDelay = 1.5f;     // 打字完成后自动前进的延迟时间
-    
-    [Header("Dialog Behavior")]
-    public bool autoPlayOnStart = false;      // 是否在启动时自动播放对话
+    public string[] dialogLines;
 
-    public int currentLineIndex = 0;         // 当前显示的文本索引
-    private bool isDialogActive = false;      // 对话是否激活
-    private bool isTyping = false;            // 是否正在打字
-    private string currentLine = "";          // 当前完整的文本行
-    private Coroutine autoAdvanceCoroutine;   // 自动前进的协程
-    
+    [Header("Typing Settings")]
+    public float typingSpeed = 0.05f;
+
+    [Header("Auto‑Advance Settings")]
+    public bool autoAdvance = true;
+    public float autoAdvanceDelay = 1.5f;
+
+    public  int currentLineIndex;
+    private int endLineIndex;
+    private bool isTyping;
+    private Coroutine autoAdvanceCoroutine;
+
+    private TextAnimatorPlayer animatorPlayer;
+
+    #region Unity Life‑cycle
     private void Awake()
     {
-        // 单例初始化
         if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        
         _instance = this;
-        
-        // 如果需要在场景切换时保留，取消注释下面的行
         DontDestroyOnLoad(gameObject);
     }
 
-    void Start()
+    private void Start()
     {
-        // 初始化时隐藏对话面板
-        if (dialogPanel != null)
-            dialogPanel.SetActive(false);
-
-        // 设置文本对齐方式
+        if (dialogPanel != null) dialogPanel.SetActive(false);
         if (dialogText != null)
         {
             dialogText.alignment = TextAlignmentOptions.Center;
-            dialogText.enableWordWrapping = true;  // 启用自动换行
+            dialogText.enableWordWrapping = true;
+            animatorPlayer = dialogText.GetComponent<TextAnimatorPlayer>();
         }
-
-        // 获取 TextAnimator 组件
-        textAnimator = dialogText?.GetComponent<TextAnimator>();
-        textAnimatorPlayer = dialogText?.GetComponent<TextAnimatorPlayer>();
-
-        if (textAnimator == null)
-            Debug.LogError("TextAnimator component not found!");
-            
-        // 设置TextAnimatorPlayer的事件监听
-        if (textAnimatorPlayer != null)
-        {
-            // 注册打字完成事件
-            textAnimatorPlayer.onTextShowed.AddListener(OnTypewriterComplete);
-        }
-        
-        // 只有在设置了自动播放时才启动对话
-        if (autoPlayOnStart && dialogLines.Length > 0)
-        {
-            StartDialog();
-        }
+        if (animatorPlayer != null)
+            animatorPlayer.onTextShowed.AddListener(OnTypingComplete);
     }
 
-    void Update()
+    private void Update()
     {
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
+        if (isTyping && (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)))
         {
-            if (isDialogActive)
-            {
-                if (isTyping)
-                {
-                    // 如果正在打字，则完成当前行
-                    CompleteLine();
-                }
-                // 移除了点击跳转到下一行的功能
-                // 只保留自动前进
-            }
+            CompleteLine();
         }
     }
+    #endregion
 
-    // 开始显示对话
-    public void StartDialog()
+    #region Public API
+    /// <summary>
+    /// 播放对话行区间 [startIndex, endIndex]，闭区间
+    /// 当两者相等时仅播放单句。
+    /// </summary>
+    public void PlayRange(int startIndex, int endIndex)
     {
-        if (dialogLines.Length == 0) return;
+        if (dialogLines == null || dialogLines.Length == 0)
+        {
+            Debug.LogError("DialogManager: dialogLines 为空！");
+            return;
+        }
 
-        isDialogActive = true;
-        currentLineIndex = 0;
+        // 边界检查
+        if (startIndex < 0 || endIndex >= dialogLines.Length || startIndex > endIndex)
+        {
+            Debug.LogError($"DialogManager: 无效区间 [{startIndex}, {endIndex}]，范围 0‑{dialogLines.Length - 1}");
+            return;
+        }
+
+        currentLineIndex = startIndex;
+        endLineIndex = endIndex;
+
         dialogPanel.SetActive(true);
-        DisplayLine(dialogLines[currentLineIndex]);
+        DisplayCurrentLine();
     }
+    #endregion
 
-    // 显示下一行文本
-    private void DisplayNextLine()
+    #region Core Logic
+    private void DisplayCurrentLine()
     {
-        currentLineIndex++;
-        if (currentLineIndex < dialogLines.Length)
+        if (autoAdvanceCoroutine != null)
         {
-            DisplayLine(dialogLines[currentLineIndex]);
+            StopCoroutine(autoAdvanceCoroutine);
+            autoAdvanceCoroutine = null;
+        }
+
+        string line = dialogLines[currentLineIndex];
+        isTyping = true;
+
+        if (animatorPlayer != null)
+        {
+            animatorPlayer.ShowText(line);
         }
         else
         {
-            // 所有文本显示完毕，关闭对话
+            dialogText.text = line;
+            isTyping = false;
+            StartAutoAdvance();
+        }
+    }
+
+    private void OnTypingComplete()
+    {
+        isTyping = false;
+        StartAutoAdvance();
+    }
+
+    private void StartAutoAdvance()
+    {
+        if (autoAdvance)
+        {
+            autoAdvanceCoroutine = StartCoroutine(AutoAdvance());
+        }
+    }
+
+    private IEnumerator AutoAdvance()
+    {
+        yield return new WaitForSeconds(autoAdvanceDelay);
+        ProceedToNextLine();
+    }
+
+    private void ProceedToNextLine()
+    {
+        if (currentLineIndex < endLineIndex)
+        {
+            currentLineIndex++;
+            DisplayCurrentLine();
+        }
+        else
+        {
             EndDialog();
         }
     }
 
-    // 显示指定的文本行
-    private void DisplayLine(string line)
-    {
-        // 如果有自动前进协程正在运行，取消它
-        if (autoAdvanceCoroutine != null)
-        {
-            StopCoroutine(autoAdvanceCoroutine);
-            autoAdvanceCoroutine = null;
-        }
-        
-        currentLine = line;
-        isTyping = true;
-
-        if (textAnimatorPlayer != null)
-        {
-            // 使用 TextAnimatorPlayer 显示文本
-            textAnimatorPlayer.ShowText(line);
-            // 事件监听会处理打字完成
-        }
-        else if (textAnimator != null)
-        {
-            // 使用 TextAnimator 显示文本
-            textAnimator.SetText(line, true);
-            // 对于TextAnimator，我们需要估算时间
-            StartCoroutine(EstimateTypewritingCompletion());
-        }
-        else
-        {
-            // 降级为普通文本显示
-            dialogText.text = line;
-            isTyping = false;
-            
-            // 如果启用了自动前进，开始自动前进倒计时
-            if (autoAdvance)
-            {
-                autoAdvanceCoroutine = StartCoroutine(AutoAdvanceDialog());
-            }
-        }
-
-        // 确保每次显示新行时文本都是居中的
-        dialogText.alignment = TextAlignmentOptions.Center;
-    }
-    
-    // 估算打字完成时间的协程（仅用于TextAnimator，不用于TextAnimatorPlayer）
-    private IEnumerator EstimateTypewritingCompletion()
-    {
-        // 估算打字完成所需时间
-        float estimatedTime = currentLine.Length * typingSpeed;
-        
-        // 等待估算的时间
-        yield return new WaitForSeconds(estimatedTime);
-        
-        // 如果此时仍在打字(用户没有点击跳过)，则标记打字完成
-        if (isTyping)
-        {
-            OnTypewriterComplete();
-        }
-    }
-    
-    // 打字效果完成后的回调
-    private void OnTypewriterComplete()
-    {
-        isTyping = false;
-        
-        // 如果启用了自动前进，开始自动前进倒计时
-        if (autoAdvance)
-        {
-            autoAdvanceCoroutine = StartCoroutine(AutoAdvanceDialog());
-        }
-    }
-    
-    // 自动前进到下一个对话的协程
-    private IEnumerator AutoAdvanceDialog()
-    {
-        // 等待设定的延迟时间
-        yield return new WaitForSeconds(autoAdvanceDelay);
-        
-        // 显示下一行文本
-        DisplayNextLine();
-        
-        // 清空协程引用
-        autoAdvanceCoroutine = null;
-    }
-
-    // 立即完成当前行的显示
     private void CompleteLine()
     {
-        if (textAnimatorPlayer != null)
+        if (!isTyping) return;
+
+        if (animatorPlayer != null)
         {
-            textAnimatorPlayer.SkipTypewriter();
-        }
-        else if (textAnimator != null)
-        {
-            textAnimator.SetText(currentLine, false);
+            animatorPlayer.SkipTypewriter();
         }
         else
         {
-            dialogText.text = currentLine;
+            dialogText.text = dialogLines[currentLineIndex];
         }
         isTyping = false;
     }
 
-    // 结束对话
     private void EndDialog()
     {
-        // 如果有自动前进协程正在运行，取消它
         if (autoAdvanceCoroutine != null)
-        {
             StopCoroutine(autoAdvanceCoroutine);
-            autoAdvanceCoroutine = null;
-        }
-        
-        isDialogActive = false;
+        autoAdvanceCoroutine = null;
+
         dialogPanel.SetActive(false);
     }
 
-    // 防止内存泄漏
     private void OnDestroy()
     {
-        if (textAnimatorPlayer != null)
-        {
-            textAnimatorPlayer.onTextShowed.RemoveListener(OnTypewriterComplete);
-        }
+        if (animatorPlayer != null)
+            animatorPlayer.onTextShowed.RemoveListener(OnTypingComplete);
     }
-
-    // 外部调用的显示对话方法
-    public void ShowDialog(string[] lines)
-    {
-        dialogLines = lines;
-        StartDialog();
-    }
-    
-    // 设置是否自动前进
-    public void SetAutoAdvance(bool enable)
-    {
-        autoAdvance = enable;
-        
-        // 如果禁用自动前进，取消正在运行的自动前进协程
-        if (!autoAdvance && autoAdvanceCoroutine != null)
-        {
-            StopCoroutine(autoAdvanceCoroutine);
-            autoAdvanceCoroutine = null;
-        }
-    }
-
-
-    /// <summary>
-    /// 播放Inspector中定义的一系列对话元素
-    /// 当startIndex与endIndex相同时，只会播放单条对话
-    /// </summary>
-    /// <param name="startIndex">开始索引</param>
-    /// <param name="endIndex">结束索引(包含)</param>
-    public void PlayElementRange(int startIndex, int endIndex)
-    {
-        Debug.Log($"DialogManager: PlayElementRange({startIndex}, {endIndex})被调用");
-        
-        if (startIndex < 0 || startIndex >= dialogLines.Length || 
-            endIndex < startIndex || endIndex >= dialogLines.Length)
-        {
-            Debug.LogError($"对话元素索引范围无效: [{startIndex}-{endIndex}], 最大值: {dialogLines.Length-1}");
-            return;
-        }
-        
-        // 选择指定范围的对话行
-        string[] selectedLines = new string[endIndex - startIndex + 1];
-        for (int i = 0; i < selectedLines.Length; i++)
-        {
-            selectedLines[i] = dialogLines[startIndex + i];
-        }
-        
-        ShowDialog(selectedLines);
-    }
-
-
-
-    /// <summary>
-    /// 播放指定范围的对话行
-    /// </summary>
-    /// <param name="lines">对话行数组</param>
-    /// <param name="startIndex">开始索引</param>
-    /// <param name="endIndex">结束索引（包含）</param>
-    public void ShowDialogRange(string[] lines, int startIndex, int endIndex)
-    {
-        if (startIndex < 0 || startIndex >= lines.Length || 
-            endIndex < startIndex || endIndex >= lines.Length)
-        {
-            Debug.LogError($"对话索引范围无效: [{startIndex}-{endIndex}], 最大值: {lines.Length-1}");
-            return;
-        }
-        
-        string[] selectedLines = new string[endIndex - startIndex + 1];
-        for (int i = 0; i < selectedLines.Length; i++)
-        {
-            selectedLines[i] = lines[startIndex + i];
-        }
-        
-        ShowDialog(selectedLines);
-    }
-    
-    /// <summary>
-    /// 播放指定索引的单条对话
-    /// </summary>
-    /// <param name="lines">对话行数组</param>
-    /// <param name="index">要播放的对话索引</param>
-    public void PlayDialogAtIndex(string[] lines, int index)
-    {
-        if (index < 0 || index >= lines.Length)
-        {
-            Debug.LogError($"对话索引无效: {index}, 最大值: {lines.Length-1}");
-            return;
-        }
-        
-        // 只播放单条对话
-        ShowDialog(new string[] { lines[index] });
-    }
-    
-    /// <summary>
-    /// 在不显示对话面板的情况下，预加载对话内容
-    /// </summary>
-    /// <param name="lines">对话行数组</param>
-    public void PreloadDialog(string[] lines)
-    {
-        dialogLines = lines;
-        currentLineIndex = 0;
-        isDialogActive = false;
-    }
-    
+    #endregion
 }

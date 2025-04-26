@@ -1,128 +1,110 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using Unity.Netcode;
 
 public class CardManager : NetworkBehaviour
 {
-    public int cardsToDeal = 2;
+    [Header("Deal Settings")]
+    [Tooltip("é»˜è®¤æ¯ä½ç©å®¶å‘çš„å¡ç‰Œæ•°é‡ï¼Œå¦‚æœä¸ä½¿ç”¨ StartDealCards(int) æŒ‡å®šï¼Œåˆ™ä½¿ç”¨æ­¤å€¼ã€‚")]
+    public int defaultCardsToDeal = 2;
+
+    [Header("References")]
     public GameObject cardPrefab;
     public Transform deckTrans;
-    public float moveDuration = 1f;    // ¿¨ÅÆÒÆ¶¯µÄÊ±¼ä
-    public float cardDelay = 0.2f;     // Ã¿ÕÅ¿¨ÅÆÖ®¼äµÄÑÓ³Ù
-
-    private Deck deck;
+    public float moveDuration = 1f;
+    public float cardDelay = 0.2f;
 
     public HandCardLogic handCardLogic1;
     public HandCardLogic handCardLogic2;
 
-    void Start()
+    private Deck deck;
+
+    #region Unity Lifeâ€‘cycle
+    private void Start()
     {
         deck = new Deck(cardPrefab);
         deck.Shuffle();
     }
+    #endregion
 
-    private void OnEnable()
+    #region Public API
+
+    /// <summary>
+    /// æœåŠ¡å™¨ç«¯è°ƒç”¨ï¼šæŒ‰ <paramref name="cardsPerPlayer"/> å¼ æ•°ç»™æ‰€æœ‰ç©å®¶å‘ç‰Œã€‚
+    /// </summary>
+    public void StartDealCards(int cardsPerPlayer)
     {
-        //GameManager.OnPlayersReady += StartDealCards;
+        if (!IsServer) return; // åªæœ‰æœåŠ¡å™¨ç”Ÿæˆä¸åŒæ­¥
+
+        StartCoroutine(WaitAndStartDeal(cardsPerPlayer));
     }
 
-    private void OnDisable()
-    {
-        //GameManager.OnPlayersReady -= StartDealCards;
-    }
-
+    /// <summary>
+    /// æœåŠ¡å™¨ç«¯è°ƒç”¨ï¼šä½¿ç”¨ Inspector ä¸­çš„ <see cref="defaultCardsToDeal"/> å‘ç‰Œã€‚
+    /// </summary>
     public void StartDealCards()
     {
-        if (NetworkManager.LocalClientId == 0)
-        {
-            StartCoroutine(WaitAndStartDeal());
-        }
+        StartDealCards(defaultCardsToDeal);
+    }
+    #endregion
+
+    #region Core Logic
+    private IEnumerator WaitAndStartDeal(int cardsPerPlayer)
+    {
+        while (deck == null) yield return null;
+        yield return DealCardsCoroutine(cardsPerPlayer);
     }
 
-    IEnumerator WaitAndStartDeal()
+    private IEnumerator DealCardsCoroutine(int cardsPerPlayer)
     {
-        while (deck == null)
-        {
-            yield return null;
-        }
-        StartCoroutine(DealCards(deck));
-    }
-
-    // ·¢ÅÆĞ­³Ì
-    IEnumerator DealCards(Deck deck)
-    {
-        // ±éÀúÃ¿¸öÍæ¼Ò
         foreach (PlayerLogic player in GameManager.Instance.playerComponents)
         {
-            // ÎªÃ¿¸öÍæ¼Ò·¢ cardsToDeal ÕÅ¿¨ÅÆ
-            for (int i = 0; i < cardsToDeal; i++)
+            for (int i = 0; i < cardsPerPlayer; i++)
             {
-                // ¼ÆËãÄ¿±êÎ»ÖÃ£¨ÕâÀï¿ÉÒÔÉÔÎ¢×ö¸öÆ«ÒÆ£©
                 Vector3 targetPos = player.handPos.position - new Vector3(0, 0.01f * i, 0);
                 Quaternion targetRot = player.handPos.rotation;
 
-                // Ê¹ÓÃº¬¸¸ÎïÌåµÄ Instantiate ÖØÔØ£¬Ö±½Ó½«¿¨ÅÆÉú³ÉÔÚÍæ¼ÒÊÖÅÆÏÂ£¨½ö·şÎñÆ÷Éú³É£©
+                // ç”Ÿæˆå¹¶ Spawnï¼ˆä»…æœåŠ¡å™¨ï¼‰
                 GameObject cardObj = Instantiate(cardPrefab, deckTrans.position, deckTrans.rotation, player.handPos);
-                NetworkObject netObj = cardObj.GetComponent<NetworkObject>();
-                netObj.Spawn();  // Ö»ÓĞ·şÎñÆ÷Ö´ĞĞÕâĞĞ
+                cardObj.GetComponent<NetworkObject>().Spawn();
 
-                // »ñÈ¡¿¨ÅÆµÄ CardLogic ×é¼ş£¬²¢¸³ÖµÅÆ¶ÑÖĞµÄÊı¾İ
-                CardLogic cardComponent = cardObj.GetComponent<CardLogic>();
-                CardLogic cardData = deck.DealCard();
+                // å¤åˆ¶ç‰Œé¢æ•°æ®
+                CardLogic cardLogic = cardObj.GetComponent<CardLogic>();
+                CardLogic template = deck.DealCard();
+                if (cardLogic && template) cardLogic.effect = template.effect;
 
-                if (cardComponent != null && cardData != null)
-                {
-                    // ÉèÖÃ effect£¬»á×Ô¶¯Í¨¹ı NetworkVariable Í¬²½µ½¿Í»§¶Ë
-                    cardComponent.effect = cardData.effect;
-                }
-                else
-                {
-                    Debug.LogError("¿¨ÅÆÊı¾İ»ò×é¼ş»ñÈ¡Ê§°Ü£¡");
-                }
+                // è®°å½•å½’å±
+                player.AddCard(cardLogic);
+                cardLogic.belong = (player == GameManager.Instance.playerComponents[0]) ? CardLogic.Belong.Player1 : CardLogic.Belong.Player2;
 
-                // ½«¿¨ÅÆÌí¼Óµ½Íæ¼ÒÊÖÅÆÖĞ£¨Êı¾İ²ãÃæµÄÌí¼Ó£©
-                player.AddCard(cardComponent);
-                if (player == GameManager.Instance.playerComponents[0])
-                {
-                    cardComponent.belong = CardLogic.Belong.Player1;
-                }
-                else if (player == GameManager.Instance.playerComponents[1])
-                {
-                    cardComponent.belong = CardLogic.Belong.Player2;
-                }
-
-                // Æô¶¯Ğ­³Ì¶¯»­£¬½«¿¨ÅÆ´ÓÅÆ¶ÑÎ»ÖÃÆ½»¬ÒÆ¶¯µ½Ä¿±êÎ»ÖÃºÍĞı×ª
+                // åŠ¨ç”»
                 StartCoroutine(MoveCardToHand(cardObj, player.handPos, targetPos, targetRot, moveDuration));
 
-                // Ã¿·¢ÍêÒ»ÕÅ¿¨ÅÆµÈ´ıÒ»¶ÎÊ±¼ä£¬ÔÙ·¢ÏÂÒ»ÕÅ
                 yield return new WaitForSeconds(cardDelay);
             }
         }
+
+        // å‘å®Œæ‰€æœ‰ç‰Œååˆå§‹åŒ–æ‰‹ç‰Œæ˜¾ç¤º
         yield return new WaitForSeconds(1f);
         handCardLogic1.Initialize();
         handCardLogic2.Initialize();
     }
 
-    /// <summary>
-    /// ½«¿¨ÅÆ´Óµ±Ç°µÄÎ»ÖÃÒÆ¶¯µ½Ä¿±êÊÖÅÆÎ»ÖÃºÍĞı×ª£¬¶¯»­Íê³Éºó½«¿¨ÅÆÉèÎªÄ¿±êµÄ×ÓÎïÌå¡£
-    /// </summary>
-    IEnumerator MoveCardToHand(GameObject card, Transform targetParent, Vector3 targetPosition, Quaternion targetRotation, float duration)
+    private IEnumerator MoveCardToHand(GameObject card, Transform targetParent, Vector3 targetPos, Quaternion targetRot, float duration)
     {
         Vector3 startPos = card.transform.position;
         Quaternion startRot = card.transform.rotation;
         float elapsed = 0f;
-
         while (elapsed < duration)
         {
-            card.transform.position = Vector3.Lerp(startPos, targetPosition, elapsed / duration);
-            card.transform.rotation = Quaternion.Slerp(startRot, targetRotation, elapsed / duration);
+            card.transform.position = Vector3.Lerp(startPos, targetPos, elapsed / duration);
+            card.transform.rotation = Quaternion.Slerp(startRot, targetRot, elapsed / duration);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        // È·±£×îÖÕÎ»ÖÃºÍĞı×ª
-        card.transform.position = targetPosition;
-        card.transform.rotation = targetRotation;
-        // ÉèÖÃ¿¨ÅÆÎªÍæ¼ÒÊÖÅÆµÄ×ÓÎïÌå
+        card.transform.position = targetPos;
+        card.transform.rotation = targetRot;
         card.transform.SetParent(targetParent);
     }
+    #endregion
 }

@@ -122,8 +122,8 @@ public class ChessLogic : MonoBehaviour
     public void Move()
     {
 
-            state = 3; 
-            timer = 0f;
+         state = 3; 
+         timer = 0f;
 
     }
 

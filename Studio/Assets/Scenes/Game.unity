@@ -6580,9 +6580,7 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras:
-  - {fileID: 1558965664}
-  - {fileID: 437392593}
+  m_ChildCameras: []
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -7401,7 +7399,6 @@ MonoBehaviour:
   typingSpeed: 0.1
   autoAdvance: 1
   autoAdvanceDelay: 1.5
-  autoPlayOnStart: 0
   currentLineIndex: 0
 --- !u!4 &1504394096
 Transform:
@@ -9057,7 +9054,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d6644a1a0ecfb24a95fefc85a0a7c53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardsToDeal: 5
+  defaultCardsToDeal: 2
   cardPrefab: {fileID: 3483611486760553335, guid: d053c48d5839a964a85e20fb2c95bc5b, type: 3}
   deckTrans: {fileID: 1702558041}
   moveDuration: 1
@@ -10833,7 +10830,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 2291698282969936280, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: element4Index
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 3439489096721479170, guid: 37e50e22272a85647aeab6944e204c88, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -10862,7 +10859,7 @@ PrefabInstance:
       objectReference: {fileID: 1504394095}
     - target: {fileID: 5127139214669917923, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: element4Index
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5999110756446379251, guid: 943f4f398933e504099fd757c6745920, type: 3}
       propertyPath: m_Name
