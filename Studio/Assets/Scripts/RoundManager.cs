@@ -127,11 +127,7 @@ public class RoundManager : NetworkBehaviour
             {
                 tutorState++;
                 DialogManager.Instance.PlayRange(4, 5);
-                
-            }
-            else if(tutorState == 3)
-            {
-                tutorState++;
+
                 CardManager cardManager = FindObjectOfType<CardManager>();
                 if (cardManager != null)
                 {
@@ -143,18 +139,18 @@ public class RoundManager : NetworkBehaviour
                 }
                 DialogManager.Instance.PlayRange(6, 9);
             }
+            else if(tutorState == 3)
+            {
+          tutorState++;
+            }
             else if(tutorState == 4)
             {
                 tutorState++;
-            }
-            else if(tutorState == 5)
-            {
                 DialogManager.Instance.PlayRange(10, 12);
                 GameManager.Instance.currentGameState = GameManager.GameState.Ready;
                 return;
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
-            
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
         {
@@ -196,7 +192,7 @@ public class RoundManager : NetworkBehaviour
         {
            
             
-            CalculatePointWithGunAndCard();
+            CalculatePointWithCardButWithoutGun();
             ChessMoveBack();
             ResetChess();
             ResetPlayersChoice();
