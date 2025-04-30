@@ -21,7 +21,8 @@ public class GameManager : NetworkBehaviour
         CalculateTurn
     }
 
-    public string ip = "127.0.0.1";
+    public string localIP = "127.0.0.1";
+    public string joinIP = "127.0.0.1";
 
     public GameState currentGameState;
 
@@ -54,6 +55,7 @@ public class GameManager : NetworkBehaviour
         if(SceneManager.GetActiveScene().name == "Init")
         {
             SceneManager.LoadScene("Start");
+
         }
 
     }

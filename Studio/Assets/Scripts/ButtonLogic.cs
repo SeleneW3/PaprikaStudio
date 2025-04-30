@@ -6,6 +6,7 @@ using System.Net;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using TMPro;
 
 public class ButtonLogic : MonoBehaviour
 {
@@ -20,6 +21,12 @@ public class ButtonLogic : MonoBehaviour
     public ButtonType buttonType;
 
 
+    private void Start()
+    {
+       
+    }
+
+    
     private void OnMouseDown()
     {
         if(buttonType == ButtonType.Create)
@@ -42,33 +49,21 @@ public class ButtonLogic : MonoBehaviour
 
     private void CreateClick()
     {
-        string localIp = GetLocalIPAddress();
-        GameManager.Instance.ip = localIp;
+        string localIp = GameManager.Instance.localIP;
 
-        var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+
+        GameManager.Instance.localIP = localIp; var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
         transport.SetConnectionData(localIp, 7777);
 
         NetworkManager.Singleton.StartHost();
         GameManager.Instance.LoadScene("Lobby");
     }
 
-    public static string GetLocalIPAddress()
-    {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
-        {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
-            {
-                return ip.ToString();
-            }
-        }
-        throw new Exception("系统中没有找到IPv4地址的网络适配器！");
-    }
-
     private void JoinClick()
     {
+        string ip = GameManager.Instance.joinIP;
         var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
-        transport.SetConnectionData(GameManager.Instance.ip, 7777);
+        transport.SetConnectionData(ip, 7777);
 
         NetworkManager.Singleton.StartClient();
     }
