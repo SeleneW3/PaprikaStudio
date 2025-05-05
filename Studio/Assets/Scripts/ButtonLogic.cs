@@ -29,6 +29,7 @@ public class ButtonLogic : MonoBehaviour
     
     private void OnMouseDown()
     {
+        Debug.Log($"Button clicked: {buttonType}");
         if(buttonType == ButtonType.Create)
         {
             CreateClick();
@@ -61,11 +62,41 @@ public class ButtonLogic : MonoBehaviour
 
     private void JoinClick()
     {
-        string ip = GameManager.Instance.joinIP;
-        var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
-        transport.SetConnectionData(ip, 7777);
+        try
+        {
+            string ip = GameManager.Instance.joinIP;
+            Debug.Log($"Attempting to join game at IP: {ip}");
 
-        NetworkManager.Singleton.StartClient();
+            if (string.IsNullOrEmpty(ip))
+            {
+                Debug.LogError("IP address is empty!");
+                return;
+            }
+
+            // 如果已经连接，先关闭现有连接
+            if (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost)
+            {
+                Debug.Log("Shutting down existing connection...");
+                NetworkManager.Singleton.Shutdown();
+            }
+
+            var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+            if (transport == null)
+            {
+                Debug.LogError("Failed to get UnityTransport!");
+                return;
+            }
+
+            transport.SetConnectionData(ip, 7777);
+            Debug.Log($"Transport configured with IP: {ip}, Port: 7777");
+
+            NetworkManager.Singleton.StartClient();
+            Debug.Log("StartClient called");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error joining game: {e.Message}");
+        }
     }
 
     private void SettingsClick()

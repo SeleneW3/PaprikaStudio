@@ -262,4 +262,27 @@ public class GameManager : NetworkBehaviour
             OnPlayersReady?.Invoke();
         }
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetAllBlocksServerRpc()
+    {
+        // 找到所有的 BlockLogic 组件并重置它们
+        BlockLogic[] blocks = FindObjectsOfType<BlockLogic>();
+        foreach (var block in blocks)
+        {
+            block.ResetState();
+        }
+        ResetAllBlocksClientRpc();
+    }
+
+    [ClientRpc]
+    public void ResetAllBlocksClientRpc()
+    {
+        // 在客户端也执行相同的重置操作
+        BlockLogic[] blocks = FindObjectsOfType<BlockLogic>();
+        foreach (var block in blocks)
+        {
+            block.ResetState();
+        }
+    }
 }

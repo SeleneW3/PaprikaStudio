@@ -49,7 +49,7 @@ public class HandCardLogic : NetworkBehaviour
 
     public void Initialize()
     {
-        Debug.Log("Initialize");
+        //Debug.Log("Initialize");
         int count = transform.childCount;
         cards = new List<Transform>(count);
         originalPositions = new List<Vector3>(count);
@@ -69,7 +69,7 @@ public class HandCardLogic : NetworkBehaviour
     {
         if (NetworkManager.LocalClientId == 0)
         {
-            Debug.Log("HandCardLogic Open");
+            //Debug.Log("HandCardLogic Open");
             opened = true;
             UpdateState();
             
@@ -92,7 +92,7 @@ public class HandCardLogic : NetworkBehaviour
     {
         if (NetworkManager.LocalClientId == 0)
         {
-            Debug.Log("HandCardLogic Close");
+            //Debug.Log("HandCardLogic Close");
             opened = false;
             UpdateState();
         }
@@ -118,7 +118,7 @@ public class HandCardLogic : NetworkBehaviour
     private void UpdateStateClientRpc(bool state)
     {
         opened = state;
-        Debug.Log("HandCardLogic UpdateState: " + state);
+        //Debug.Log("HandCardLogic UpdateState: " + state);
     }
 
     /// <summary>

@@ -39,7 +39,7 @@ public class BlockLogic : MonoBehaviour
 
     void OnMouseEnter()
     {
-        Debug.Log($"Mouse entered: belonging={belonging}, isSelected={isSelected}");
+        //Debug.Log($"Mouse entered: belonging={belonging}, isSelected={isSelected}");
         if (spriteRenderer != null && !isSelected)
         {
             spriteRenderer.color = hoverColor;
@@ -62,7 +62,7 @@ public class BlockLogic : MonoBehaviour
 
     private void OnMouseDown()
     {
-        Debug.Log($"OnMouseDown - LocalClientId: {NetworkManager.Singleton.LocalClientId}, belonging: {belonging}, type: {type}");
+        //Debug.Log($"OnMouseDown - LocalClientId: {NetworkManager.Singleton.LocalClientId}, belonging: {belonging}, type: {type}");
         
         // 播放Block点击音效
         if (SoundManager.Instance != null)
@@ -72,10 +72,10 @@ public class BlockLogic : MonoBehaviour
         
         if(NetworkManager.Singleton.LocalClientId == 0)
         {
-            Debug.Log("Detected as Player1 client");
+            //Debug.Log("Detected as Player1 client");
             if (belonging == Belonging.Player1 && type == Type.Cooperate)
             {
-                Debug.Log("Player1 selecting Cooperate");
+                //Debug.Log("Player1 selecting Cooperate");
                 GameManager.Instance.SetPlayer1ChoiceServerRpc(PlayerLogic.playerChoice.Cooperate);
                 GameManager.Instance.ChangeChess1ClickPointServerRpc(targetPoint.position, targetPoint.rotation);
                 SetSelected(true);
@@ -116,6 +116,10 @@ public class BlockLogic : MonoBehaviour
 
     public void ResetState()
     {
-        SetSelected(false);
+        isSelected = false;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = originalColor;
+        }
     }
 }
