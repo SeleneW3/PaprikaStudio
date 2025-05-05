@@ -148,6 +148,14 @@ public class RoundManager : NetworkBehaviour
             {
                 tutorState++;
                 DialogManager.Instance.PlayRange(10, 12);
+                
+                // 重置玩家分数，准备开始第一阶段
+                if (NetworkManager.Singleton.IsServer)
+                {
+                    player1.point.Value = 0;
+                    player2.point.Value = 0;
+                }
+                
                 GameManager.Instance.currentGameState = GameManager.GameState.Ready;
                 return;
             }

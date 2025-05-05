@@ -71,6 +71,10 @@ public class LevelManager : NetworkBehaviour
             // 重置回合和分数
             roundManager.ResetRound();
             
+            // 重置玩家分数
+            roundManager.player1.point.Value = 0;
+            roundManager.player2.point.Value = 0;
+            
             // 设置游戏状态为Ready，这样会触发发牌
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         }
