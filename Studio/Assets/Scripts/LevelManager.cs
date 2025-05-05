@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections;
 
 public class LevelManager : NetworkBehaviour
 {
@@ -65,6 +66,11 @@ public class LevelManager : NetworkBehaviour
     // 开始枪战阶段
     public void StartGunfightPhase()
     {
+        // 关闭结算面板
+        if (settlementPanel != null)
+            settlementPanel.SetActive(false);
+
+        // 先重置游戏状态和分数
         if (NetworkManager.Singleton.IsServer)
         {
             isGunfightMode.Value = true;
@@ -75,13 +81,24 @@ public class LevelManager : NetworkBehaviour
             roundManager.player1.point.Value = 0;
             roundManager.player2.point.Value = 0;
             
-            // 设置游戏状态为Ready，这样会触发发牌
+            // 立即发牌
             GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         }
 
-        // 关闭结算面板
-        if (settlementPanel != null)
-            settlementPanel.SetActive(false);
+        // 等待一小段时间让发牌动画开始，然后播放对话
+        StartCoroutine(PlayDialogAfterDealing());
+    }
+
+    private IEnumerator PlayDialogAfterDealing()
+    {
+        // 等待一小段时间让发牌动画开始
+        yield return new WaitForSeconds(0.5f);
+        
+        // 播放对话
+        if (DialogManager.Instance != null)
+        {
+            DialogManager.Instance.PlayRange(13, 16);
+        }
     }
 
     private void ExitGame()
