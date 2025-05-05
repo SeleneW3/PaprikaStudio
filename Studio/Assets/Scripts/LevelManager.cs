@@ -21,6 +21,10 @@ public class LevelManager : NetworkBehaviour
     public NetworkVariable<bool> isGunfightMode = new NetworkVariable<bool>();
     public NetworkVariable<float> firstPhaseScore1 = new NetworkVariable<float>();
     public NetworkVariable<float> firstPhaseScore2 = new NetworkVariable<float>();
+    
+    // 玩家选择状态
+    public NetworkVariable<bool> player1Ready = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> player2Ready = new NetworkVariable<bool>(false);
 
     private void Start()
     {
@@ -28,43 +32,69 @@ public class LevelManager : NetworkBehaviour
             settlementPanel.SetActive(false);
 
         if (continueButton != null)
-            continueButton.onClick.AddListener(StartGunfightPhase);
+            continueButton.onClick.AddListener(OnContinueClicked);
             
         if (exitButton != null)
-            exitButton.onClick.AddListener(ExitGame);
+            exitButton.onClick.AddListener(OnExitClicked);
+
+        // 监听玩家准备状态变化
+        player1Ready.OnValueChanged += OnPlayerReadyChanged;
+        player2Ready.OnValueChanged += OnPlayerReadyChanged;
     }
 
-    // 第一阶段（无枪）结束时调用
-    public void ShowFirstPhaseSettlement()
+    private void OnDestroy()
     {
-        if (settlementPanel != null)
-        {
-            settlementPanel.SetActive(true);
-            
-            // 保存第一阶段分数
-            if (NetworkManager.Singleton.IsServer)
-            {
-                firstPhaseScore1.Value = roundManager.player1.point.Value;
-                firstPhaseScore2.Value = roundManager.player2.point.Value;
-            }
+        player1Ready.OnValueChanged -= OnPlayerReadyChanged;
+        player2Ready.OnValueChanged -= OnPlayerReadyChanged;
+    }
 
-            // 更新结算面板显示
-            if (settlementScoreText != null)
-            {
-                string winner = firstPhaseScore1.Value > firstPhaseScore2.Value ? "Player 1" : 
-                              firstPhaseScore2.Value > firstPhaseScore1.Value ? "Player 2" : "No one";
-                
-                settlementScoreText.text = $"Phase 1 Complete!\n\n" +
-                                         $"Player 1: {firstPhaseScore1.Value}\n" +
-                                         $"Player 2: {firstPhaseScore2.Value}\n\n" +
-                                         $"{winner} wins Phase 1!\n\n" +
-                                         "Continue to Gunfight Phase?";
-            }
+    private void OnContinueClicked()
+    {
+        SetPlayerReadyServerRpc(NetworkManager.Singleton.LocalClientId);
+        
+        // 禁用按钮并显示等待消息
+        continueButton.interactable = false;
+        exitButton.interactable = false;
+        settlementScoreText.text += "\n\n等待另一位玩家选择...";
+    }
+
+    private void OnExitClicked()
+    {
+        ExitGameServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetPlayerReadyServerRpc(ulong clientId)
+    {
+        if (clientId == 0)
+            player1Ready.Value = true;
+        else
+            player2Ready.Value = true;
+    }
+
+    private void OnPlayerReadyChanged(bool previousValue, bool newValue)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+        
+        // 如果双方都准备好了
+        if (player1Ready.Value && player2Ready.Value)
+        {
+            StartGunfightPhaseServerRpc();
         }
     }
 
-    // 开始枪战阶段
-    public void StartGunfightPhase()
+    [ServerRpc(RequireOwnership = false)]
+    private void StartGunfightPhaseServerRpc()
+    {
+        // 重置准备状态
+        player1Ready.Value = false;
+        player2Ready.Value = false;
+        
+        StartGunfightPhaseClientRpc();
+    }
+
+    [ClientRpc]
+    private void StartGunfightPhaseClientRpc()
     {
         // 关闭结算面板
         if (settlementPanel != null)
@@ -89,19 +119,14 @@ public class LevelManager : NetworkBehaviour
         StartCoroutine(PlayDialogAfterDealing());
     }
 
-    private IEnumerator PlayDialogAfterDealing()
+    [ServerRpc(RequireOwnership = false)]
+    private void ExitGameServerRpc()
     {
-        // 等待一小段时间让发牌动画开始
-        yield return new WaitForSeconds(0.5f);
-        
-        // 播放对话
-        if (DialogManager.Instance != null)
-        {
-            DialogManager.Instance.PlayRange(13, 16);
-        }
+        ExitGameClientRpc();
     }
 
-    private void ExitGame()
+    [ClientRpc]
+    private void ExitGameClientRpc()
     {
         UIManager uiManager = FindObjectOfType<UIManager>();
         if (uiManager != null)
@@ -111,6 +136,58 @@ public class LevelManager : NetworkBehaviour
                               $"Player 1: {firstPhaseScore1.Value}\n" +
                               $"Player 2: {firstPhaseScore2.Value}";
             uiManager.ShowGameOver(finalScore);
+        }
+    }
+
+    // 第一阶段（无枪）结束时调用
+    public void ShowFirstPhaseSettlement()
+    {
+        if (settlementPanel != null)
+        {
+            settlementPanel.SetActive(true);
+            
+            // 保存第一阶段分数
+            if (NetworkManager.Singleton.IsServer)
+            {
+                firstPhaseScore1.Value = roundManager.player1.point.Value;
+                firstPhaseScore2.Value = roundManager.player2.point.Value;
+            }
+
+            // 重置准备状态
+            if (NetworkManager.Singleton.IsServer)
+            {
+                player1Ready.Value = false;
+                player2Ready.Value = false;
+            }
+
+            // 启用按钮
+            continueButton.interactable = true;
+            exitButton.interactable = true;
+
+            // 更新结算面板显示
+            if (settlementScoreText != null)
+            {
+                string winner = firstPhaseScore1.Value > firstPhaseScore2.Value ? "Player 1" : 
+                              firstPhaseScore2.Value > firstPhaseScore1.Value ? "Player 2" : "No one";
+                
+                settlementScoreText.text = $"Phase 1 Complete!\n\n" +
+                                         $"Player 1: {firstPhaseScore1.Value}\n" +
+                                         $"Player 2: {firstPhaseScore2.Value}\n\n" +
+                                         $"{winner} wins Phase 1!\n\n" +
+                                         "Continue to Gunfight Phase?";
+            }
+        }
+    }
+
+    private IEnumerator PlayDialogAfterDealing()
+    {
+        // 等待一小段时间让发牌动画开始
+        yield return new WaitForSeconds(0.5f);
+        
+        // 播放对话
+        if (DialogManager.Instance != null)
+        {
+            DialogManager.Instance.PlayRange(13, 16);
         }
     }
 
