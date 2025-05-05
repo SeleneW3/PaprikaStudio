@@ -11,6 +11,7 @@ public class RoundManager : NetworkBehaviour
     public TMP_Text roundText;
     public float baseBet = 1f;
     public float betMultiplier = 2f;
+    public LevelManager levelManager;  // 添加LevelManager引用
 
     [Header("Game Settings")]
     public int totalRounds = 5; // 游戏总回合数
@@ -190,9 +191,16 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
-           
-            
+            // 根据是否是枪战模式选择计分方法
+            if (levelManager != null && levelManager.IsGunfightMode())
+            {
+                CalculatePointWithGunAndCard();
+            }
+            else
+            {
             CalculatePointWithCardButWithoutGun();
+            }
+            
             ChessMoveBack();
             ResetChess();
             ResetPlayersChoice();
@@ -205,7 +213,7 @@ public class RoundManager : NetworkBehaviour
             {
                 uiManager.UpdateRoundText(currentRound, totalRounds);
             }
-            else if (roundText != null) // 备用方案：直接更新
+            else if (roundText != null)
             {
                 roundText.text = $"ROUND {currentRound}/{totalRounds}";
             }
@@ -236,7 +244,7 @@ public class RoundManager : NetworkBehaviour
     {
         if (gameEnded)
         {
-            return;  // 如果游戏已经结束，则不再执行其他操作
+            return;
         }
 
         // 计算完成后，构造调试信息字符串
@@ -308,10 +316,51 @@ public class RoundManager : NetworkBehaviour
         }
         ResetPlayersChoice();
         GameManager.Instance.ResetAllBlocksServerRpc();
-        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
 
+        // 检查是否回合数达到上限
+        if (!gameEnded && currentRound >= totalRounds)
+        {
+            Debug.Log($"{totalRounds} rounds completed.");
+            gameEnded = true;
+            
+            // 显示第一阶段结算面板
+            if (levelManager != null)
+            {
+                levelManager.ShowFirstPhaseSettlement();
+            }
+            else
+            {
+                // 原有的结束逻辑
+                UIManager uiManager = FindObjectOfType<UIManager>();
+                if (uiManager != null)
+                {
+                    string winner = "";
+                    if (player1.point.Value > player2.point.Value)
+                    {
+                        winner = "Player 1 wins!";
+                    }
+                    else if (player2.point.Value > player1.point.Value)
+                    {
+                        winner = "Player 2 wins!";
+                    }
+                    else
+                    {
+                        winner = "It's a tie!";
+                    }
+                    uiManager.ShowGameOver($"{totalRounds} rounds completed\n{winner}");
+                }
+            }
+        }
+
+        // 如果游戏未结束，则继续进行下一回合
+        if (!gameEnded)
+        {
+            currentRound++;
+            Debug.Log($"Round {currentRound}");
+        }
     }
 
     void CalculatePointWithoutCardAndGun()
