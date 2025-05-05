@@ -34,7 +34,6 @@ public class PlayerLogic : NetworkBehaviour
     NetworkVariableWritePermission.Server
 );
 
-
     public List<CardLogic> hand = new List<CardLogic>();
     public Transform handPos;
 
