@@ -99,13 +99,11 @@ public class GunController : NetworkBehaviour
         remainingChances.Value--;  // 使用 .Value 访问 NetworkVariable 的值
         Debug.Log($"Current position: {currentPosition}, Remaining chances: {remainingChances.Value}, Real Bullet is at position {realBulletPosition.Value}");
 
+        // 使用ClientRpc来同步动画
+        PlayFireAnimationClientRpc();
+        
         // 延迟播放开枪音效
         Invoke("PlayGunFireSound", 2f);
-        
-        if (gunAnimator != null)
-        {
-            gunAnimator.SetTrigger("Grab");
-        }
 
         if (currentPosition == realBulletPosition.Value) // 检查当前位置是否是真子弹位置
         {
@@ -158,9 +156,14 @@ public class GunController : NetworkBehaviour
     [ClientRpc]
     void PlayFireAnimationClientRpc()
     {
+        Debug.Log("PlayFireAnimationClientRpc called on " + (IsServer ? "Server" : "Client"));
         if (gunAnimator != null)
         {
             gunAnimator.SetTrigger("Grab");
+        }
+        else
+        {
+            Debug.LogError("gunAnimator is null on " + (IsServer ? "Server" : "Client"));
         }
     }
     
