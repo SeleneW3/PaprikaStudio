@@ -50,16 +50,31 @@ public class LevelManager : NetworkBehaviour
 
     private void OnContinueClicked()
     {
+        if (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsClient)
+        {
+            Debug.LogError("Not connected to network!");
+            return;
+        }
+
         SetPlayerReadyServerRpc(NetworkManager.Singleton.LocalClientId);
         
         // 禁用按钮并显示等待消息
-        continueButton.interactable = false;
-        exitButton.interactable = false;
-        settlementScoreText.text += "\n\n等待另一位玩家选择...";
+        if (continueButton != null)
+            continueButton.interactable = false;
+        if (exitButton != null)
+            exitButton.interactable = false;
+        if (settlementScoreText != null)
+            settlementScoreText.text += "\n\n等待另一位玩家选择...";
     }
 
     private void OnExitClicked()
     {
+        if (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsClient)
+        {
+            Debug.LogError("Not connected to network!");
+            return;
+        }
+
         ExitGameServerRpc();
     }
 
@@ -100,6 +115,13 @@ public class LevelManager : NetworkBehaviour
         if (settlementPanel != null)
             settlementPanel.SetActive(false);
 
+        // 隐藏游戏结束文本
+        UIManager uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.HideGameOver();
+        }
+
         // 先重置游戏状态和分数
         if (NetworkManager.Singleton.IsServer)
         {
@@ -135,34 +157,42 @@ public class LevelManager : NetworkBehaviour
                               $"Phase 1 Results:\n" +
                               $"Player 1: {firstPhaseScore1.Value}\n" +
                               $"Player 2: {firstPhaseScore2.Value}";
-            uiManager.ShowGameOver(finalScore);
+            uiManager.NetworkShowGameOver(finalScore);
         }
     }
 
     // 第一阶段（无枪）结束时调用
     public void ShowFirstPhaseSettlement()
     {
+        if (NetworkManager.Singleton.IsServer)
+        {
+            // 在服务器端保存分数
+            firstPhaseScore1.Value = roundManager.player1.point.Value;
+            firstPhaseScore2.Value = roundManager.player2.point.Value;
+            
+            // 重置准备状态
+            player1Ready.Value = false;
+            player2Ready.Value = false;
+
+            // 通知所有客户端更新UI
+            ShowSettlementPanelClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void ShowSettlementPanelClientRpc()
+    {
+        Debug.Log($"Showing settlement panel on client. Scores: {firstPhaseScore1.Value} vs {firstPhaseScore2.Value}");
+        
         if (settlementPanel != null)
         {
             settlementPanel.SetActive(true);
-            
-            // 保存第一阶段分数
-            if (NetworkManager.Singleton.IsServer)
-            {
-                firstPhaseScore1.Value = roundManager.player1.point.Value;
-                firstPhaseScore2.Value = roundManager.player2.point.Value;
-            }
-
-            // 重置准备状态
-            if (NetworkManager.Singleton.IsServer)
-            {
-                player1Ready.Value = false;
-                player2Ready.Value = false;
-            }
 
             // 启用按钮
-            continueButton.interactable = true;
-            exitButton.interactable = true;
+            if (continueButton != null)
+                continueButton.interactable = true;
+            if (exitButton != null)
+                exitButton.interactable = true;
 
             // 更新结算面板显示
             if (settlementScoreText != null)
@@ -176,6 +206,14 @@ public class LevelManager : NetworkBehaviour
                                          $"{winner} wins Phase 1!\n\n" +
                                          "Continue to Gunfight Phase?";
             }
+            else
+            {
+                Debug.LogError("Settlement score text is missing!");
+            }
+        }
+        else
+        {
+            Debug.LogError("Settlement panel is missing!");
         }
     }
 

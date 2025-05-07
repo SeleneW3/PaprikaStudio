@@ -404,6 +404,31 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    // 网络同步版本的显示游戏结束文本
+    public void NetworkShowGameOver(string reason = "")
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            // 如果没有网络管理器，直接显示
+            ShowGameOver(reason);
+            return;
+        }
+
+        if (NetworkManager.Singleton.IsServer)
+        {
+            // 如果是服务器，则通知所有客户端显示游戏结束文本
+            NetworkShowGameOverClientRpc(reason);
+        }
+    }
+
+    [ClientRpc]
+    private void NetworkShowGameOverClientRpc(string reason)
+    {
+        // 确保在所有客户端上显示
+        ShowGameOver(reason);
+        Debug.Log($"Showing game over text on client: {reason}");
+    }
+
     // 提供更新调试信息的接口
     public void UpdateDebugInfo(string player1Debug, string player2Debug)
     {
