@@ -38,6 +38,10 @@ public class RoundManager : NetworkBehaviour
 
     public int breakPoint = 0;
 
+    [Header("Bool")]
+    public bool chessIsMoved = false;
+    public bool playerGotCard = false;
+
 
     void Start()
     {
@@ -133,6 +137,7 @@ public class RoundManager : NetworkBehaviour
                 if (cardManager != null)
                 {
                     cardManager.StartDealCards(2);
+                    playerGotCard = true;
                 }
                 else
                 {
@@ -163,10 +168,26 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
         {
-            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
+            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None
+                )
             {
-                MovePiecesToPositions();
-                GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+               
+                if (playerGotCard)
+                {
+                    if (player1.usedCard.Value == true && player2.usedCard.Value == true)
+                    {
+
+                        MovePiecesToPositions();
+
+                        GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+                    }
+                    Debug.Log(tutorState);
+                }
+                else
+                {
+                    MovePiecesToPositions();
+                    GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+                }
             }
 
             // 获取玩家选择状态
@@ -200,9 +221,19 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.PlayerTurn)
         {
-            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
+            if (playerGotCard)
             {
-                // 如果双方都选择了棋子放置，开始移动棋子
+                if (player1.usedCard.Value == true && player2.usedCard.Value == true)
+                {
+
+                    MovePiecesToPositions();
+
+                    GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+                }
+                Debug.Log(tutorState);
+            }
+            else
+            {
                 MovePiecesToPositions();
                 GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
             }
@@ -473,6 +504,7 @@ public class RoundManager : NetworkBehaviour
         GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
+        chessIsMoved = false;  // 重置棋子移动状态
 
     }
 
@@ -607,7 +639,7 @@ public class RoundManager : NetworkBehaviour
                 gameEnded = true;
                 if (uiManager != null)
                 {
-                    uiManager.ShowGameOver("Player 2 is dead!");
+                    uiManager.NetworkShowGameOver("Player 2 is dead!");
                 }
             }
             else if (Gun2.GetComponent<GunController>().gameEnded.Value)
@@ -617,7 +649,7 @@ public class RoundManager : NetworkBehaviour
                 gameEnded = true;
                 if (uiManager != null)
                 {
-                    uiManager.ShowGameOver("Player 1 is dead!");
+                    uiManager.NetworkShowGameOver("Player 1 is dead!");
                 }
             }
 
@@ -642,7 +674,7 @@ public class RoundManager : NetworkBehaviour
                     {
                         winner = "It's a tie!";
                     }
-                    uiManager.ShowGameOver($"{totalRounds} rounds completed\n{winner}");
+                    uiManager.NetworkShowGameOver($"{totalRounds} rounds completed\n{winner}");
                 }
             }
 
@@ -660,6 +692,7 @@ public class RoundManager : NetworkBehaviour
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
+        chessIsMoved = false;
 
     }
 

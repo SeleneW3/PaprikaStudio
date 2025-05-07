@@ -48,16 +48,35 @@ public class ButtonLogic : MonoBehaviour
         }
     }
 
-    private void CreateClick()
+    private async void CreateClick()
     {
         string localIp = GameManager.Instance.localIP;
+        GameManager.Instance.localIP = localIp;
 
-
-        GameManager.Instance.localIP = localIp; var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+        // 配置 Transport
+        var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as Unity.Netcode.Transports.UTP.UnityTransport;
         transport.SetConnectionData(localIp, 7777);
 
-        NetworkManager.Singleton.StartHost();
-        GameManager.Instance.LoadScene("Lobby");
+        // 启动 Host
+        bool started = NetworkManager.Singleton.StartHost();
+        if (!started)
+        {
+            Debug.LogError("StartHost failed. Cannot create lobby.");
+            return;
+        }
+
+        // 等待一帧让底层 Transport 完全启动
+        await System.Threading.Tasks.Task.Yield();
+
+        // 确认自己是服务器后再切换场景
+        if (NetworkManager.Singleton.IsServer)
+        {
+            GameManager.Instance.LoadScene("Lobby");
+        }
+        else
+        {
+            Debug.LogError("NotServerException: Only server can load scenes.");
+        }
     }
 
     private void JoinClick()
