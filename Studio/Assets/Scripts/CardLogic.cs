@@ -54,6 +54,8 @@ public class CardLogic : NetworkBehaviour
 
     public bool isSelected = false;
 
+    public bool disableHover = false;
+
 
 // 在 Start 方法中初始化贴图，并监听 effectNetwork 的变化
     private void Start()
@@ -375,20 +377,23 @@ public static int GetEffectPriority(Effect effect)
 
     private void OnMouseEnter()
     {
-        if (!isOut)
+        if (!disableHover)
         {
-            if(NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+            if (!isOut)
             {
-                Debug.Log("Mouse Entered1");
-                GetComponentInParent<HandCardLogic>().Open();
-            }
-            else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
-            {
-                GetComponentInParent<HandCardLogic>().Open();
-            }
+                if (NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+                {
+                    Debug.Log("Mouse Entered1");
+                    GetComponentInParent<HandCardLogic>().Open();
+                }
+                else if (NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
+                {
+                    GetComponentInParent<HandCardLogic>().Open();
+                }
 
+            }
+            Debug.Log("Mouse Entered");
         }
-        Debug.Log("Mouse Entered");
     }
 
     private void OnMouseExit()
@@ -449,18 +454,22 @@ public static int GetEffectPriority(Effect effect)
         {
             if (GameManager.Instance.playerComponents[1].selectCard != this)
             {
-                // 播放点击卡牌前置查看的音效
                 if (SoundManager.Instance != null)
                 {
                     SoundManager.Instance.PlaySFX("CardClick");
                 }
 
                 handCardLogic.RequestSelectCardIndexServerRpc(transform.GetSiblingIndex());
-                GameManager.Instance.playerComponents[1].selectCard = this;
                 handCardLogic.hasSelectedCard = true;
-
+                if (GameManager.Instance.playerComponents[1].selectCard != null)
+                {
+                    GameManager.Instance.playerComponents[1].selectCard.disableHover = false;
+                }
+                GameManager.Instance.playerComponents[1].selectCard = this;
+                this.disableHover = true;
             }
-            else if (GameManager.Instance.playerComponents[1].selectCard == this || GameManager.Instance.playerComponents[1].selectCard == null)
+
+            else if (GameManager.Instance.playerComponents[1].selectCard == this)
             {
                 if (GameManager.Instance.playerComponents[1].usedCard.Value == false)
                 {

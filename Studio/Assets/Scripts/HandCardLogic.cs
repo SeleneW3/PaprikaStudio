@@ -279,6 +279,8 @@ public class HandCardLogic : NetworkBehaviour
             /* ===== ① 选中牌：飞到指定空物体 ===== */
             if (isSelected)
             {
+                CardLogic cardLogic = cards[i].GetComponent<CardLogic>();
+                cardLogic.disableHover = true; // 禁用 hover 效果
                 targetPos = selectedCardPos.localPosition;
                 targetRot = selectedCardPos.localRotation;
 
@@ -292,6 +294,8 @@ public class HandCardLogic : NetworkBehaviour
             /* ===== ② 其它牌：扇形排布（目标始终“完全展开”位置） ===== */
             else
             {
+                CardLogic cardLogic = cards[i].GetComponent<CardLogic>();
+                cardLogic.disableHover = false; // 禁用 hover 效果
                 float angle = 0f, offsetX = 0f;
                 if (animatedCount > 1)
                 {
