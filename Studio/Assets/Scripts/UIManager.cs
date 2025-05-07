@@ -44,6 +44,13 @@ public class UIManager : MonoBehaviour
     private GunController gun1;
     private GunController gun2;
 
+    [Header("Choice Status UI")]
+    public TextMeshProUGUI player1ChoiceStatusText; // 玩家1选择状态
+    public TextMeshProUGUI player2ChoiceStatusText; // 玩家2选择状态
+    public Transform player1ChoiceStatusAnchor; // 玩家1状态显示锚点
+    public Transform player2ChoiceStatusAnchor; // 玩家2状态显示锚点
+    public Vector2 choiceStatusOffset = new Vector2(0, 30); // 状态显示的位置偏移
+
     void Start()
     {
         // 获取父级Canvas
@@ -96,6 +103,21 @@ public class UIManager : MonoBehaviour
         
         // 强制UI可见性
         ForceUIVisibility();
+        
+        // 初始化选择状态文本
+        if (player1ChoiceStatusText != null)
+        {
+            player1ChoiceStatusText.gameObject.SetActive(true);
+            player1ChoiceStatusText.text = "...";
+            player1ChoiceStatusText.color = Color.white;
+        }
+        
+        if (player2ChoiceStatusText != null)
+        {
+            player2ChoiceStatusText.gameObject.SetActive(true);
+            player2ChoiceStatusText.text = "...";
+            player2ChoiceStatusText.color = Color.white;
+        }
     }
 
     void Update()
@@ -200,6 +222,16 @@ public class UIManager : MonoBehaviour
         {
             Vector3 roundScreenPos = Camera.main.WorldToScreenPoint(roundAnchor.position);
             UpdateTextPosition(roundText, roundScreenPos, roundOffset, roundScreenPos.z < 0);
+        }
+
+        // 更新选择状态文本位置
+        if (player1ChoiceStatusText != null && player2ChoiceStatusText != null)
+        {
+            Vector3 status1ScreenPos = Camera.main.WorldToScreenPoint(player1ChoiceStatusAnchor.position);
+            Vector3 status2ScreenPos = Camera.main.WorldToScreenPoint(player2ChoiceStatusAnchor.position);
+            
+            UpdateTextPosition(player1ChoiceStatusText, status1ScreenPos, choiceStatusOffset, status1ScreenPos.z < 0);
+            UpdateTextPosition(player2ChoiceStatusText, status2ScreenPos, choiceStatusOffset, status2ScreenPos.z < 0);
         }
     }
     
@@ -392,6 +424,22 @@ public class UIManager : MonoBehaviour
         if (roundText != null)
         {
             roundText.text = $"ROUND {currentRound}/{totalRounds}";
+        }
+    }
+
+    // 更新选择状态的方法
+    public void UpdateChoiceStatus(bool player1Selected, bool player2Selected)
+    {
+        if (player1ChoiceStatusText != null)
+        {
+            player1ChoiceStatusText.text = player1Selected ? "✓" : "...";
+            player1ChoiceStatusText.color = player1Selected ? Color.green : Color.white;
+        }
+        
+        if (player2ChoiceStatusText != null)
+        {
+            player2ChoiceStatusText.text = player2Selected ? "✓" : "...";
+            player2ChoiceStatusText.color = player2Selected ? Color.green : Color.white;
         }
     }
 } 

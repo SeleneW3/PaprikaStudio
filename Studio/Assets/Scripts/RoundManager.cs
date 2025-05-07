@@ -169,6 +169,16 @@ public class RoundManager : NetworkBehaviour
                 GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
             }
 
+            // 获取玩家选择状态
+            bool player1Selected = player1.choice != PlayerLogic.playerChoice.None;
+            bool player2Selected = player2.choice != PlayerLogic.playerChoice.None;
+            
+            // 更新UI显示
+            UIManager uiManager = FindObjectOfType<UIManager>();
+            if (uiManager != null)
+            {
+                uiManager.UpdateChoiceStatus(player1Selected, player2Selected);
+            }
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
         {
@@ -195,6 +205,17 @@ public class RoundManager : NetworkBehaviour
                 // 如果双方都选择了棋子放置，开始移动棋子
                 MovePiecesToPositions();
                 GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+            }
+
+            // 获取玩家选择状态
+            bool player1Selected = player1.choice != PlayerLogic.playerChoice.None;
+            bool player2Selected = player2.choice != PlayerLogic.playerChoice.None;
+            
+            // 更新UI显示
+            UIManager uiManager = FindObjectOfType<UIManager>();
+            if (uiManager != null)
+            {
+                uiManager.UpdateChoiceStatus(player1Selected, player2Selected);
             }
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
