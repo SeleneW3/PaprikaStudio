@@ -22,13 +22,12 @@ public class CellLogic : MonoBehaviour
         
     }
 
-    public void Initial(OnlinePlayerInfo info, int displayIndex)
+    public void Initial(OnlinePlayerInfo playerInfo)
     {
-        this.playerInfo = info;
         playerName = transform.Find("Name").GetComponent<TMP_Text>();
         stateText = transform.Find("State").GetComponent<TMP_Text>();
-        playerName.text = "Player" + displayIndex;
-        stateText.text = info.isReady ? "Ready" : "Not Ready";
+        playerName.text = "Player" + playerInfo.id;
+        stateText.text = playerInfo.isReady ? "Ready" : "Not Ready";
     }
 
     internal void SetReady(bool arg0)

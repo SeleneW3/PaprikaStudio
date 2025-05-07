@@ -10,13 +10,6 @@ public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    // 添加玩家ID存储
-    private ulong player1NetworkId;
-    private ulong player2NetworkId;
-    
-    // 添加网络变量来同步玩家ID
-    public NetworkVariable<ulong> networkPlayer1Id = new NetworkVariable<ulong>();
-    public NetworkVariable<ulong> networkPlayer2Id = new NetworkVariable<ulong>();
 
     public enum GameState
     {
@@ -248,85 +241,24 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    public void SetPlayerRoles(ulong player1Id, ulong player2Id)
-    {
-        player1NetworkId = player1Id;
-        player2NetworkId = player2Id;
-        
-        if (IsServer)
-        {
-            networkPlayer1Id.Value = player1Id;
-            networkPlayer2Id.Value = player2Id;
-        }
-
-        // 清理现有的玩家组件列表
-        playerComponents.Clear();
-        playerObjs.Clear();
-        
-        Debug.Log($"设置玩家角色 - 本地玩家ID: {NetworkManager.Singleton.LocalClientId}");
-        Debug.Log($"Player1(Host) ID: {player1NetworkId}, Player2(Client) ID: {player2NetworkId}");
-    }
-
-    public bool IsPlayer1()
-    {
-        return NetworkManager.Singleton.LocalClientId == networkPlayer1Id.Value;
-    }
-
-    public bool IsPlayer2()
-    {
-        return NetworkManager.Singleton.LocalClientId == networkPlayer2Id.Value;
-    }
-
     public void AddPlayer(PlayerLogic player)
     {
         if (!playerComponents.Contains(player))
         {
-            // 根据网络ID设置玩家ID
-            if (player.OwnerClientId == networkPlayer1Id.Value)
+            if(player.playerID == 1)
             {
-                player.playerID = 1;
-                // 确保Player1总是在列表的第一个位置
-                if (playerComponents.Count > 0 && playerComponents[0].playerID != 1)
-                {
-                    playerComponents.Insert(0, player);
-                    playerObjs.Insert(0, player.gameObject);
-                }
-                else
-                {
-                    playerComponents.Add(player);
-                    playerObjs.Add(player.gameObject);
-                }
-                Debug.Log($"添加Player1，NetworkId: {player.OwnerClientId}");
+                GameManager.Instance.playerComponents[0] = player;
+                GameManager.Instance.playerObjs[0] = player.gameObject;
             }
-            else if (player.OwnerClientId == networkPlayer2Id.Value)
+            else if(player.playerID == 2)
             {
-                player.playerID = 2;
-                playerComponents.Add(player);
-                playerObjs.Add(player.gameObject);
-                Debug.Log($"添加Player2，NetworkId: {player.OwnerClientId}");
-            }
-            else
-            {
-                Debug.LogError($"未知的玩家NetworkId: {player.OwnerClientId}，当前Player1Id: {networkPlayer1Id.Value}, Player2Id: {networkPlayer2Id.Value}");
-                return;
+                GameManager.Instance.playerComponents[1] = player;
+                GameManager.Instance.playerObjs[1] = player.gameObject;
             }
         }
-        
-        if (playerComponents.Count == 2)
-        {
-            // 确保玩家顺序正确
-            if (playerComponents[0].playerID != 1)
-            {
-                // 交换 PlayerLogic 组件
-                PlayerLogic tempComponent = playerComponents[0];
-                playerComponents[0] = playerComponents[1];
-                playerComponents[1] = tempComponent;
 
-                // 交换对应的 GameObject
-                GameObject tempObject = playerObjs[0];
-                playerObjs[0] = playerObjs[1];
-                playerObjs[1] = tempObject;
-            }
+        if (playerComponents[1] != null && playerComponents[0] != null)
+        {
             OnPlayersReady?.Invoke();
         }
     }
