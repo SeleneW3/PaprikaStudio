@@ -221,21 +221,24 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.PlayerTurn)
         {
-            if (playerGotCard)
+            if(player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
             {
-                if (player1.usedCard.Value == true && player2.usedCard.Value == true)
+                if (playerGotCard)
                 {
+                    if (player1.usedCard.Value == true && player2.usedCard.Value == true)
+                    {
 
+                        MovePiecesToPositions();
+
+                        GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+                    }
+                    Debug.Log(tutorState);
+                }
+                else
+                {
                     MovePiecesToPositions();
-
                     GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
                 }
-                Debug.Log(tutorState);
-            }
-            else
-            {
-                MovePiecesToPositions();
-                GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
             }
 
             // 获取玩家选择状态

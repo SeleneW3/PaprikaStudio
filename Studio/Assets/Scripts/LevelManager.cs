@@ -155,8 +155,8 @@ public class LevelManager : NetworkBehaviour
         {
             string finalScore = $"Game Complete!\n\n" +
                               $"Phase 1 Results:\n" +
-                              $"Player 1: {firstPhaseScore1.Value}\n" +
-                              $"Player 2: {firstPhaseScore2.Value}";
+                              $"Player 1: {roundManager.player1.point.Value}\n" +
+                              $"Player 2: {roundManager.player2.point.Value}";
             uiManager.NetworkShowGameOver(finalScore);
         }
     }
@@ -182,7 +182,7 @@ public class LevelManager : NetworkBehaviour
     [ClientRpc]
     private void ShowSettlementPanelClientRpc()
     {
-        Debug.Log($"Showing settlement panel on client. Scores: {firstPhaseScore1.Value} vs {firstPhaseScore2.Value}");
+        Debug.Log($"Showing settlement panel on client. Scores: {roundManager.player1.point.Value} vs {firstPhaseScore2.Value}");
         
         if (settlementPanel != null)
         {
@@ -197,12 +197,12 @@ public class LevelManager : NetworkBehaviour
             // 更新结算面板显示
             if (settlementScoreText != null)
             {
-                string winner = firstPhaseScore1.Value > firstPhaseScore2.Value ? "Player 1" : 
-                              firstPhaseScore2.Value > firstPhaseScore1.Value ? "Player 2" : "No one";
+                string winner = roundManager.player1.point.Value > roundManager.player2.point.Value ? "Player 1" :
+                              roundManager.player2.point.Value > roundManager.player1.point.Value ? "Player 2" : "No one";
                 
                 settlementScoreText.text = $"Phase 1 Complete!\n\n" +
-                                         $"Player 1: {firstPhaseScore1.Value}\n" +
-                                         $"Player 2: {firstPhaseScore2.Value}\n\n" +
+                                         $"Player 1: {roundManager.player1.point.Value}\n" +
+                                         $"Player 2: {roundManager.player2.point.Value}\n\n" +
                                          $"{winner} wins Phase 1!\n\n" +
                                          "Continue to Gunfight Phase?";
             }
