@@ -13,6 +13,7 @@ public class ChessAnimation : MonoBehaviour
     private Vector3 startPosition;
     private bool hasLanded = false;
     private bool hasStarted = false;         // 是否已经开始下落
+    private int collisionCount = 0;          // 碰撞次数计数
 
     // Start is called before the first frame update
     void Start()
@@ -67,7 +68,17 @@ public class ChessAnimation : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Table"))
         {
-            // 可以在这里添加碰撞音效或特效
+            collisionCount++;
+            
+            // 播放棋子落下音效，第二次碰撞音量减半
+            if (SoundManager.Instance != null)
+            {
+                float volume = collisionCount > 1 ? 0.5f : 1f;
+                SoundManager.Instance.SetSFXVolumeForClip("ChessDown", volume);
+                SoundManager.Instance.PlaySFX("ChessDown");
+            }
+            
+            // 检查是否已经落地
             if (!hasLanded && rb.velocity.magnitude < 0.1f)
             {
                 hasLanded = true;
@@ -81,6 +92,7 @@ public class ChessAnimation : MonoBehaviour
     {
         hasLanded = false;
         hasStarted = false;
+        collisionCount = 0;  // 重置碰撞计数
         rb.useGravity = false;
         rb.velocity = Vector3.zero;
         transform.position = new Vector3(startPosition.x, initialHeight, startPosition.z);
