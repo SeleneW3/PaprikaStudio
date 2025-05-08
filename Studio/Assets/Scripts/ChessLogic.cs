@@ -2,9 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using System;  // 添加这行用于事件系统
 
 public class ChessLogic : MonoBehaviour
 {
+    // 添加静态事件用于通知动画完成
+    public static event Action OnBothChessAnimationComplete;
+    private static int completedAnimationCount = 0;
+
     public Transform stateBeingClicked;
 
     public Vector3 clickPointPos;
@@ -12,7 +17,7 @@ public class ChessLogic : MonoBehaviour
 
     public float originToBeingClickedDuration = 0.5f;
 
-    public float beingClickedToClickPointDuration = 0.8f;
+    public float beingClickedToClickPointDuration = 1.15f;  //移动速度减慢
 
     public float heightOffset = 1f;
 
@@ -88,6 +93,9 @@ public class ChessLogic : MonoBehaviour
                 {
                     SoundManager.Instance.PlaySFX("ChessDown");
                 }
+
+                // 通知一个棋子动画完成
+                NotifyAnimationComplete();
             }
         }
         else if(state == 4 && backToOriginal)
@@ -152,6 +160,26 @@ public class ChessLogic : MonoBehaviour
             timer = 0f;
             backToOriginal = false;
             
+        }
+    }
+
+    private void OnEnable()
+    {
+        completedAnimationCount = 0;
+    }
+
+    private void OnDisable()
+    {
+        completedAnimationCount = 0;
+    }
+
+    private void NotifyAnimationComplete()
+    {
+        completedAnimationCount++;
+        if (completedAnimationCount >= 2)  // 当两个棋子都完成动画时
+        {
+            completedAnimationCount = 0;
+            OnBothChessAnimationComplete?.Invoke();
         }
     }
 }

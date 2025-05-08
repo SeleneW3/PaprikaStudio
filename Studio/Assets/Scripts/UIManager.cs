@@ -14,6 +14,13 @@ public class UIManager : MonoBehaviour
     public Transform player1ScoreAnchor; // 天平上的第一个空子物体
     public Transform player2ScoreAnchor; // 天平上的第二个空子物体
 
+    [Header("Debug Text UI")]
+    public TextMeshProUGUI player1DebugText;
+    public TextMeshProUGUI player2DebugText;
+    public Transform player1DebugAnchor; // 玩家1 debug text 显示锚点
+    public Transform player2DebugAnchor; // 玩家2 debug text 显示锚点
+    public Vector2 debugTextOffset = new Vector2(0, 30); // debug text 的位置偏移
+
     [Header("Bullets UI")]
     public TextMeshProUGUI player1BulletsText; // 显示玩家1剩余子弹的文本
     public TextMeshProUGUI player2BulletsText; // 显示玩家2剩余子弹的文本
@@ -26,8 +33,6 @@ public class UIManager : MonoBehaviour
 
     [Header("Screen Space UI")]
     public TextMeshProUGUI gameOverText;
-    public TextMeshProUGUI player1DebugText;
-    public TextMeshProUGUI player2DebugText;
 
     [Header("Movement Settings")]
     [Range(1f, 50f)]
@@ -50,6 +55,14 @@ public class UIManager : MonoBehaviour
     public Transform player1ChoiceStatusAnchor; // 玩家1状态显示锚点
     public Transform player2ChoiceStatusAnchor; // 玩家2状态显示锚点
     public Vector2 choiceStatusOffset = new Vector2(0, 30); // 状态显示的位置偏移
+
+    [Header("Debug Text Animation")]
+    public float debugTextAnimDuration = 0.5f;
+    public float scaleAmount = 1.5f;
+    public float showDuration = 1.5f;  // 显示持续时间
+    public float fadeOutDuration = 0.3f;  // 淡出动画时间
+    private Vector3 debugTextOriginalScale1;
+    private Vector3 debugTextOriginalScale2;
 
     void Start()
     {
@@ -118,6 +131,109 @@ public class UIManager : MonoBehaviour
             player2ChoiceStatusText.text = "...";
             player2ChoiceStatusText.color = Color.white;
         }
+
+        // 保存原始缩放值
+        if (player1DebugText != null)
+        {
+            debugTextOriginalScale1 = player1DebugText.transform.localScale;
+            player1DebugText.gameObject.SetActive(false);
+        }
+        if (player2DebugText != null)
+        {
+            debugTextOriginalScale2 = player2DebugText.transform.localScale;
+            player2DebugText.gameObject.SetActive(false);
+        }
+
+        // 订阅棋子动画完成事件
+        ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
+    }
+
+    void OnDestroy()
+    {
+        // 取消订阅事件
+        ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+    }
+
+    private void OnChessAnimationComplete()
+    {
+        // 当棋子动画完成时，显示并播放debug text动画
+        StartCoroutine(PlayDebugTextAnimation());
+    }
+
+    private IEnumerator PlayDebugTextAnimation()
+    {
+        // 确保debug text是可见的，并重置透明度
+        if (player1DebugText != null)
+        {
+            player1DebugText.gameObject.SetActive(true);
+            SetTextAlpha(player1DebugText, 1f);
+        }
+        if (player2DebugText != null)
+        {
+            player2DebugText.gameObject.SetActive(true);
+            SetTextAlpha(player2DebugText, 1f);
+        }
+
+        // 缩放动画
+        float elapsed = 0f;
+        while (elapsed < debugTextAnimDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / debugTextAnimDuration;
+            
+            float scale = 1f + Mathf.Sin(progress * Mathf.PI) * (scaleAmount - 1f);
+            
+            if (player1DebugText != null)
+                player1DebugText.transform.localScale = debugTextOriginalScale1 * scale;
+            if (player2DebugText != null)
+                player2DebugText.transform.localScale = debugTextOriginalScale2 * scale;
+
+            yield return null;
+        }
+
+        // 确保回到原始大小
+        if (player1DebugText != null)
+            player1DebugText.transform.localScale = debugTextOriginalScale1;
+        if (player2DebugText != null)
+            player2DebugText.transform.localScale = debugTextOriginalScale2;
+
+        // 等待显示时间
+        yield return new WaitForSeconds(showDuration);
+
+        // 淡出动画
+        elapsed = 0f;
+        while (elapsed < fadeOutDuration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = 1f - (elapsed / fadeOutDuration);  // 从1渐变到0
+            
+            if (player1DebugText != null)
+                SetTextAlpha(player1DebugText, alpha);
+            if (player2DebugText != null)
+                SetTextAlpha(player2DebugText, alpha);
+
+            yield return null;
+        }
+
+        // 完全隐藏
+        if (player1DebugText != null)
+        {
+            SetTextAlpha(player1DebugText, 0f);
+            player1DebugText.gameObject.SetActive(false);
+        }
+        if (player2DebugText != null)
+        {
+            SetTextAlpha(player2DebugText, 0f);
+            player2DebugText.gameObject.SetActive(false);
+        }
+    }
+
+    // 辅助方法：设置文本透明度
+    private void SetTextAlpha(TextMeshProUGUI text, float alpha)
+    {
+        Color color = text.color;
+        color.a = alpha;
+        text.color = color;
     }
 
     void Update()
@@ -205,6 +321,17 @@ public class UIManager : MonoBehaviour
         
         // 处理玩家2分数文本位置
         UpdateTextPosition(player2ScoreText, player2ScreenPos, scoreOffset, player2ScreenPos.z < 0);
+
+        // 更新 debug text 位置
+        if (player1DebugText != null && player2DebugText != null && 
+            player1DebugAnchor != null && player2DebugAnchor != null)
+        {
+            Vector3 debug1ScreenPos = Camera.main.WorldToScreenPoint(player1DebugAnchor.position);
+            Vector3 debug2ScreenPos = Camera.main.WorldToScreenPoint(player2DebugAnchor.position);
+            
+            UpdateTextPosition(player1DebugText, debug1ScreenPos, debugTextOffset, debug1ScreenPos.z < 0);
+            UpdateTextPosition(player2DebugText, debug2ScreenPos, debugTextOffset, debug2ScreenPos.z < 0);
+        }
         
         // 更新子弹数文本位置（使用新的锚点）
         if (player1BulletsText != null && player2BulletsText != null)
@@ -292,26 +419,27 @@ public class UIManager : MonoBehaviour
             return;
         }
         
+        // 初始化分数文本
         if (player1ScoreText != null)
         {
             player1ScoreText.gameObject.SetActive(true);
             player1ScoreText.text = "Player 1: 0";
             player1ScoreText.color = Color.red;
-            
-            if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                player1ScoreText.transform.position = new Vector3(Screen.width / 2, Screen.height / 2 + 100, 0);
-            }
-            else // Screen Space - Camera
-            {
-                // 将屏幕中心转换为世界坐标
-                Vector3 screenCenter = new Vector3(Screen.width / 2, Screen.height / 2 + 100, 0);
-                Ray ray = parentCanvas.worldCamera.ScreenPointToRay(screenCenter);
-                float distance = parentCanvas.planeDistance;
-                Vector3 worldPos = ray.origin + ray.direction * distance;
-                
-                player1ScoreText.transform.position = worldPos;
-            }
+        }
+
+        // 初始化 debug text
+        if (player1DebugText != null)
+        {
+            player1DebugText.gameObject.SetActive(true);
+            player1DebugText.text = "+0";
+            player1DebugText.color = Color.white;
+        }
+        
+        if (player2DebugText != null)
+        {
+            player2DebugText.gameObject.SetActive(true);
+            player2DebugText.text = "+0";
+            player2DebugText.color = Color.white;
         }
         
         // 同样初始化子弹数文本
@@ -429,18 +557,38 @@ public class UIManager : MonoBehaviour
         Debug.Log($"Showing game over text on client: {reason}");
     }
 
-    // 提供更新调试信息的接口
+    // 修改UpdateDebugInfo方法
     public void UpdateDebugInfo(string player1Debug, string player2Debug)
     {
-        if (player1DebugText != null) player1DebugText.text = player1Debug;
-        if (player2DebugText != null) player2DebugText.text = player2Debug;
+        if (player1DebugText != null)
+        {
+            player1DebugText.text = player1Debug;
+            player1DebugText.gameObject.SetActive(false);
+            SetTextAlpha(player1DebugText, 1f);  // 重置透明度
+        }
+        if (player2DebugText != null)
+        {
+            player2DebugText.text = player2Debug;
+            player2DebugText.gameObject.SetActive(false);
+            SetTextAlpha(player2DebugText, 1f);  // 重置透明度
+        }
     }
 
-    // 用于清空调试信息
+    // 修改ClearDebugInfo方法
     public void ClearDebugInfo()
     {
-        if (player1DebugText != null) player1DebugText.text = "";
-        if (player2DebugText != null) player2DebugText.text = "";
+        if (player1DebugText != null)
+        {
+            player1DebugText.text = "";
+            player1DebugText.gameObject.SetActive(false);
+            SetTextAlpha(player1DebugText, 1f);  // 重置透明度
+        }
+        if (player2DebugText != null)
+        {
+            player2DebugText.text = "";
+            player2DebugText.gameObject.SetActive(false);
+            SetTextAlpha(player2DebugText, 1f);  // 重置透明度
+        }
     }
 
     // 添加更新回合文本的方法

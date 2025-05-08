@@ -311,8 +311,8 @@ public class RoundManager : NetworkBehaviour
         }
 
         // 计算完成后，构造调试信息字符串
-        string player1Debug = $"Player 1: {player1.choice} +0";
-        string player2Debug = $"Player 2: {player2.choice} +0";
+        string player1Debug = "+0";
+        string player2Debug = "+0";
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -323,8 +323,8 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
-                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
-                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
+                player1Debug = $"+{player1.coopPoint.Value}";
+                player2Debug = $"+{player2.coopPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -333,9 +333,8 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
 
-                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
-                player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
-
+                player1Debug = $"+{player1.coopPoint.Value}";
+                player2Debug = $"+{player2.cheatPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -344,9 +343,8 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
-                player1Debug = $"Player 1: Cheat +{player1.cheatPoint.Value}";
-                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
-
+                player1Debug = $"+{player1.cheatPoint.Value}";
+                player2Debug = $"+{player2.coopPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -355,12 +353,11 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
 
-                player1Debug = $"Player 1: Cheat +0";
-                player2Debug = $"Player 2: Cheat +0";
+                player1Debug = "+0";
+                player2Debug = "+0";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
-
 
             // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
             UIManager uiManager = FindObjectOfType<UIManager>();
@@ -428,16 +425,14 @@ public class RoundManager : NetworkBehaviour
 
     void CalculatePointWithoutCardAndGun()
     {
-
         if (gameEnded)
         {
-            return;  // 如果游戏已经结束，则不再执行其他操作
+            return;
         }
 
         // 计算完成后，构造调试信息字符串
-        string player1Debug = $"Player 1: {player1.choice} +0";
-        string player2Debug = $"Player 2: {player2.choice} +0";
-
+        string player1Debug = "+0";
+        string player2Debug = "+0";
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -448,8 +443,8 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
-                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
-                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
+                player1Debug = $"+{player1.coopPoint.Value}";
+                player2Debug = $"+{player2.coopPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -458,9 +453,8 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
 
-                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
-                player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
-
+                player1Debug = $"+{player1.coopPoint.Value}";
+                player2Debug = $"+{player2.cheatPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -469,9 +463,8 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
-                player1Debug = $"Player 1: Cheat +{player1.cheatPoint.Value}";
-                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
-
+                player1Debug = $"+{player1.cheatPoint.Value}";
+                player2Debug = $"+{player2.coopPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -480,12 +473,11 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
 
-                player1Debug = $"Player 1: Cheat +0";
-                player2Debug = $"Player 2: Cheat +0";
+                player1Debug = "+0";
+                player2Debug = "+0";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
-
 
             // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
             UIManager uiManager = FindObjectOfType<UIManager>();
@@ -516,12 +508,12 @@ public class RoundManager : NetworkBehaviour
     {
         if (gameEnded)
         {
-            return;  // 如果游戏已经结束，则不再执行其他操作
+            return;
         }
 
         // 计算完成后，构造调试信息字符串
-        string player1Debug = $"Player 1: {player1.choice} +0"; 
-        string player2Debug = $"Player 2: {player2.choice} +0";
+        string player1Debug = "+0";
+        string player2Debug = "+0";
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -535,6 +527,9 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
+                player1Debug = $"+{player1.coopPoint.Value}";
+                player2Debug = $"+{player2.coopPoint.Value}";
+
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
@@ -542,9 +537,6 @@ public class RoundManager : NetworkBehaviour
                 // 生成硬币
                 Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
-
-                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
-                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -556,6 +548,9 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.coopPoint.Value;
                 player2.point.Value += player2.cheatPoint.Value;
 
+                player1Debug = $"+{player1.coopPoint.Value}";
+                player2Debug = $"+{player2.cheatPoint.Value}";
+
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
@@ -564,10 +559,7 @@ public class RoundManager : NetworkBehaviour
                 Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
-                player1Debug = $"Player 1: Cooperate +{player1.coopPoint.Value}";
-                player2Debug = $"Player 2: Cheat +{player2.cheatPoint.Value}";
-
-                Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
+                Gun1.GetComponent<GunController>().FireGun();
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -579,6 +571,9 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += player1.cheatPoint.Value;
                 player2.point.Value += player2.coopPoint.Value;
 
+                player1Debug = $"+{player1.cheatPoint.Value}";
+                player2Debug = $"+{player2.coopPoint.Value}";
+
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
@@ -587,10 +582,7 @@ public class RoundManager : NetworkBehaviour
                 Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
-                player1Debug = $"Player 1: Cheat +{player1.cheatPoint.Value}";
-                player2Debug = $"Player 2: Cooperate +{player2.coopPoint.Value}";
-
-                Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
+                Gun2.GetComponent<GunController>().FireGun();
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
@@ -602,19 +594,19 @@ public class RoundManager : NetworkBehaviour
                 player1.point.Value += 0f;
                 player2.point.Value += 0f;
 
+                player1Debug = "+0";
+                player2Debug = "+0";
+
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
-                // 生成硬币 (这里应该是0个硬币，因为分数没有增加)
+                // 生成硬币
                 Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
-                player1Debug = $"Player 1: Cheat +0";
-                player2Debug = $"Player 2: Cheat +0";
-
-                Gun1.GetComponent<GunController>().FireGun();  // 触发玩家1的枪动画
-                Gun2.GetComponent<GunController>().FireGun();  // 触发玩家2的枪动画
+                Gun1.GetComponent<GunController>().FireGun();
+                Gun2.GetComponent<GunController>().FireGun();
 
                 balanceScale.UpdateScore(player1.point.Value, player2.point.Value);
             }
