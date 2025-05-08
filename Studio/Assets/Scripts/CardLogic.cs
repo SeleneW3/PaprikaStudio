@@ -488,6 +488,51 @@ public static int GetEffectPriority(Effect effect)
         }
     }
 
+    private void OnMouseOver()
+    {
+        // 检测右键点击
+        if (Input.GetMouseButtonDown(1))
+        {
+            HandCardLogic handCardLogic = GetComponentInParent<HandCardLogic>();
+
+            // 检查是否是当前选中的卡牌
+            if (NetworkManager.LocalClientId == 0 && handCardLogic.belong == HandCardLogic.Belong.Player1)
+            {
+                if (GameManager.Instance.playerComponents[0].selectCard == this)
+                {
+                    // 播放取消选择的音效
+                    if (SoundManager.Instance != null)
+                    {
+                        SoundManager.Instance.PlaySFX("CardClick");
+                    }
+
+                    // 取消选择
+                    handCardLogic.RequestSelectCardIndexServerRpc(-1);
+                    handCardLogic.hasSelectedCard = false;
+                    GameManager.Instance.playerComponents[0].selectCard = null;
+                    this.disableHover = false;
+                }
+            }
+            else if (NetworkManager.LocalClientId == 1 && handCardLogic.belong == HandCardLogic.Belong.Player2)
+            {
+                if (GameManager.Instance.playerComponents[1].selectCard == this)
+                {
+                    // 播放取消选择的音效
+                    if (SoundManager.Instance != null)
+                    {
+                        SoundManager.Instance.PlaySFX("CardClick");
+                    }
+
+                    // 取消选择
+                    handCardLogic.RequestSelectCardIndexServerRpc(-1);
+                    handCardLogic.hasSelectedCard = false;
+                    GameManager.Instance.playerComponents[1].selectCard = null;
+                    this.disableHover = false;
+                }
+            }
+        }
+    }
+
     private void SendACard()
     {
         GetComponentInParent<HandCardLogic>().SendCard(transform);
