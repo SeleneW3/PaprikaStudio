@@ -72,6 +72,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: balance1 1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: efbed89a15da0c8409159a6c845a743a, type: 3}
+      propertyPath: m_TagString
+      value: BalanceScale
+      objectReference: {fileID: 0}
     - target: {fileID: 4487751408827800712, guid: efbed89a15da0c8409159a6c845a743a, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 

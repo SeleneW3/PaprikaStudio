@@ -82,6 +82,12 @@ public class UIManager : MonoBehaviour
         {
             gameOverText.gameObject.SetActive(false);
         }
+
+        // 初始化时隐藏回合文本
+        if (roundText != null)
+        {
+            roundText.gameObject.SetActive(false);
+        }
         
         // 获取GunController引用
         GameObject gun1Obj = GameObject.Find("Gun1");
@@ -467,7 +473,7 @@ public class UIManager : MonoBehaviour
         // 初始化回合显示文本
         if (roundText != null)
         {
-            roundText.gameObject.SetActive(true);
+            roundText.gameObject.SetActive(false);
             roundText.text = "ROUND 1/5";
             roundText.color = Color.white;
             
@@ -597,6 +603,7 @@ public class UIManager : MonoBehaviour
         if (roundText != null)
         {
             roundText.text = $"ROUND {currentRound}/{totalRounds}";
+            roundText.gameObject.SetActive(true);  // 显示文本
         }
     }
 
