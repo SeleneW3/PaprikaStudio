@@ -37,7 +37,18 @@ public class Coin : NetworkBehaviour
         if (NetworkManager.Singleton.IsServer)
         {
             coinPrefab = prefab;
-            instance.SpawnCoinsServerRpc(spawnPosition, amount, anchor.gameObject.name);
+            // 创建一个临时的Coin组件来调用ServerRpc
+            GameObject tempCoin = new GameObject("TempCoin");
+            Coin coinComponent = tempCoin.AddComponent<Coin>();
+            NetworkObject netObj = tempCoin.AddComponent<NetworkObject>();
+            netObj.Spawn();
+            
+            // 调用ServerRpc
+            coinComponent.SpawnCoinsServerRpc(spawnPosition, amount, anchor.gameObject.name);
+            
+            // 清理临时对象
+            netObj.Despawn();
+            GameObject.Destroy(tempCoin);
         }
     }
     

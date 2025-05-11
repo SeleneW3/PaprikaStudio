@@ -64,6 +64,8 @@ public class UIManager : MonoBehaviour
     private Vector3 debugTextOriginalScale1;
     private Vector3 debugTextOriginalScale2;
 
+    private System.Action onDebugTextAnimationComplete;
+
     void Start()
     {
         // 获取父级Canvas
@@ -232,6 +234,20 @@ public class UIManager : MonoBehaviour
             SetTextAlpha(player2DebugText, 0f);
             player2DebugText.gameObject.SetActive(false);
         }
+
+        // 调用回调
+        if (onDebugTextAnimationComplete != null)
+        {
+            onDebugTextAnimationComplete.Invoke();
+            onDebugTextAnimationComplete = null;  // 清除回调
+        }
+    }
+
+    // 新增：播放debug text动画并在完成时执行回调
+    public void PlayDebugTextAnimationWithCallback(System.Action callback)
+    {
+        onDebugTextAnimationComplete = callback;
+        StartCoroutine(PlayDebugTextAnimation());
     }
 
     // 辅助方法：设置文本透明度
