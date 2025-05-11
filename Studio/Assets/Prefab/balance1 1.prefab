@@ -94,6 +94,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: efbed89a15da0c8409159a6c845a743a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6794183017050068813}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: efbed89a15da0c8409159a6c845a743a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -2698053644342591332}
     - targetCorrespondingSourceObject: {fileID: -7092596370885093499, guid: efbed89a15da0c8409159a6c845a743a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1888823512763536720}
@@ -178,6 +181,26 @@ MonoBehaviour:
   testPlayer2WinKey: 50
   testNeutralKey: 48
   testScoreAmount: 5
+--- !u!114 &-2698053644342591332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845190911071374076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 951099334
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &2897888013229155856 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4426294346767110589, guid: efbed89a15da0c8409159a6c845a743a, type: 3}

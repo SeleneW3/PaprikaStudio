@@ -5019,6 +5019,8 @@ MonoBehaviour:
   settlementScoreText: {fileID: 642010095}
   continueButton: {fileID: 1099419178}
   exitButton: {fileID: 1577418586}
+  gameSceneName: Game
+  mapSceneName: MapScene
   isGunfightMode:
     m_InternalValue: 0
   firstPhaseScore1:
@@ -5029,6 +5031,8 @@ MonoBehaviour:
     m_InternalValue: 0
   player2Ready:
     m_InternalValue: 0
+  currentLevelIndex:
+    m_InternalValue: 1
 --- !u!4 &837097504
 Transform:
   m_ObjectHideFlags: 0
