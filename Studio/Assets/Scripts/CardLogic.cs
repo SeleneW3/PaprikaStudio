@@ -385,12 +385,29 @@ public static int GetEffectPriority(Effect effect)
                 {
                     Debug.Log("Mouse Entered1");
                     GetComponentInParent<HandCardLogic>().Open();
+                    // 设置手牌鼠标图案
+                    if (GameManager.Instance.playerComponents[0].selectCard == this)
+                    {
+                        FindObjectOfType<UIManager>().SetSelectedCardCursor();
+                    }
+                    else
+                    {
+                        FindObjectOfType<UIManager>().SetHandCardCursor();
+                    }
                 }
                 else if (NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
                 {
                     GetComponentInParent<HandCardLogic>().Open();
+                    // 设置手牌鼠标图案
+                    if (GameManager.Instance.playerComponents[1].selectCard == this)
+                    {
+                        FindObjectOfType<UIManager>().SetSelectedCardCursor();
+                    }
+                    else
+                    {
+                        FindObjectOfType<UIManager>().SetHandCardCursor();
+                    }
                 }
-
             }
             Debug.Log("Mouse Entered");
         }
@@ -403,10 +420,14 @@ public static int GetEffectPriority(Effect effect)
             if(NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
             {
                 GetComponentInParent<HandCardLogic>().Close();
+                // 恢复默认鼠标图案
+                FindObjectOfType<UIManager>().SetDefaultCursor();
             }
             else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
             {
                 GetComponentInParent<HandCardLogic>().Close();
+                // 恢复默认鼠标图案
+                FindObjectOfType<UIManager>().SetDefaultCursor();
             }
         }
         Debug.Log("Mouse Exited");
@@ -415,6 +436,7 @@ public static int GetEffectPriority(Effect effect)
     private void OnMouseDown()
     {
         HandCardLogic handCardLogic = GetComponentInParent<HandCardLogic>();
+        UIManager uiManager = FindObjectOfType<UIManager>();
 
         if (NetworkManager.LocalClientId == 0 && handCardLogic.belong == HandCardLogic.Belong.Player1)
         {
@@ -429,8 +451,9 @@ public static int GetEffectPriority(Effect effect)
                 handCardLogic.RequestSelectCardIndexServerRpc(transform.GetSiblingIndex());
                 handCardLogic.hasSelectedCard = true;
                 GameManager.Instance.playerComponents[0].selectCard = this;
+                // 更新为选中卡牌的鼠标图案
+                uiManager.SetSelectedCardCursor();
             }
-
             else if (GameManager.Instance.playerComponents[0].selectCard == this)
             {
                 if (GameManager.Instance.playerComponents[0].usedCard.Value == false)
@@ -445,11 +468,11 @@ public static int GetEffectPriority(Effect effect)
                     GameManager.Instance.playerComponents[0].SetUsedCardServerRpc(true);
                     handCardLogic.RequestSelectCardIndexServerRpc(-1);
                     handCardLogic.hasSelectedCard = false;
+                    // 恢复默认鼠标图案
+                    uiManager.SetDefaultCursor();
                 }
             }
-
         }
-
         else if (NetworkManager.LocalClientId == 1 && handCardLogic.belong == HandCardLogic.Belong.Player2)
         {
             if (GameManager.Instance.playerComponents[1].selectCard != this)
@@ -467,8 +490,9 @@ public static int GetEffectPriority(Effect effect)
                 }
                 GameManager.Instance.playerComponents[1].selectCard = this;
                 this.disableHover = true;
+                // 更新为选中卡牌的鼠标图案
+                uiManager.SetSelectedCardCursor();
             }
-
             else if (GameManager.Instance.playerComponents[1].selectCard == this)
             {
                 if (GameManager.Instance.playerComponents[1].usedCard.Value == false)
@@ -483,6 +507,8 @@ public static int GetEffectPriority(Effect effect)
                     GameManager.Instance.playerComponents[1].SetUsedCardServerRpc(true);
                     handCardLogic.RequestSelectCardIndexServerRpc(-1);
                     handCardLogic.hasSelectedCard = false;
+                    // 恢复默认鼠标图案
+                    uiManager.SetDefaultCursor();
                 }
             }
         }
@@ -494,6 +520,7 @@ public static int GetEffectPriority(Effect effect)
         if (Input.GetMouseButtonDown(1))
         {
             HandCardLogic handCardLogic = GetComponentInParent<HandCardLogic>();
+            UIManager uiManager = FindObjectOfType<UIManager>();
 
             // 检查是否是当前选中的卡牌
             if (NetworkManager.LocalClientId == 0 && handCardLogic.belong == HandCardLogic.Belong.Player1)
@@ -511,6 +538,8 @@ public static int GetEffectPriority(Effect effect)
                     handCardLogic.hasSelectedCard = false;
                     GameManager.Instance.playerComponents[0].selectCard = null;
                     this.disableHover = false;
+                    // 更新为手牌鼠标图案
+                    uiManager.SetHandCardCursor();
                 }
             }
             else if (NetworkManager.LocalClientId == 1 && handCardLogic.belong == HandCardLogic.Belong.Player2)
@@ -528,6 +557,8 @@ public static int GetEffectPriority(Effect effect)
                     handCardLogic.hasSelectedCard = false;
                     GameManager.Instance.playerComponents[1].selectCard = null;
                     this.disableHover = false;
+                    // 更新为手牌鼠标图案
+                    uiManager.SetHandCardCursor();
                 }
             }
         }

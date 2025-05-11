@@ -66,6 +66,13 @@ public class UIManager : MonoBehaviour
 
     private System.Action onDebugTextAnimationComplete;
 
+    [Header("Cursor Settings")]
+    public Texture2D defaultCursor;     // 默认鼠标图案
+    public Texture2D handCardCursor;    // 在手牌上的鼠标图案
+    public Texture2D selectedCardCursor; // 在已选中卡牌上的鼠标图案
+    public Vector2 cursorHotspot = Vector2.zero;  // 鼠标热点位置
+
+
     void Start()
     {
         // 获取父级Canvas
@@ -154,6 +161,9 @@ public class UIManager : MonoBehaviour
 
         // 订阅棋子动画完成事件
         ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
+
+        // 设置默认鼠标图案
+        SetDefaultCursor();
     }
 
     void OnDestroy()
@@ -637,5 +647,65 @@ public class UIManager : MonoBehaviour
             player2ChoiceStatusText.text = player2Selected ? "✓" : "...";
             player2ChoiceStatusText.color = player2Selected ? Color.green : Color.white;
         }
+    }
+
+    /// <summary>
+    /// 设置默认鼠标图案
+    /// </summary>
+    public void SetDefaultCursor()
+    {
+        if (defaultCursor != null)
+        {
+            Cursor.SetCursor(defaultCursor, cursorHotspot, CursorMode.Auto);
+        }
+    }
+
+    /// <summary>
+    /// 设置手牌上的鼠标图案
+    /// </summary>
+    public void SetHandCardCursor()
+    {
+        if (handCardCursor != null)
+        {
+            Cursor.SetCursor(handCardCursor, cursorHotspot, CursorMode.Auto);
+        }
+    }
+
+    /// <summary>
+    /// 设置已选中卡牌上的鼠标图案
+    /// </summary>
+    public void SetSelectedCardCursor()
+    {
+        if (selectedCardCursor != null)
+        {
+            Cursor.SetCursor(selectedCardCursor, cursorHotspot, CursorMode.Auto);
+        }
+    }
+
+    /// <summary>
+    /// 重置为系统默认鼠标图案
+    /// </summary>
+    public void ResetToSystemCursor()
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+    }
+
+    private bool IsMouseOverClickableUI()
+    {
+        // 获取鼠标位置的射线
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
+
+        foreach (RaycastHit2D hit in hits)
+        {
+            // 检查是否击中了按钮或其他可交互的UI元素
+            Button button = hit.collider?.GetComponent<Button>();
+            if (button != null && button.interactable)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 } 
