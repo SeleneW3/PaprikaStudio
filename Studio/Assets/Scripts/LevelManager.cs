@@ -56,15 +56,14 @@ public class LevelManager : NetworkBehaviour
             return;
         }
 
-        SetPlayerReadyServerRpc(NetworkManager.Singleton.LocalClientId);
-        
-        // 禁用按钮并显示等待消息
+        // 禁用按钮
         if (continueButton != null)
             continueButton.interactable = false;
         if (exitButton != null)
             exitButton.interactable = false;
-        if (settlementScoreText != null)
-            settlementScoreText.text += "\n\n等待另一位玩家选择...";
+
+        // 调用服务器RPC来加载地图场景
+        LoadMapSceneServerRpc();
     }
 
     private void OnExitClicked()
@@ -233,5 +232,12 @@ public class LevelManager : NetworkBehaviour
     public bool IsGunfightMode()
     {
         return isGunfightMode.Value;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void LoadMapSceneServerRpc()
+    {
+        // 在服务器端加载地图场景
+        GameManager.Instance.LoadScene("MapScene");
     }
 } 
