@@ -1454,7 +1454,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 72.07712, y: 0, z: 67.99616, w: 0}
+  m_margin: {x: 63.043167, y: 0, z: 61.118996, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -5019,8 +5019,6 @@ MonoBehaviour:
   settlementScoreText: {fileID: 642010095}
   continueButton: {fileID: 1099419178}
   exitButton: {fileID: 1577418586}
-  gameSceneName: Game
-  mapSceneName: MapScene
   isGunfightMode:
     m_InternalValue: 0
   firstPhaseScore1:
@@ -5031,8 +5029,6 @@ MonoBehaviour:
     m_InternalValue: 0
   player2Ready:
     m_InternalValue: 0
-  currentLevelIndex:
-    m_InternalValue: 1
 --- !u!4 &837097504
 Transform:
   m_ObjectHideFlags: 0
@@ -6008,7 +6004,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 70.87842, y: 0, z: 71.27141, w: 0}
+  m_margin: {x: 63.999474, y: 0, z: 65.25233, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
