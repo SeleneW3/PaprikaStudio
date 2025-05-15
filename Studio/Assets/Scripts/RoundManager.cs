@@ -13,6 +13,19 @@ public class RoundManager : NetworkBehaviour
     public float betMultiplier = 2f;
     public LevelManager levelManager;  // 添加LevelManager引用
 
+    [Header("Choice Statistics")]
+    // 当前回合的选择统计
+    public NetworkVariable<int> player1CurrentRoundCoopCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player1CurrentRoundCheatCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player2CurrentRoundCoopCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player2CurrentRoundCheatCount = new NetworkVariable<int>(0);
+
+    // 总的选择统计
+    public NetworkVariable<int> player1TotalCoopCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player1TotalCheatCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player2TotalCoopCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> player2TotalCheatCount = new NetworkVariable<int>(0);
+
     [Header("Game Settings")]
     public int totalRounds = 5; // 游戏总回合数
 
@@ -30,7 +43,7 @@ public class RoundManager : NetworkBehaviour
     public Transform player1ScoreAnchor; // 玩家1分数锚点
     public Transform player2ScoreAnchor; // 玩家2分数锚点
 
-    private int currentRound = 0;  // 当前回合计数器
+    public int currentRound = 0;  // 当前回合计数器
     private bool gameEnded = false;
 
     public int tutorState = 0;
@@ -444,6 +457,7 @@ public class RoundManager : NetworkBehaviour
         // 计算完成后，构造调试信息字符串
         string player1Debug = "+0";
         string player2Debug = "+0";
+        UIManager uiManager = FindObjectOfType<UIManager>();
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -535,7 +549,6 @@ public class RoundManager : NetworkBehaviour
             }
 
             // 调用 UIManager 来更新调试信息
-            UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
                 uiManager.UpdateDebugInfo(player1Debug, player2Debug);
@@ -547,14 +560,28 @@ public class RoundManager : NetworkBehaviour
                 GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
                 GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
             }
-
         }
         ResetPlayersChoice();
         GameManager.Instance.ResetAllBlocksServerRpc();
         GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
-        chessIsMoved = false;  // 重置棋子移动状态
+        chessIsMoved = false;
+
+        // 添加回合结束检查
+        if (!gameEnded && currentRound >= totalRounds)
+        {
+            EndGame(uiManager);
+        }
+        else if (!gameEnded)
+        {
+            currentRound++;
+            if (uiManager != null)
+            {
+                uiManager.UpdateRoundText(currentRound, totalRounds);
+            }
+            Debug.Log($"Round {currentRound}");
+        }
     }
 
 
@@ -568,6 +595,7 @@ public class RoundManager : NetworkBehaviour
         // 计算完成后，构造调试信息字符串
         string player1Debug = "+0";
         string player2Debug = "+0";
+        UIManager uiManager = FindObjectOfType<UIManager>();
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -666,7 +694,6 @@ public class RoundManager : NetworkBehaviour
             }
 
             // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
-            UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
                 uiManager.UpdateDebugInfo(player1Debug, player2Debug);
@@ -743,6 +770,20 @@ public class RoundManager : NetworkBehaviour
         GameManager.Instance.chessComponents[1].backToOriginal = true;
         chessIsMoved = false;
 
+        // 添加回合结束检查
+        if (!gameEnded && currentRound >= totalRounds)
+        {
+            EndGame(uiManager);
+        }
+        else if (!gameEnded)
+        {
+            currentRound++;
+            if (uiManager != null)
+            {
+                uiManager.UpdateRoundText(currentRound, totalRounds);
+            }
+            Debug.Log($"Round {currentRound}");
+        }
     }
 
     public void ResetRound()
@@ -751,6 +792,9 @@ public class RoundManager : NetworkBehaviour
 
         gameEnded = false;
         currentRound = 1;  // 重置回合计数器
+        
+        // 重置统计数据
+        ResetAllStatistics();
         
         // 重置枪支状态
         Gun1.GetComponent<GunController>().ResetGun();
@@ -885,5 +929,50 @@ public class RoundManager : NetworkBehaviour
         {
             chess.isOnGround = false;
         }
+    }
+
+    private void UpdateChoiceStatistics()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        // 更新当前回合统计
+        player1CurrentRoundCoopCount.Value = (player1.choice == PlayerLogic.playerChoice.Cooperate) ? 1 : 0;
+        player1CurrentRoundCheatCount.Value = (player1.choice == PlayerLogic.playerChoice.Cheat) ? 1 : 0;
+        player2CurrentRoundCoopCount.Value = (player2.choice == PlayerLogic.playerChoice.Cooperate) ? 1 : 0;
+        player2CurrentRoundCheatCount.Value = (player2.choice == PlayerLogic.playerChoice.Cheat) ? 1 : 0;
+
+        // 更新总统计
+        if (player1.choice == PlayerLogic.playerChoice.Cooperate)
+            player1TotalCoopCount.Value++;
+        else if (player1.choice == PlayerLogic.playerChoice.Cheat)
+            player1TotalCheatCount.Value++;
+
+        if (player2.choice == PlayerLogic.playerChoice.Cooperate)
+            player2TotalCoopCount.Value++;
+        else if (player2.choice == PlayerLogic.playerChoice.Cheat)
+            player2TotalCheatCount.Value++;
+    }
+
+    // 重置当前回合的统计
+    private void ResetCurrentRoundStatistics()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+        
+        player1CurrentRoundCoopCount.Value = 0;
+        player1CurrentRoundCheatCount.Value = 0;
+        player2CurrentRoundCoopCount.Value = 0;
+        player2CurrentRoundCheatCount.Value = 0;
+    }
+
+    // 重置所有统计
+    public void ResetAllStatistics()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        ResetCurrentRoundStatistics();
+        player1TotalCoopCount.Value = 0;
+        player1TotalCheatCount.Value = 0;
+        player2TotalCoopCount.Value = 0;
+        player2TotalCheatCount.Value = 0;
     }
 }

@@ -27,10 +27,9 @@ public class GameManager : NetworkBehaviour
     public GameState currentGameState;
 
     public List<GameObject> playerObjs = new List<GameObject>();
-
     public List<PlayerLogic> playerComponents = new List<PlayerLogic>();
-
     public List<ChessLogic> chessComponents = new List<ChessLogic>();
+    public LevelManager levelManager;  // 添加LevelManager引用
 
     public static event Action OnPlayersReady;
 

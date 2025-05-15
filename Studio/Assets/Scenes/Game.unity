@@ -793,7 +793,6 @@ MonoBehaviour:
   showDuration: 1.5
   fadeOutDuration: 0.3
   defaultCursor: {fileID: 2800000, guid: 74581f653187aa443b12b39baff54901, type: 3}
-  clickableCursor: {fileID: 2800000, guid: 74581f653187aa443b12b39baff54901, type: 3}
   handCardCursor: {fileID: 2800000, guid: e2b0be17981df0b44859b135f8a81c05, type: 3}
   selectedCardCursor: {fileID: 2800000, guid: 1806d0360844a6840b2f9b4dfabd2e99, type: 3}
   cursorHotspot: {x: 0, y: 0}
@@ -5017,6 +5016,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc25291f52dc9224cb58f7eadec72519, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentLevel: 0
+  targetScore:
+    m_InternalValue: 0
+  targetRounds:
+    m_InternalValue: 0
+  objectiveCompleted:
+    m_InternalValue: 0
+  player1CheatTimes: 0
+  player2CheatTimes: 0
   roundManager: {fileID: 1606319023}
   Gun1: {fileID: 2001497636}
   Gun2: {fileID: 1755964191}
@@ -7110,6 +7118,7 @@ MonoBehaviour:
   chessComponents:
   - {fileID: 0}
   - {fileID: 0}
+  levelManager: {fileID: 0}
 --- !u!114 &1079564576
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9749,6 +9758,7 @@ MonoBehaviour:
   coinPrefab: {fileID: 4274701198760140147, guid: 258b544794366544a8aa69ee8b1432fe, type: 3}
   player1ScoreAnchor: {fileID: 1653025040}
   player2ScoreAnchor: {fileID: 220708796}
+  currentRound: 0
   tutorState: 0
   dialogIndex: 0
   breakPoint: 0

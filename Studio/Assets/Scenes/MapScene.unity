@@ -243,14 +243,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 23594450}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 8
-  levelName: Level 6
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 8
 --- !u!65 &23594453
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -879,14 +875,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 114698559}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 5
-  levelName: Level 4/1
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 5
 --- !u!65 &114698562
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2678,14 +2670,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 746333340}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 6
-  levelName: Level 4/2
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 6
 --- !u!65 &746333343
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2827,14 +2815,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 767217292}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 4
-  levelName: Level 3/2
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 4
 --- !u!65 &767217295
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3631,14 +3615,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1177842149}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 3
-  levelName: Level 3/1
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 3
 --- !u!65 &1177842152
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4182,14 +4162,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1509335913}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 7
-  levelName: Level 5
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 7
 --- !u!65 &1509335916
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4805,8 +4781,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1589037009}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.497731, y: 0, z: 0, w: 0.8673315}
-  m_LocalPosition: {x: 0, y: 4.9253826, z: -8.881318}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -1.6, z: -12.55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5666,14 +5642,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1830360290}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 2
-  levelName: Level 2
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 2
 --- !u!65 &1830360293
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5943,14 +5915,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1883100636}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d13010e1d0a7094184531d3019961c7, type: 3}
+  m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelIndex: 1
-  levelName: Level 1
-  levelNameText: {fileID: 0}
-  hoverHeight: 0.5
-  hoverSpeed: 5
+  nodeIndex: 1
 --- !u!1 &2027953278
 GameObject:
   m_ObjectHideFlags: 0

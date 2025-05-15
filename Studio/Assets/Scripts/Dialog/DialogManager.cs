@@ -2,8 +2,9 @@ using UnityEngine;
 using TMPro;
 using Febucci.UI;
 using System.Collections;
+using Unity.Netcode;
 
-public class DialogManager : MonoBehaviour
+public class DialogManager : NetworkBehaviour
 {
     #region Singleton
     private static DialogManager _instance;
@@ -16,9 +17,112 @@ public class DialogManager : MonoBehaviour
 
     [Header("Dialog Content")]
     [TextArea(3, 10)]
-    public string[] dialogLines;
+    public string[] dialogLines;  // 用于教程对话
 
     [Header("Typing Settings")]
+
+    // 对话内容定义
+    private static readonly string[] Level3A_Dialog_Player1 = new string[]
+    {
+        "玩家1，你现在已经欺骗了xx次",
+        "在整局游戏中，你如果总共能够能达到15次欺骗...",
+        "你最后会获得15分的额外加分。"
+    };
+
+    private static readonly string[] Level3A_Dialog_Player2 = new string[]
+    {
+        "玩家2，你现在已经合作了xx次",
+        "在整局游戏中，你如果总共能够能达到12次合作...",
+        "你最后会获得15分的额外加分。"
+    };
+
+    private static readonly string[] Level3B_Dialog_Player1 = new string[]
+    {
+        "玩家1，你现在已经合作了xx次",
+        "在整局游戏中，你如果总共能够能达到12次合作...",
+        "你最后会获得15分的额外加分。"
+    };
+
+    private static readonly string[] Level3B_Dialog_Player2 = new string[]
+    {
+        "玩家2，你现在已经欺骗了xx次",
+        "在整局游戏中，你如果总共能够能达到15次欺骗...",
+        "你最后会获得15分的额外加分。"
+    };
+
+//---------------------------Level4--------------------------------
+    private static readonly string[] Level4A_Dialog_Player1 = new string[]
+    {
+        "玩家1，本轮如果双方总得分能够控制在15分以内...",
+        "你会获得10分的额外加分。"
+    };
+
+    private static readonly string[] Level4A_Dialog_Player2 = new string[]
+    {
+        "玩家2，本轮如果双方总得分能够达到20分...",
+        "你会获得10分的额外加分。"
+    };
+
+    private static readonly string[] Level4B_Dialog_Player1 = new string[]
+    {
+        "玩家1，本轮如果双方总得分能够达到20分...",
+        "你会获得10分的额外加分。"
+    }; 
+
+    private static readonly string[] Level4B_Dialog_Player2 = new string[]
+    {
+        "玩家2，本轮如果双方总得分能够控制在15分以内...",
+        "你会获得10分的额外加分。"
+    };
+
+//---------------------------Level5--------------------------------
+    private static readonly string[] Level5A_Dialog_Player1 = new string[]
+    {
+        "玩家1，本轮要是你被打死了...",
+        "你会获得15分作为补偿。",
+        "权衡利弊吧。"
+    };
+
+    private static readonly string[] Level5A_Dialog_Player2 = new string[]
+    {
+        "玩家2，本轮要是对方分数比你高...",
+        "你会获得15分作为补偿。",
+        "权衡利弊吧。"
+    };
+
+    private static readonly string[] Level5B_Dialog_Player1 = new string[]
+    {
+        "玩家1，本轮要是对方分数比你高...",
+        "你会获得15分作为补偿。",
+        "权衡利弊吧。"
+
+    };
+
+    private static readonly string[] Level5B_Dialog_Player2 = new string[]
+    {   
+        "玩家2，本轮要是你被打死了...",
+        "你会获得15分作为补偿。",
+        "权衡利弊吧。"
+    };
+
+//---------------------------LevelFinal--------------------------------
+
+    private static readonly string[] LevelFinal_Dialog_Player1 = new string[]
+    {  
+        "最后一轮了...",
+        "打死对方,获得双方总分。",
+        "别留情面。"
+    };
+
+    private static readonly string[] LevelFinal_Dialog_Player2 = new string[]
+    {
+        "最后一轮了...",
+        "打死对方,获得双方总分。",
+        "别留情面。"
+    };
+    
+
+    private string[] currentDialog;
     public float typingSpeed = 0.05f;
 
     [Header("Auto‑Advance Settings")]
@@ -86,8 +190,33 @@ public class DialogManager : MonoBehaviour
             return;
         }
 
+        currentDialog = dialogLines;  // 使用教程对话内容
         currentLineIndex = startIndex;
         endLineIndex = endIndex;
+
+        dialogPanel.SetActive(true);
+        DisplayCurrentLine();
+    }
+
+    public void PlayLevelDialog(LevelManager.Level level, bool isPlayer1)
+    {
+        string[] levelDialog;
+        switch (level)
+        {
+            case LevelManager.Level.Level3A:
+                levelDialog = isPlayer1 ? Level3A_Dialog_Player1 : Level3A_Dialog_Player2;
+                break;
+            case LevelManager.Level.Level3B:
+                levelDialog = isPlayer1 ? Level3B_Dialog_Player1 : Level3B_Dialog_Player2;
+                break;
+            default:
+                Debug.LogError($"DialogManager: 未知关卡 {level}");
+                return;
+        }
+
+        currentDialog = levelDialog;
+        currentLineIndex = 0;
+        endLineIndex = levelDialog.Length - 1;
 
         dialogPanel.SetActive(true);
         DisplayCurrentLine();
@@ -103,7 +232,7 @@ public class DialogManager : MonoBehaviour
             autoAdvanceCoroutine = null;
         }
 
-        string line = dialogLines[currentLineIndex];
+        string line = currentDialog[currentLineIndex];
         isTyping = true;
 
         if (animatorPlayer != null)
@@ -161,7 +290,7 @@ public class DialogManager : MonoBehaviour
         }
         else
         {
-            dialogText.text = dialogLines[currentLineIndex];
+            dialogText.text = currentDialog[currentLineIndex];
         }
         isTyping = false;
     }
