@@ -55,6 +55,9 @@ public class RoundManager : NetworkBehaviour
     public bool chessIsMoved = false;
     public bool playerGotCard = false;
 
+    [Header("Gun Control")]
+    public NetworkVariable<bool> player1CanFire = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> player2CanFire = new NetworkVariable<bool>(false);
 
     void Start()
     {
@@ -612,6 +615,10 @@ public class RoundManager : NetworkBehaviour
                 player1Debug = $"+{player1.coopPoint.Value}";
                 player2Debug = $"+{player2.coopPoint.Value}";
 
+                // 双方合作，都不能开枪
+                player1CanFire.Value = false;
+                player2CanFire.Value = false;
+
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
@@ -632,6 +639,10 @@ public class RoundManager : NetworkBehaviour
 
                 player1Debug = $"+{player1.coopPoint.Value}";
                 player2Debug = $"+{player2.cheatPoint.Value}";
+
+                // 玩家1被欺骗，可以开枪
+                player1CanFire.Value = true;
+                player2CanFire.Value = false;
 
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
@@ -656,6 +667,10 @@ public class RoundManager : NetworkBehaviour
                 player1Debug = $"+{player1.cheatPoint.Value}";
                 player2Debug = $"+{player2.coopPoint.Value}";
 
+                // 玩家2被欺骗，可以开枪
+                player1CanFire.Value = false;
+                player2CanFire.Value = true;
+
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
@@ -678,6 +693,10 @@ public class RoundManager : NetworkBehaviour
 
                 player1Debug = "+0";
                 player2Debug = "+0";
+
+                // 双方都欺骗，都可以开枪
+                player1CanFire.Value = true;
+                player2CanFire.Value = true;
 
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
@@ -911,6 +930,8 @@ public class RoundManager : NetworkBehaviour
         player2.choice = PlayerLogic.playerChoice.None;
         player1.SetUsedCardServerRpc(false);
         player2.SetUsedCardServerRpc(false);
+        player1CanFire.Value = false;
+        player2CanFire.Value = false;
     }
 
     void ChessMoveBack()
@@ -974,5 +995,22 @@ public class RoundManager : NetworkBehaviour
         player1TotalCheatCount.Value = 0;
         player2TotalCoopCount.Value = 0;
         player2TotalCheatCount.Value = 0;
+    }
+
+    // 新增：手动开枪方法
+    [ServerRpc(RequireOwnership = false)]
+    public void FireGunServerRpc(ulong clientId)
+    {
+        // 检查是否有开枪权限
+        if (clientId == 0 && player1CanFire.Value)
+        {
+            Gun1.GetComponent<GunController>().FireGun();
+            player1CanFire.Value = false;  // 开枪后失去开枪权限
+        }
+        else if (clientId == 1 && player2CanFire.Value)
+        {
+            Gun2.GetComponent<GunController>().FireGun();
+            player2CanFire.Value = false;  // 开枪后失去开枪权限
+        }
     }
 }

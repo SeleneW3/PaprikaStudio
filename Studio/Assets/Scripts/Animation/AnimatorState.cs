@@ -64,7 +64,7 @@ public class AnimatorState : NetworkBehaviour
     }
     
     // 只播放重置音效
-    private void PlayResetSound()
+    public void PlayResetSound()
     {
         if (SoundManager.Instance != null)
         {
