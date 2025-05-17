@@ -17,6 +17,14 @@ public class GunController : NetworkBehaviour
     private bool isHovered = false;    // 记录是否正在悬停
     private float hoverHeight = 0.1f;  // 抬起高度
 
+    [Header("UI Anchor")]
+    public Transform gunUIAnchor;  // 用于放置UI按钮的锚点
+    
+    // Gun action events
+    public delegate void GunActionHandler(GunController gun);
+    public event GunActionHandler OnGunThrown;  // 扔枪事件
+    public event GunActionHandler OnGunSpun;    // 甩枪事件
+
     void Awake()
     {
         // 在 Awake 中获取 NetworkObject，确保最早获取到组件
@@ -316,7 +324,7 @@ public class GunController : NetworkBehaviour
 
     void OnMouseEnter()
     {
-        Debug.Log($"OnMouseEnter triggered on {gameObject.name}");
+        //Debug.Log($"OnMouseEnter triggered on {gameObject.name}");
         
         // 如果是联机状态
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
@@ -333,7 +341,7 @@ public class GunController : NetworkBehaviour
         // 单机状态
         else
         {
-            Debug.Log($"Executing hover effect on {gameObject.name} in single player mode");
+            //Debug.Log($"Executing hover effect on {gameObject.name} in single player mode");
             // 直接执行悬停效果
             HoverGun(true);
         }
@@ -341,7 +349,7 @@ public class GunController : NetworkBehaviour
 
     void OnMouseExit()
     {
-        Debug.Log($"OnMouseExit triggered on {gameObject.name}");
+        //Debug.Log($"OnMouseExit triggered on {gameObject.name}");
         
         // 如果是联机状态
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
@@ -358,20 +366,17 @@ public class GunController : NetworkBehaviour
         // 单机状态
         else
         {
-            Debug.Log($"Executing unhover effect on {gameObject.name} in single player mode");
+            //Debug.Log($"Executing unhover effect on {gameObject.name} in single player mode");
             // 直接执行取消悬停效果
             HoverGun(false);
         }
     }
 
-    // 实际执行悬停效果的方法
+    // 修改HoverGun方法，移除UI显示/隐藏逻辑
     private void HoverGun(bool hover)
     {
-        Debug.Log($"HoverGun called with hover={hover} on {gameObject.name}");
-        
         if (hover && !isHovered)
         {
-            Debug.Log($"Lifting gun {gameObject.name}");
             // 抬起枪
             transform.position = originalPosition + Vector3.up * hoverHeight;
             if (SoundManager.Instance != null)
@@ -382,7 +387,6 @@ public class GunController : NetworkBehaviour
         }
         else if (!hover && isHovered)
         {
-            Debug.Log($"Lowering gun {gameObject.name}");
             // 放下枪
             transform.position = originalPosition;
             if (SoundManager.Instance != null)
@@ -404,5 +408,33 @@ public class GunController : NetworkBehaviour
     private void HoverGunClientRpc(bool hover)
     {
         HoverGun(hover);
+    }
+
+    // 动画接口
+    public void PlayThrowAnimation()
+    {
+        if (gunAnimator != null)
+        {
+            gunAnimator.SetTrigger("Throw");
+        }
+    }
+    
+    public void PlaySpinAnimation()
+    {
+        if (gunAnimator != null)
+        {
+            gunAnimator.SetTrigger("Spin");
+        }
+    }
+
+    // 添加事件触发方法
+    public void TriggerThrowEvent()
+    {
+        OnGunThrown?.Invoke(this);
+    }
+
+    public void TriggerSpinEvent()
+    {
+        OnGunSpun?.Invoke(this);
     }
 }

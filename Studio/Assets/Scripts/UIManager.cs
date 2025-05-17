@@ -6,6 +6,8 @@ using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance { get; private set; }  // 单例模式
+
     [Header("Score UI")]
     public TextMeshProUGUI player1ScoreText;
     public TextMeshProUGUI player2ScoreText;
@@ -45,9 +47,9 @@ public class UIManager : MonoBehaviour
     public float snapThreshold = 2.0f; 
     private Canvas parentCanvas;
 
-    // 引用GunController
     private GunController gun1;
     private GunController gun2;
+    private RoundManager roundManager;
 
     [Header("Choice Status UI")]
     public TextMeshProUGUI player1ChoiceStatusText; // 玩家1选择状态
@@ -72,6 +74,18 @@ public class UIManager : MonoBehaviour
     public Texture2D selectedCardCursor; // 在已选中卡牌上的鼠标图案
     public Vector2 cursorHotspot = Vector2.zero;  // 鼠标热点位置
 
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
 
     void Start()
     {
@@ -164,6 +178,13 @@ public class UIManager : MonoBehaviour
 
         // 设置默认鼠标图案
         SetDefaultCursor();
+
+        // 获取RoundManager引用
+        roundManager = FindObjectOfType<RoundManager>();
+        if (roundManager == null)
+        {
+            Debug.LogWarning("RoundManager not found!");
+        }
     }
 
     void OnDestroy()

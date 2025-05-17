@@ -9,7 +9,7 @@ public class AnimatorState : NetworkBehaviour
 {
     public Animator animator;
     public DialogManager dialogManager; // 对话管理器，用于检测当前对话行
-    public int element4Index = 5; // 假设 Element4 是对话的第4行（索引从0开始）
+    public int element4Index = 14; // 假设 Element4 是对话的第4行（索引从0开始）
     private bool hasPlayedAddBullet = false;  // 确保动画只播放一次
     private bool isAnimating = false;  // 防止动画重复触发
 

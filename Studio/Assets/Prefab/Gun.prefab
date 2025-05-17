@@ -202,6 +202,7 @@ Transform:
   m_Children:
   - {fileID: 8810973471502798363}
   - {fileID: 3314704784087917807}
+  - {fileID: 1194901040221094271}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -1.307, y: -159.075, z: -90.762}
 --- !u!95 &2909346642320607592
@@ -258,6 +259,7 @@ MonoBehaviour:
     m_InternalValue: 0
   gameEnded:
     m_InternalValue: 0
+  gunUIAnchor: {fileID: 0}
 --- !u!114 &-3676569307389607258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -299,3 +301,34 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.38171193, y: 0.8677475, z: 2.1044285}
   m_Center: {x: -0.070726894, y: 1.1692761, z: -0.17335697}
+--- !u!1 &9004577207905615945
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1194901040221094271}
+  m_Layer: 0
+  m_Name: UIAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1194901040221094271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9004577207905615945}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.096, y: 0.476, z: -1.343}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7109983158692628076}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
