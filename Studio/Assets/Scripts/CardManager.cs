@@ -75,7 +75,14 @@ public class CardManager : NetworkBehaviour
 
                 // 记录归属
                 player.AddCard(cardLogic);
-                cardLogic.belong = (player == GameManager.Instance.playerComponents[0]) ? CardLogic.Belong.Player1 : CardLogic.Belong.Player2;
+                if(player.playerID == 1)
+                {
+                    cardLogic.SetBelongServerRpc(CardLogic.Belong.Player1);
+                }
+                else if (player.playerID == 2)
+                {
+                    cardLogic.SetBelongServerRpc(CardLogic.Belong.Player2);
+                }
 
                 // 动画
                 StartCoroutine(MoveCardToHand(cardObj, player.handPos, targetPos, targetRot, moveDuration));

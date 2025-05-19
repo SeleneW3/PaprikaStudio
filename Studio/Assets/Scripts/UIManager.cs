@@ -293,6 +293,8 @@ public class UIManager : MonoBehaviour
     {
         // 直接调用统一的位置更新方法
         UpdateUIPositions();
+
+        UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
         
         if (GameManager.Instance != null)
         {

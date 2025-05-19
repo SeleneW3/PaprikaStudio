@@ -16,8 +16,10 @@ public class GameManager : NetworkBehaviour
         TutorReady,
         TutorPlayerTurn,
         TutorCalculateTurn,
+        TutorShowState,
         Ready,
         PlayerTurn,
+        PlayerShowState,
         CalculateTurn
     }
 
@@ -32,6 +34,8 @@ public class GameManager : NetworkBehaviour
     public LevelManager levelManager;  // 添加LevelManager引用
 
     public static event Action OnPlayersReady;
+
+    public DeckLogic deck;
 
 
 

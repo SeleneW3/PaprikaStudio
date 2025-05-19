@@ -143,11 +143,5 @@ public class BalanceScale : MonoBehaviour
         SetAllAnimationsFrame(frame / 100f);
     }
 
-    // 可选：添加缓动效果
-    private float SmoothStep(float current, float target, float speed)
-    {
-        float change = target - current;
-        float step = change * Mathf.Clamp01(speed * Time.deltaTime);
-        return current + step;
-    }
+
 }

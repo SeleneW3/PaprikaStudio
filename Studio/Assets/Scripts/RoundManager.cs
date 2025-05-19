@@ -35,6 +35,11 @@ public class RoundManager : NetworkBehaviour
     public GameObject Gun1;  // 玩家1的枪对象
     public GameObject Gun2;  // 玩家2的枪对象
 
+    public GameObject ShowCamera1;
+    public GameObject ShowCamera2;
+    public GameObject Player1Camera;
+    public GameObject Player2Camera;
+
     [Header("Balance Scale")]
     [SerializeField] private BalanceScale balanceScale;  // 天平引用
 
@@ -42,8 +47,10 @@ public class RoundManager : NetworkBehaviour
     public GameObject coinPrefab; // 硬币预制体
     public Transform player1ScoreAnchor; // 玩家1分数锚点
     public Transform player2ScoreAnchor; // 玩家2分数锚点
+    public Transform player1CoinRespawnPos;
+    public Transform player2CoinRespawnPos;
 
-    public int currentRound = 0;  // 当前回合计数器
+    public NetworkVariable<int> currentRound = new NetworkVariable<int>(0);
     private bool gameEnded = false;
 
     public int tutorState = 0;
@@ -54,6 +61,7 @@ public class RoundManager : NetworkBehaviour
     [Header("Bool")]
     public bool chessIsMoved = false;
     public bool playerGotCard = false;
+    public bool showCard = false;
 
     [Header("Gun Control")]
     public NetworkVariable<bool> player1CanFire = new NetworkVariable<bool>(false);
@@ -62,7 +70,7 @@ public class RoundManager : NetworkBehaviour
     void Start()
     {
         // 初始化回合
-        currentRound = 1;
+        currentRound.Value = 1;
 
         if (dialogManager != null)
         {
@@ -136,7 +144,7 @@ public class RoundManager : NetworkBehaviour
             }
             else if(tutorState == 3)
             {
-          tutorState++;
+                tutorState++;
             }
             else if(tutorState == 4)
             {
@@ -158,13 +166,39 @@ public class RoundManager : NetworkBehaviour
                     {
                         uiManager.roundText.gameObject.SetActive(true);
                     }
-                    uiManager.UpdateRoundText(currentRound, totalRounds);
+                    uiManager.UpdateRoundText(currentRound.Value, totalRounds);
                 }
                 
                 GameManager.Instance.currentGameState = GameManager.GameState.Ready;
                 return;
             }
-            GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorShowState;
+        }
+        else if (GameManager.Instance.currentGameState == GameManager.GameState.TutorShowState)
+        {
+
+            if(deckLogic.player1SendCard != null && deckLogic.player2SendCard != null)
+            {
+                if (NetworkManager.LocalClientId == 0)
+                {
+                    Player1Camera.SetActive(false);
+                    ShowCamera1.SetActive(true);
+                }
+                else if (NetworkManager.LocalClientId == 1)
+                {
+                    Player2Camera.SetActive(false);
+                    ShowCamera2.SetActive(true);
+                }
+                if(showCard == false)
+                {
+                    deckLogic.ShowSentCards();
+                    showCard = true;
+                }
+            }
+            else
+            {
+                GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
+            }
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
         {
@@ -188,6 +222,21 @@ public class RoundManager : NetworkBehaviour
                     MovePiecesToPositions();
                     GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
                 }
+            }
+
+            if(deckLogic.player1SendCard != null && deckLogic.player2SendCard != null)
+            {
+                if (NetworkManager.LocalClientId == 0)
+                {
+                    Player1Camera.SetActive(true);
+                    ShowCamera1.SetActive(false);
+                }
+                else if (NetworkManager.LocalClientId == 1)
+                {
+                    Player2Camera.SetActive(true);
+                    ShowCamera2.SetActive(false);
+                }
+                deckLogic.ResetPlayerCardServerRpc();
             }
 
             // 获取玩家选择状态
@@ -268,17 +317,18 @@ public class RoundManager : NetworkBehaviour
             ResetChess();
             ResetPlayersChoice();
             ResetPlayers();
+            showCard = false;
             GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
 
             // 使用UIManager更新回合UI
             UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
-                uiManager.UpdateRoundText(currentRound, totalRounds);
+                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
             }
             else if (roundText != null)
             {
-                roundText.text = $"ROUND {currentRound}/{totalRounds}";
+                roundText.text = $"ROUND {currentRound.Value}/{totalRounds}";
             }
         }
     }
@@ -385,14 +435,16 @@ public class RoundManager : NetworkBehaviour
                 // 计算增加了多少分并生成金币
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
+
+                Coin coin = FindObjectOfType<Coin>();
                 
                 if (p1PointsAdded > 0)
                 {
-                    Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                    coin.RequestSpawnCoins(player1ScoreAnchor.position ,p1PointsAdded);
                 }
                 if (p2PointsAdded > 0)
                 {
-                    Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                    coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
                 }
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
@@ -411,14 +463,14 @@ public class RoundManager : NetworkBehaviour
         chessIsMoved = false;
 
         // 检查游戏是否结束
-        if (!gameEnded && currentRound >= totalRounds)
+        if (!gameEnded && currentRound.Value >= totalRounds)
         {
             EndGame(uiManager);
         }
         else if (!gameEnded)
         {
-            currentRound++;
-            Debug.Log($"Round {currentRound}");
+            currentRound.Value++;
+            Debug.Log($"Round {currentRound.Value}");
         }
     }
 
@@ -480,10 +532,13 @@ public class RoundManager : NetworkBehaviour
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
+
+                Coin coin = FindObjectOfType<Coin>();
+
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                coin.RequestSpawnCoins(player1CoinRespawnPos.position, p1PointsAdded);
+                Debug.Log($"Player 1 spawned {p1PointsAdded} coins at {player1ScoreAnchor.position}");
+                coin.RequestSpawnCoins(player2CoinRespawnPos.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -501,10 +556,12 @@ public class RoundManager : NetworkBehaviour
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
+
+                Coin coin = FindObjectOfType<Coin>();
+
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
+                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -522,10 +579,12 @@ public class RoundManager : NetworkBehaviour
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
+
+                Coin coin = FindObjectOfType<Coin>();
+
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
+                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -543,10 +602,12 @@ public class RoundManager : NetworkBehaviour
                 // 计算增加了多少分
                 int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
+
+                Coin coin = FindObjectOfType<Coin>();
+
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
+                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -569,21 +630,24 @@ public class RoundManager : NetworkBehaviour
         GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
+        GameManager.Instance.deck.ResetPlayerCardServerRpc();
+        GameManager.Instance.deck.SetPlayerCardBoolServerRpc(1, false);
+        GameManager.Instance.deck.SetPlayerCardBoolServerRpc(2, false);
         chessIsMoved = false;
 
         // 添加回合结束检查
-        if (!gameEnded && currentRound >= totalRounds)
+        if (!gameEnded && currentRound.Value >= totalRounds)
         {
             EndGame(uiManager);
         }
         else if (!gameEnded)
         {
-            currentRound++;
+            currentRound.Value++;
             if (uiManager != null)
             {
-                uiManager.UpdateRoundText(currentRound, totalRounds);
+                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
             }
-            Debug.Log($"Round {currentRound}");
+            Debug.Log($"Round {currentRound.Value}");
         }
     }
 
@@ -624,8 +688,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -649,8 +713,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -674,8 +738,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -699,8 +763,8 @@ public class RoundManager : NetworkBehaviour
                 int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
                 
                 // 生成硬币
-                Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
+                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
@@ -742,7 +806,7 @@ public class RoundManager : NetworkBehaviour
             }
 
             // 检查是否回合数达到上限
-            if (!gameEnded && currentRound >= totalRounds)
+            if (!gameEnded && currentRound.Value >= totalRounds)
             {
                 Debug.Log($"{totalRounds} rounds completed. Game over.");
                 gameEnded = true;
@@ -769,8 +833,8 @@ public class RoundManager : NetworkBehaviour
             // 如果游戏未结束，则继续进行下一回合
             if (!gameEnded)
             {
-                currentRound++;
-                Debug.Log($"Round {currentRound}");
+                currentRound.Value++;
+                Debug.Log($"Round {currentRound.Value}");
             }
 
         }
@@ -783,18 +847,18 @@ public class RoundManager : NetworkBehaviour
         chessIsMoved = false;
 
         // 添加回合结束检查
-        if (!gameEnded && currentRound >= totalRounds)
+        if (!gameEnded && currentRound.Value >= totalRounds)
         {
             EndGame(uiManager);
         }
         else if (!gameEnded)
         {
-            currentRound++;
+            currentRound.Value++;
             if (uiManager != null)
             {
-                uiManager.UpdateRoundText(currentRound, totalRounds);
+                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
             }
-            Debug.Log($"Round {currentRound}");
+            Debug.Log($"Round {currentRound.Value}");
         }
     }
 
@@ -803,7 +867,7 @@ public class RoundManager : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer) return;
 
         gameEnded = false;
-        currentRound = 1;  // 重置回合计数器
+        currentRound.Value = 1;  // 重置回合计数器
         
         // 重置统计数据
         ResetAllStatistics();
@@ -855,11 +919,11 @@ public class RoundManager : NetworkBehaviour
         {
             if (cardLogic.isOut)
             {
-                if (cardLogic.belong == CardLogic.Belong.Player1)
+                if (cardLogic.belong.Value == CardLogic.Belong.Player1)
                 {
                     p1Card = cardLogic;
                 }
-                else if (cardLogic.belong == CardLogic.Belong.Player2)
+                else if (cardLogic.belong.Value == CardLogic.Belong.Player2)
                 {
                     p2Card = cardLogic;
                 }

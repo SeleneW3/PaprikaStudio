@@ -1,168 +1,71 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using Unity.Netcode.Components;
 
 public class Coin : NetworkBehaviour
-{
-    private static Coin instance;
-    public static GameObject coinPrefab;
-    
-    [Header("Physics Settings")]
-    public float initialForce = 0.2f;
-    public Vector3 randomForceRange = new Vector3(0.2f, 0.5f, 0.2f);
-    public float randomPositionRange = 0.05f;
-    
-    [Header("Appearance")]
-    public Color[] possibleColors = new Color[] { 
-        new Color(1f, 0.8f, 0f), // 金色
-        new Color(0.8f, 0.8f, 0.8f) // 银色
-    };
+{ 
+    public static Coin Instance { get; private set; }
 
-    private bool hasLanded = false;
-    private Transform originalParent;
-    private Rigidbody rb;
-    private NetworkTransform netTransform;
-    
-    void Awake()
+    [Header("Prefab & 延迟设置")]
+    [Tooltip("带有 NetworkObject 组件 的硬币预制体")]
+    public GameObject coinPrefab;
+    [Tooltip("每次生成硬币之间的间隔（秒）")]
+    public float spawnDelay = 0.2f;
+
+    private void Awake()
     {
-        instance = this;
-        rb = GetComponent<Rigidbody>();
-        netTransform = GetComponent<NetworkTransform>();
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
-    
-    public static void SpawnCoins(GameObject prefab, Transform anchor, Vector3 spawnPosition, int amount)
+
+    /// <summary>
+    /// 在客户端或服务器端请求生成硬币
+    /// </summary>
+    public void RequestSpawnCoins(Vector3 position, int amount)
     {
         if (NetworkManager.Singleton.IsServer)
         {
-            coinPrefab = prefab;
-            // 创建一个临时的Coin组件来调用ServerRpc
-            GameObject tempCoin = new GameObject("TempCoin");
-            Coin coinComponent = tempCoin.AddComponent<Coin>();
-            NetworkObject netObj = tempCoin.AddComponent<NetworkObject>();
-            netObj.Spawn();
-            
-            // 调用ServerRpc
-            coinComponent.SpawnCoinsServerRpc(spawnPosition, amount, anchor.gameObject.name);
-            
-            // 清理临时对象
-            netObj.Despawn();
-            GameObject.Destroy(tempCoin);
+            // 如果已经是服务器，直接启动协程
+            StartCoroutine(SpawnCoinsCoroutine(position, amount));
+        }
+        else
+        {
+            // 否则发起 ServerRpc 让服务器来做
+            SpawnCoinsServerRpc(position, amount);
+            Debug.Log("send request");
         }
     }
-    
+
     [ServerRpc(RequireOwnership = false)]
-    private void SpawnCoinsServerRpc(Vector3 spawnPosition, int amount, string anchorName)
+    private void SpawnCoinsServerRpc(Vector3 position, int amount)
     {
-        if (coinPrefab == null) return;
-        
-        // 找到对应的锚点
-        GameObject anchorObj = GameObject.Find(anchorName);
-        if (anchorObj == null) return;
-        
-        // 创建容器并设置父物体
-        GameObject coinContainer = new GameObject($"CoinContainer_{Random.Range(0, 10000)}");
-        coinContainer.transform.SetParent(anchorObj.transform, false);
-        coinContainer.transform.localPosition = Vector3.zero;
-        
-        NetworkObject containerNetObj = coinContainer.AddComponent<NetworkObject>();
-        containerNetObj.Spawn();
-        
-        // 在服务器上生成所有硬币
+        StartCoroutine(SpawnCoinsCoroutine(position, amount));
+    }
+
+    /// <summary>
+    /// 在服务器上按顺序生成指定数量的硬币，并在每个生成之间等待 spawnDelay
+    /// </summary>
+    private IEnumerator SpawnCoinsCoroutine(Vector3 position, int amount)
+    {
         for (int i = 0; i < amount; i++)
         {
-            Vector3 randomOffset = Random.insideUnitSphere * randomPositionRange;
-            Vector3 finalPosition = spawnPosition + randomOffset + Vector3.up * 0.1f; // 稍微抬高一点
-            
-            GameObject coinObj = Instantiate(coinPrefab, finalPosition, Random.rotation);
-            NetworkObject coinNetObj = coinObj.GetComponent<NetworkObject>();
-            
-            if (coinNetObj != null)
+            // 可以加一点随机偏移，让硬币不完全重叠
+            Vector3 randomOffset = Random.insideUnitSphere * 0.1f;
+            Vector3 spawnPos = position + randomOffset + Vector3.up * 0.1f;
+
+            GameObject coin = Instantiate(coinPrefab, spawnPos, Random.rotation);
+            NetworkObject netObj = coin.GetComponent<NetworkObject>();
+            if (netObj != null)
             {
-                // 设置父物体关系
-                coinObj.transform.SetParent(coinContainer.transform, true);
-                
-                // 确保有刚体组件
-                Rigidbody coinRb = coinObj.GetComponent<Rigidbody>();
-                if (coinRb == null)
-                {
-                    coinRb = coinObj.AddComponent<Rigidbody>();
-                }
-                
-                // 配置刚体属性
-                coinRb.isKinematic = false;
-                coinRb.useGravity = true;
-                coinRb.drag = 0.1f;
-                coinRb.angularDrag = 0.1f;
-                coinRb.mass = 0.1f;
-                coinRb.interpolation = RigidbodyInterpolation.Interpolate;
-                coinRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-                
-                // 生成到网络中
-                coinNetObj.Spawn();
-
-                // 在服务器端添加随机力，但力度更温和
-                Vector3 randomForce = new Vector3(
-                    Random.Range(-randomForceRange.x, randomForceRange.x),
-                    Mathf.Abs(Random.Range(0, randomForceRange.y)),
-                    Random.Range(-randomForceRange.z, randomForceRange.z)
-                ) * initialForce;
-                
-                coinRb.AddForce(randomForce, ForceMode.Impulse);
+                netObj.Spawn();
             }
-        }
-    }
-    
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-        
-        // 确保有必要的组件
-        if (rb == null) rb = GetComponent<Rigidbody>();
-        if (netTransform == null) netTransform = GetComponent<NetworkTransform>();
-        
-        // 确保渲染器可见
-        MeshRenderer renderer = GetComponent<MeshRenderer>();
-        if (renderer != null)
-        {
-            renderer.enabled = true;
-            if (renderer.material == null)
-            {
-                renderer.material = new Material(Shader.Find("Standard"));
-                renderer.material.color = possibleColors[0];
-            }
-        }
 
-        // 设置网络同步
-        if (netTransform != null)
-        {
-            // NetworkTransform 会自动同步位置和旋转
-            netTransform.Interpolate = true;  // 启用插值
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!IsServer) return;
-        
-        // 服务器端处理物理更新
-        if (rb != null && !rb.isKinematic)
-        {
-            // 物理更新会通过 NetworkTransform 自动同步到客户端
-            rb.AddForce(Physics.gravity, ForceMode.Acceleration);
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (!IsServer) return;
-        
-        if (!hasLanded && collision.gameObject.CompareTag("BalanceScale"))
-        {
-            hasLanded = true;
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            yield return new WaitForSeconds(spawnDelay);
         }
     }
 }

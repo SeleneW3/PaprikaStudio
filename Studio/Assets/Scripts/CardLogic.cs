@@ -37,6 +37,9 @@ public class CardLogic : NetworkBehaviour
 
     public NetworkVariable<Effect> effectNetwork = new NetworkVariable<Effect>(Effect.None);
 
+    public NetworkVariable<Belong> belong = new NetworkVariable<Belong>(Belong.Deck);
+
+
     public Effect effect
     {
         get { return effectNetwork.Value; }
@@ -47,8 +50,8 @@ public class CardLogic : NetworkBehaviour
     {
         Player1,
         Player2,
+        Deck
     }
-    public Belong belong;
 
     public bool isOut = false;
 
@@ -65,7 +68,7 @@ public class CardLogic : NetworkBehaviour
 
         effectNetwork.OnValueChanged += (oldEffect, newEffect) =>
         {
-            Debug.Log($"Effect changed from {oldEffect} to {newEffect}");
+            Debug.Log($"客户端 {NetworkManager.LocalClientId} 收到 belonging 从 {oldEffect} → {newEffect}");
             UpdateSprite();
         };
     }
@@ -171,11 +174,11 @@ public class CardLogic : NetworkBehaviour
 
     public void DoubleCheatPoint()
     {
-        if (belong == Belong.Player1)
+        if (belong.Value == Belong.Player1)
         {
             GameManager.Instance.playerComponents[0].cheatPoint.Value *= 2;
         }
-        else if (belong == Belong.Player2)
+        else if (belong.Value == Belong.Player2)
         {
             GameManager.Instance.playerComponents[1].cheatPoint.Value *= 2;
         }
@@ -184,11 +187,11 @@ public class CardLogic : NetworkBehaviour
 
     public void DoubleCoopPoint()
     {
-        if (belong == Belong.Player1)
+        if (belong.Value == Belong.Player1)
         {
             GameManager.Instance.playerComponents[0].coopPoint.Value *= 2;
         }
-        else if (belong == Belong.Player2)
+        else if (belong.Value == Belong.Player2)
         {
             GameManager.Instance.playerComponents[1].coopPoint.Value *= 2;
         }
@@ -220,7 +223,7 @@ public class CardLogic : NetworkBehaviour
 // 1. 本回合你的合作选择将逆转为欺骗
 public void ReverseCoopToCheat()
 {
-    if (belong == Belong.Player1)
+    if (belong.Value == Belong.Player1)
     {
         if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cooperate)
         {
@@ -228,7 +231,7 @@ public void ReverseCoopToCheat()
             Debug.Log("Player1: Cooperation reversed to Cheat");
         }
     }
-    else if (belong == Belong.Player2)
+    else if (belong.Value == Belong.Player2)
     {
         if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cooperate)
         {
@@ -241,7 +244,7 @@ public void ReverseCoopToCheat()
 // 2. 本回合你的欺骗选择将逆转为合作
 public void ReverseCheatToCoop()
 {
-    if (belong == Belong.Player1)
+    if (belong.Value == Belong.Player1)
     {
         if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cheat)
         {
@@ -249,7 +252,7 @@ public void ReverseCheatToCoop()
             Debug.Log("Player1: Cheat reversed to Cooperation");
         }
     }
-    else if (belong == Belong.Player2)
+    else if (belong.Value == Belong.Player2)
     {
         if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cheat)
         {
@@ -263,7 +266,7 @@ public void ReverseCheatToCoop()
 public void ReverseOpponentDecision()
 {
     // 根据当前卡牌归属，找到对手
-    if (belong == Belong.Player1)
+    if (belong.Value == Belong.Player1)
     {
         // 对手为 Player2
         if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cooperate)
@@ -277,7 +280,7 @@ public void ReverseOpponentDecision()
             Debug.Log("Player2: Cheat reversed to Cooperation");
         }
     }
-    else if (belong == Belong.Player2)
+    else if (belong.Value == Belong.Player2)
     {
         // 对手为 Player1
         if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cooperate)
@@ -296,7 +299,7 @@ public void ReverseOpponentDecision()
     // 4. 本回合你的合作收益+2，欺骗收益-2
     public void AdjustPayoff()
     {
-        if (belong == Belong.Player1)
+        if (belong.Value == Belong.Player1)
         {
             if (GameManager.Instance.playerComponents[0].choice == PlayerLogic.playerChoice.Cooperate)
             {
@@ -309,7 +312,7 @@ public void ReverseOpponentDecision()
                 Debug.Log("Player1: Cheat payoff decreased by 2");
             }
         }
-        else if (belong == Belong.Player2)
+        else if (belong.Value == Belong.Player2)
         {
             if (GameManager.Instance.playerComponents[1].choice == PlayerLogic.playerChoice.Cooperate)
             {
@@ -466,10 +469,13 @@ public static int GetEffectPriority(Effect effect)
 
                     SendACard();
                     GameManager.Instance.playerComponents[0].SetUsedCardServerRpc(true);
+                    SetBelongServerRpc(Belong.Player1);
+                    GameManager.Instance.deck.SetPlayerCardBoolServerRpc(1, true);
                     handCardLogic.RequestSelectCardIndexServerRpc(-1);
                     handCardLogic.hasSelectedCard = false;
                     // 恢复默认鼠标图案
                     uiManager.SetDefaultCursor();
+                    
                 }
             }
         }
@@ -504,6 +510,8 @@ public static int GetEffectPriority(Effect effect)
                     }
 
                     SendACard();
+                    SetBelongServerRpc(Belong.Player2);
+                    GameManager.Instance.deck.SetPlayerCardBoolServerRpc(2,true);
                     GameManager.Instance.playerComponents[1].SetUsedCardServerRpc(true);
                     handCardLogic.RequestSelectCardIndexServerRpc(-1);
                     handCardLogic.hasSelectedCard = false;
@@ -563,6 +571,14 @@ public static int GetEffectPriority(Effect effect)
             }
         }
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetBelongServerRpc(Belong newBelong, ServerRpcParams rpcParams = default)
+    {
+        Debug.Log($"SetBelongServerRpc called with newBelong: {newBelong}");
+        belong.Value = newBelong;
+    }
+
 
     private void SendACard()
     {

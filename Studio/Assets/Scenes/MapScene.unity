@@ -246,7 +246,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 8
+  levelType: 0
+  nextNodes: []
+  isActive: 0
 --- !u!65 &23594453
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -878,7 +880,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 5
+  levelType: 0
+  nextNodes: []
+  isActive: 0
 --- !u!65 &114698562
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2673,7 +2677,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 6
+  levelType: 0
+  nextNodes: []
+  isActive: 0
 --- !u!65 &746333343
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2818,7 +2824,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 4
+  levelType: 0
+  nextNodes: []
+  isActive: 0
 --- !u!65 &767217295
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3618,7 +3626,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 3
+  levelType: 0
+  nextNodes: []
+  isActive: 0
 --- !u!65 &1177842152
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4165,7 +4175,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 7
+  levelType: 0
+  nextNodes: []
+  isActive: 0
 --- !u!65 &1509335916
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4781,8 +4793,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1589037009}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.6, z: -12.55}
+  m_LocalRotation: {x: 0.497731, y: 0, z: 0, w: 0.8673315}
+  m_LocalPosition: {x: 0, y: 4.9253826, z: -8.881318}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5645,7 +5657,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 2
+  levelType: 0
+  nextNodes: []
+  isActive: 1
 --- !u!65 &1830360293
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5918,7 +5932,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c11075363feb04f9a9c41426bd562c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeIndex: 1
+  levelType: 0
+  nextNodes: []
+  isActive: 1
 --- !u!1 &2027953278
 GameObject:
   m_ObjectHideFlags: 0
