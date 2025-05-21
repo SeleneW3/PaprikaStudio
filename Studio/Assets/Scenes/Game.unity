@@ -8602,7 +8602,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1665797636}
+  - {fileID: 564796209}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 564796209}
@@ -9163,6 +9165,11 @@ MonoBehaviour:
   player2SendCard: {fileID: 0}
   player1CardShowPos: {fileID: 148724476}
   player2CardShowPos: {fileID: 1819901115}
+  autoCollectDelay: 5
+  player1SendCardBool:
+    m_InternalValue: 0
+  player2SendCardBool:
+    m_InternalValue: 0
 --- !u!114 &1132786855
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10031,7 +10038,9 @@ MonoBehaviour:
   m_AnimatedTarget: {fileID: 153504300}
   m_LayerIndex: 0
   m_ShowDebugText: 0
-  m_ChildCameras: []
+  m_ChildCameras:
+  - {fileID: 1558965664}
+  - {fileID: 437392593}
   m_Instructions:
   - m_FullHash: -153225821
     m_VirtualCamera: {fileID: 437392593}
@@ -11798,6 +11807,7 @@ MonoBehaviour:
   breakPoint: 0
   chessIsMoved: 0
   playerGotCard: 0
+  showCard: 0
   player1CanFire:
     m_InternalValue: 0
   player2CanFire:

@@ -146,6 +146,9 @@ public class DialogManager : NetworkBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // 自动挂载到GameManager（如果你有需要）
+        //GameManager.Instance.dialogManager = this;
     }
 
     private void Start()

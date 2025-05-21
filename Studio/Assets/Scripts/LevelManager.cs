@@ -110,7 +110,7 @@ public class LevelManager : NetworkBehaviour
     public NetworkVariable<bool> player1Ready = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> player2Ready = new NetworkVariable<bool>(false);
 
-    private void Start()
+    private void Awake()
     {
         if (settlementPanel != null)
             settlementPanel.SetActive(false);
@@ -127,6 +127,10 @@ public class LevelManager : NetworkBehaviour
 
         // 设置关卡目标
         ApplyLevelObjectives();
+
+        // 自动挂载到GameManager
+        //if (GameManager.Instance != null)
+        //    GameManager.Instance.levelManager = this;
     }
 
     private void OnDestroy()

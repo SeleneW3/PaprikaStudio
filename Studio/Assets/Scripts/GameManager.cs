@@ -32,6 +32,7 @@ public class GameManager : NetworkBehaviour
     public List<PlayerLogic> playerComponents = new List<PlayerLogic>();
     public List<ChessLogic> chessComponents = new List<ChessLogic>();
     public LevelManager levelManager;  // 添加LevelManager引用
+    public DialogManager dialogManager; // 添加DialogManager引用
 
     public static event Action OnPlayersReady;
 
@@ -45,6 +46,7 @@ public class GameManager : NetworkBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
@@ -52,7 +54,15 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Start �ڵ�һ�θ���ǰ����
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 自动查找并挂载LevelManager
+        levelManager = FindObjectOfType<LevelManager>();
+        // 你也可以加DialogManager等
+        dialogManager = FindObjectOfType<DialogManager>();
+    }
+
+    // Start ڵһθǰ
     void Start()
     {
         if(SceneManager.GetActiveScene().name == "Init")
