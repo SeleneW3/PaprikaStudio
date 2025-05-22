@@ -626,7 +626,7 @@ public class LevelManager : NetworkBehaviour
         string levelName = currentLevel.ToString();
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.UpdateLevelInfo($" {levelName}");
+            UIManager.Instance.UpdateLevelInfo($"<shake a=0.2 f=0.8><wave a=0.3 f=0.1>{levelName}</wave></shake>");
         }
     }
 
@@ -647,25 +647,25 @@ public class LevelManager : NetworkBehaviour
         switch (level)
         {
             case Level.Level3A:
-                return playerIndex == 0 ? "你的目标：在整局游戏中欺骗15次（+15分）" : "你的目标：在整局游戏中合作12次（+15分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：在整局游戏中欺骗15次（<bounce>+15分</bounce>）" : "<wave>你的目标</wave>：在整局游戏中合作12次（<bounce>+15分</bounce>）";
             case Level.Level3B:
-                return playerIndex == 0 ? "你的目标：在整局游戏中合作12次（+15分）" : "你的目标：在整局游戏中欺骗15次（+15分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：在整局游戏中合作12次（<bounce>+15分</bounce>）" : "<wave>你的目标</wave>：在整局游戏中欺骗15次（<bounce>+15分</bounce>）";
 
             case Level.Level4A:
-                return playerIndex == 0 ? "你的目标：控制本轮游戏总分在15分以内（+10分）" : "你的目标：使得本轮游戏总分大于20分（+10分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：控制本轮游戏总分在15分以内（<bounce>+10分</bounce>）" : "<wave>你的目标</wave>：使得本轮游戏总分大于20分（<bounce>+10分</bounce>）";
             case Level.Level4B:
-                return playerIndex == 0 ? "你的目标：使得本轮游戏总分大于20分（+10分）" : "你的目标：在15分控制本轮游戏总分以内（+10分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：使得本轮游戏总分大于20分（<bounce>+10分</bounce>）" : "<wave>你的目标</wave>：在15分控制本轮游戏总分以内（<bounce>+10分</bounce>）";
 
             case Level.Level5A:
-                return playerIndex == 0 ? "你的目标：被枪击中（+15分）" : "你的目标：分数低于对手（+15分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：被枪击中（<bounce>+15分</bounce>）" : "<wave>你的目标</wave>：分数低于对手（<bounce>+15分</bounce>）";
             case Level.Level5B:
-                return playerIndex == 0 ? "你的目标：分数低于对手（+15分）" : "你的目标：被枪击中（+15分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：分数低于对手（<bounce>+15分</bounce>）" : "<wave>你的目标</wave>：被枪击中（<bounce>+15分</bounce>）";
 
             case Level.LevelFinal: 
-                return playerIndex == 0 ? "你的目标：打死对方（获得双方总分）" : "你的目标：打死对方（获得双方总分）";
+                return playerIndex == 0 ? "<wave>你的目标</wave>：打死对方（<bounce>获得双方总分</bounce>）" : "<wave>你的目标</wave>：打死对方（<bounce>获得双方总分</bounce>）";
                 
             default:
-                return "本关目标：请等待...";
+                return "<wave>本关目标</wave>：请等待...";
         }
     }
 } 

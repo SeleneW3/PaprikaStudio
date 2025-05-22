@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.UI;  // 用于 CanvasScaler 等 UI 组件
 using Unity.Netcode;
 using System.Collections;
+using Febucci.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -79,6 +80,15 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI player1TargetText;
     public TextMeshProUGUI player2TargetText;
 
+    // 新增：Text Animator Player组件引用
+    private TextAnimatorPlayer levelTextAnimator;
+    private TextAnimatorPlayer roundTextAnimator;
+    private TextAnimatorPlayer player1TargetTextAnimator;
+    private TextAnimatorPlayer player2TargetTextAnimator;
+
+    private int lastDisplayedRound = -1; // 新增：用于跟踪上一次显示的回合数
+    private int lastDisplayedTotalRounds = -1; // 新增：用于跟踪上一次显示的总回合数
+
     void Awake()
     {
         if (Instance == null)
@@ -90,6 +100,16 @@ public class UIManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
+        // 获取Text Animator组件
+        if (levelText != null)
+            levelTextAnimator = levelText.GetComponent<TextAnimatorPlayer>();
+        if (roundText != null)
+            roundTextAnimator = roundText.GetComponent<TextAnimatorPlayer>();
+        if (player1TargetText != null)
+            player1TargetTextAnimator = player1TargetText.GetComponent<TextAnimatorPlayer>();
+        if (player2TargetText != null)
+            player2TargetTextAnimator = player2TargetText.GetComponent<TextAnimatorPlayer>();
     }
 
     void Start()
@@ -628,13 +648,27 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // 添加更新回合文本的方法
+    // 修改更新回合文本的方法
     public void UpdateRoundText(int currentRound, int totalRounds = 5)
     {
-        if (roundText != null)
+        // 只在回合数真正改变时才更新文本
+        if (roundText != null && (currentRound != lastDisplayedRound || totalRounds != lastDisplayedTotalRounds))
         {
-            roundText.text = $"ROUND {currentRound}/{totalRounds}";
-            roundText.gameObject.SetActive(true);  // 显示文本
+            lastDisplayedRound = currentRound;
+            lastDisplayedTotalRounds = totalRounds;
+
+            string roundInfo = $"ROUND {currentRound}/{totalRounds}";
+            
+            if (roundTextAnimator != null)
+            {
+                roundText.gameObject.SetActive(true);
+                roundTextAnimator.ShowText(roundInfo);
+            }
+            else
+            {
+                roundText.text = roundInfo;
+                roundText.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -719,8 +753,18 @@ public class UIManager : MonoBehaviour
     {
         if (levelText != null)
         {
-            levelText.text = info;
-            levelText.gameObject.SetActive(true);
+            if (levelTextAnimator != null)
+            {
+                // 使用Text Animator显示带效果的文本
+                levelText.gameObject.SetActive(true);
+                levelTextAnimator.ShowText(info);
+            }
+            else
+            {
+                // 普通文本显示
+                levelText.text = info;
+                levelText.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -729,13 +773,29 @@ public class UIManager : MonoBehaviour
     {
         if (playerIndex == 0 && player1TargetText != null)
         {
-            player1TargetText.text = content;
-            player1TargetText.gameObject.SetActive(true);
+            if (player1TargetTextAnimator != null)
+            {
+                player1TargetText.gameObject.SetActive(true);
+                player1TargetTextAnimator.ShowText(content);
+            }
+            else
+            {
+                player1TargetText.text = content;
+                player1TargetText.gameObject.SetActive(true);
+            }
         }
         else if (playerIndex == 1 && player2TargetText != null)
         {
-            player2TargetText.text = content;
-            player2TargetText.gameObject.SetActive(true);
+            if (player2TargetTextAnimator != null)
+            {
+                player2TargetText.gameObject.SetActive(true);
+                player2TargetTextAnimator.ShowText(content);
+            }
+            else
+            {
+                player2TargetText.text = content;
+                player2TargetText.gameObject.SetActive(true);
+            }
         }
     }
 } 

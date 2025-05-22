@@ -24,101 +24,101 @@ public class DialogManager : NetworkBehaviour
     // 对话内容定义
     private static readonly string[] Level3A_Dialog_Player1 = new string[]
     {
-        "玩家1，你现在已经欺骗了xx次",
-        "在整局游戏中，你如果总共能够能达到15次欺骗...",
-        "你最后会获得15分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，你现在已经欺骗了xx次</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到15次欺骗...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level3A_Dialog_Player2 = new string[]
     {
-        "玩家2，你现在已经合作了xx次",
-        "在整局游戏中，你如果总共能够能达到12次合作...",
-        "你最后会获得15分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，你现在已经合作了xx次</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次合作...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level3B_Dialog_Player1 = new string[]
     {
-        "玩家1，你现在已经合作了xx次",
-        "在整局游戏中，你如果总共能够能达到12次合作...",
-        "你最后会获得15分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，你现在已经合作了xx次</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次合作...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level3B_Dialog_Player2 = new string[]
     {
-        "玩家2，你现在已经欺骗了xx次",
-        "在整局游戏中，你如果总共能够能达到15次欺骗...",
-        "你最后会获得15分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，你现在已经欺骗了xx次</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到15次欺骗...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
 //---------------------------Level4--------------------------------
     private static readonly string[] Level4A_Dialog_Player1 = new string[]
     {
-        "玩家1，本轮如果双方总得分能够控制在15分以内...",
-        "你会获得10分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮如果双方总得分能够控制在15分以内...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level4A_Dialog_Player2 = new string[]
     {
-        "玩家2，本轮如果双方总得分能够达到20分...",
-        "你会获得10分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮如果双方总得分能够达到20分...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level4B_Dialog_Player1 = new string[]
     {
-        "玩家1，本轮如果双方总得分能够达到20分...",
-        "你会获得10分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮如果双方总得分能够达到20分...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
     }; 
 
     private static readonly string[] Level4B_Dialog_Player2 = new string[]
     {
-        "玩家2，本轮如果双方总得分能够控制在15分以内...",
-        "你会获得10分的额外加分。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮如果双方总得分能够控制在15分以内...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
     };
 
 //---------------------------Level5--------------------------------
     private static readonly string[] Level5A_Dialog_Player1 = new string[]
     {
-        "玩家1，本轮要是你被打死了...",
-        "你会获得15分作为补偿。",
-        "权衡利弊吧。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮要是你被打死了...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
     };
 
     private static readonly string[] Level5A_Dialog_Player2 = new string[]
     {
-        "玩家2，本轮要是对方分数比你高...",
-        "你会获得15分作为补偿。",
-        "权衡利弊吧。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮要是对方分数比你高...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
     };
 
     private static readonly string[] Level5B_Dialog_Player1 = new string[]
     {
-        "玩家1，本轮要是对方分数比你高...",
-        "你会获得15分作为补偿。",
-        "权衡利弊吧。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮要是对方分数比你高...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
 
     };
 
     private static readonly string[] Level5B_Dialog_Player2 = new string[]
     {   
-        "玩家2，本轮要是你被打死了...",
-        "你会获得15分作为补偿。",
-        "权衡利弊吧。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮要是你被打死了...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
     };
 
 //---------------------------LevelFinal--------------------------------
 
     private static readonly string[] LevelFinal_Dialog_Player1 = new string[]
     {  
-        "最后一轮了...",
-        "打死对方,获得双方总分。",
-        "别留情面。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>最后一轮了...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>打死对方,获得双方总分。</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>别留情面。</wave></shake>"
     };
 
     private static readonly string[] LevelFinal_Dialog_Player2 = new string[]
     {
-        "最后一轮了...",
-        "打死对方,获得双方总分。",
-        "别留情面。"
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>最后一轮了...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>打死对方,获得双方总分。</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>别留情面。</wave></shake>"
     };
     
 
