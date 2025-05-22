@@ -723,6 +723,8 @@ public class RoundManager : NetworkBehaviour
                 //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
+                Gun1.GetComponent<GunController>().FireGun();
+
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
@@ -748,6 +750,8 @@ public class RoundManager : NetworkBehaviour
                 //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
 
+                Gun2.GetComponent<GunController>().FireGun();
+
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }
             else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
@@ -772,6 +776,9 @@ public class RoundManager : NetworkBehaviour
                 // 生成硬币
                 //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
                 //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
+
+                Gun1.GetComponent<GunController>().FireGun();
+                Gun2.GetComponent<GunController>().FireGun();
 
                 UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
             }

@@ -288,7 +288,8 @@ public class GunController : NetworkBehaviour
         }
     }
 
-    void OnMouseDown()
+
+    /*void OnMouseDown()
     {
         if (!IsSpawned || roundManager == null) return;
 
@@ -323,7 +324,7 @@ public class GunController : NetworkBehaviour
                 roundManager.player2CanFire.Value = false;
             }
         }
-    }
+    }*/
 
     void OnMouseEnter()
     {
@@ -413,6 +414,7 @@ public class GunController : NetworkBehaviour
         HoverGun(hover);
     }
 
+
     // 动画接口
     public void PlayThrowAnimation()
     {
@@ -457,4 +459,5 @@ public class GunController : NetworkBehaviour
             CameraShake.Instance.ShakeCamera(0.3f, 0.4f);
         }
     }
+
 }
