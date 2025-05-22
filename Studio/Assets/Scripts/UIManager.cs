@@ -8,6 +8,8 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }  // 单例模式
 
+    [Header("Screen Space UI")]
+
     [Header("Score UI")]
     public TextMeshProUGUI player1ScoreText;
     public TextMeshProUGUI player2ScoreText;
@@ -29,9 +31,6 @@ public class UIManager : MonoBehaviour
     public Transform player1BulletsAnchor; // 玩家1子弹数显示锚点
     public Transform player2BulletsAnchor; // 玩家2子弹数显示锚点
 
-    [Header("Round UI")]
-    public TextMeshProUGUI roundText; // 回合显示UI
-    public Transform roundAnchor; // 回合显示锚点
 
     [Header("Screen Space UI")]
     public TextMeshProUGUI gameOverText;
@@ -74,6 +73,12 @@ public class UIManager : MonoBehaviour
     public Texture2D selectedCardCursor; // 在已选中卡牌上的鼠标图案
     public Vector2 cursorHotspot = Vector2.zero;  // 鼠标热点位置
 
+    [Header("World Space UI")]
+    public TextMeshProUGUI levelText;
+    public TextMeshProUGUI roundText; // World Space Canvas中的回合显示UI
+    public TextMeshProUGUI player1TargetText;
+    public TextMeshProUGUI player2TargetText;
+
     void Awake()
     {
         if (Instance == null)
@@ -106,7 +111,7 @@ public class UIManager : MonoBehaviour
             gameOverText.gameObject.SetActive(false);
         }
 
-        // 初始化时隐藏回合文本
+        // 初始化时隐藏World Space回合文本
         if (roundText != null)
         {
             roundText.gameObject.SetActive(false);
@@ -135,12 +140,6 @@ public class UIManager : MonoBehaviour
         {
             Debug.LogWarning("Player2BulletsAnchor未设置，将使用player2ScoreAnchor作为备用");
             player2BulletsAnchor = player2ScoreAnchor;
-        }
-        
-        // 检查回合锚点是否存在
-        if (roundAnchor == null)
-        {
-            Debug.LogWarning("RoundAnchor未设置，回合显示可能不会正确定位");
         }
         
         // 强制UI可见性
@@ -178,8 +177,14 @@ public class UIManager : MonoBehaviour
 
         // 设置默认鼠标图案
         SetDefaultCursor();
+        
+        // World Space回合文本初始化
+        if (roundText != null)
+        {
+            roundText.text = "ROUND 1/5";
+            roundText.gameObject.SetActive(true);
+        }
 
-        // 获取RoundManager引用
         roundManager = FindObjectOfType<RoundManager>();
         if (roundManager == null)
         {
@@ -294,7 +299,10 @@ public class UIManager : MonoBehaviour
         // 直接调用统一的位置更新方法
         UpdateUIPositions();
 
-        UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
+        if (roundManager != null)
+        {
+            UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
+        }
         
         if (GameManager.Instance != null)
         {
@@ -399,13 +407,6 @@ public class UIManager : MonoBehaviour
             UpdateTextPosition(player2BulletsText, bullets2ScreenPos, bulletsOffset, bullets2ScreenPos.z < 0);
         }
         
-        // 更新回合显示文本位置
-        if (roundText != null && roundAnchor != null)
-        {
-            Vector3 roundScreenPos = Camera.main.WorldToScreenPoint(roundAnchor.position);
-            UpdateTextPosition(roundText, roundScreenPos, roundOffset, roundScreenPos.z < 0);
-        }
-
         // 更新选择状态文本位置
         if (player1ChoiceStatusText != null && player2ChoiceStatusText != null)
         {
@@ -519,31 +520,12 @@ public class UIManager : MonoBehaviour
             }
         }
         
-        // 初始化回合显示文本
+        // 初始化World Space回合显示文本
         if (roundText != null)
         {
-            roundText.gameObject.SetActive(false);
+            roundText.gameObject.SetActive(true);
             roundText.text = "ROUND 1/5";
             roundText.color = Color.white;
-            
-            if (roundAnchor != null)
-            {
-                // 如果存在锚点，会在Update中更新位置
-            }
-            else if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                // 默认位置（如果没有锚点）
-                roundText.transform.position = new Vector3(Screen.width / 2, Screen.height - 50, 0);
-            }
-            else // Screen Space - Camera
-            {
-                Vector3 screenPos = new Vector3(Screen.width / 2, Screen.height - 50, 0);
-                Ray ray = parentCanvas.worldCamera.ScreenPointToRay(screenPos);
-                float distance = parentCanvas.planeDistance;
-                Vector3 worldPos = ray.origin + ray.direction * distance;
-                
-                roundText.transform.position = worldPos;
-            }
         }
     }
 
@@ -730,5 +712,30 @@ public class UIManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    // 新增：更新Level信息显示
+    public void UpdateLevelInfo(string info)
+    {
+        if (levelText != null)
+        {
+            levelText.text = info;
+            levelText.gameObject.SetActive(true);
+        }
+    }
+
+    // 设置玩家目标内容
+    public void SetPlayerTargetText(int playerIndex, string content)
+    {
+        if (playerIndex == 0 && player1TargetText != null)
+        {
+            player1TargetText.text = content;
+            player1TargetText.gameObject.SetActive(true);
+        }
+        else if (playerIndex == 1 && player2TargetText != null)
+        {
+            player2TargetText.text = content;
+            player2TargetText.gameObject.SetActive(true);
+        }
     }
 } 

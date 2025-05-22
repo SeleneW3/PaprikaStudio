@@ -131,6 +131,9 @@ public class LevelManager : NetworkBehaviour
         // 自动挂载到GameManager
         //if (GameManager.Instance != null)
         //    GameManager.Instance.levelManager = this;
+
+        UpdateLevelUI();
+        UpdatePlayerTargetUI();
     }
 
     private void OnDestroy()
@@ -383,6 +386,8 @@ public class LevelManager : NetworkBehaviour
 
         currentLevel = level;
         progress.playedLevels.Add(level);
+        UpdateLevelUI();
+        UpdatePlayerTargetUI();
         GameManager.Instance.LoadScene("Game");
     }
 
@@ -613,5 +618,54 @@ public class LevelManager : NetworkBehaviour
         }
 
         objectiveCompleted.Value = completed;
+    }
+
+    // 新增：更新Level UI显示
+    private void UpdateLevelUI()
+    {
+        string levelName = currentLevel.ToString();
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateLevelInfo($" {levelName}");
+        }
+    }
+
+    // 新增：根据level和玩家身份设置目标UI
+    private void UpdatePlayerTargetUI()
+    {
+        if (UIManager.Instance == null || NetworkManager.Singleton == null) return;
+        ulong localId = NetworkManager.Singleton.LocalClientId;
+        int playerIndex = (int)localId;
+        string targetContent = GetTargetContentForPlayer(currentLevel, playerIndex);
+        UIManager.Instance.SetPlayerTargetText(playerIndex, targetContent);
+    }
+
+    // 新增：你可以自定义每个关卡和玩家的目标内容
+    private string GetTargetContentForPlayer(Level level, int playerIndex)
+    {
+        // 示例：你可以根据level和playerIndex返回不同内容
+        switch (level)
+        {
+            case Level.Level3A:
+                return playerIndex == 0 ? "你的目标：在整局游戏中欺骗15次（+15分）" : "你的目标：在整局游戏中合作12次（+15分）";
+            case Level.Level3B:
+                return playerIndex == 0 ? "你的目标：在整局游戏中合作12次（+15分）" : "你的目标：在整局游戏中欺骗15次（+15分）";
+
+            case Level.Level4A:
+                return playerIndex == 0 ? "你的目标：控制本轮游戏总分在15分以内（+10分）" : "你的目标：使得本轮游戏总分大于20分（+10分）";
+            case Level.Level4B:
+                return playerIndex == 0 ? "你的目标：使得本轮游戏总分大于20分（+10分）" : "你的目标：在15分控制本轮游戏总分以内（+10分）";
+
+            case Level.Level5A:
+                return playerIndex == 0 ? "你的目标：被枪击中（+15分）" : "你的目标：分数低于对手（+15分）";
+            case Level.Level5B:
+                return playerIndex == 0 ? "你的目标：分数低于对手（+15分）" : "你的目标：被枪击中（+15分）";
+
+            case Level.LevelFinal: 
+                return playerIndex == 0 ? "你的目标：打死对方（获得双方总分）" : "你的目标：打死对方（获得双方总分）";
+                
+            default:
+                return "本关目标：请等待...";
+        }
     }
 } 
