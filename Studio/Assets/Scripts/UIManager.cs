@@ -75,19 +75,23 @@ public class UIManager : MonoBehaviour
     public Vector2 cursorHotspot = Vector2.zero;  // 鼠标热点位置
 
     [Header("World Space UI")]
-    public TextMeshProUGUI levelText;
-    public TextMeshProUGUI roundText; // World Space Canvas中的回合显示UI
+    public TextMeshProUGUI levelText1;  // 玩家1的关卡显示
+    public TextMeshProUGUI levelText2;  // 玩家2的关卡显示
+    public TextMeshProUGUI roundText1;  // 玩家1的回合显示
+    public TextMeshProUGUI roundText2;  // 玩家2的回合显示
     public TextMeshProUGUI player1TargetText;
     public TextMeshProUGUI player2TargetText;
 
-    // 新增：Text Animator Player组件引用
-    private TextAnimatorPlayer levelTextAnimator;
-    private TextAnimatorPlayer roundTextAnimator;
+    // Text Animator Player组件引用
+    private TextAnimatorPlayer levelText1Animator;
+    private TextAnimatorPlayer levelText2Animator;
+    private TextAnimatorPlayer roundText1Animator;
+    private TextAnimatorPlayer roundText2Animator;
     private TextAnimatorPlayer player1TargetTextAnimator;
     private TextAnimatorPlayer player2TargetTextAnimator;
 
-    private int lastDisplayedRound = -1; // 新增：用于跟踪上一次显示的回合数
-    private int lastDisplayedTotalRounds = -1; // 新增：用于跟踪上一次显示的总回合数
+    private int lastDisplayedRound = -1; // 用于跟踪上一次显示的回合数
+    private int lastDisplayedTotalRounds = -1; // 用于跟踪上一次显示的总回合数
 
     void Awake()
     {
@@ -102,10 +106,14 @@ public class UIManager : MonoBehaviour
         }
 
         // 获取Text Animator组件
-        if (levelText != null)
-            levelTextAnimator = levelText.GetComponent<TextAnimatorPlayer>();
-        if (roundText != null)
-            roundTextAnimator = roundText.GetComponent<TextAnimatorPlayer>();
+        if (levelText1 != null)
+            levelText1Animator = levelText1.GetComponent<TextAnimatorPlayer>();
+        if (levelText2 != null)
+            levelText2Animator = levelText2.GetComponent<TextAnimatorPlayer>();
+        if (roundText1 != null)
+            roundText1Animator = roundText1.GetComponent<TextAnimatorPlayer>();
+        if (roundText2 != null)
+            roundText2Animator = roundText2.GetComponent<TextAnimatorPlayer>();
         if (player1TargetText != null)
             player1TargetTextAnimator = player1TargetText.GetComponent<TextAnimatorPlayer>();
         if (player2TargetText != null)
@@ -132,9 +140,10 @@ public class UIManager : MonoBehaviour
         }
 
         // 初始化时隐藏World Space回合文本
-        if (roundText != null)
+        if (roundText1 != null || roundText2 != null)
         {
-            roundText.gameObject.SetActive(false);
+            roundText1.gameObject.SetActive(false);
+            roundText2.gameObject.SetActive(false);
         }
         
         // 获取GunController引用
@@ -198,11 +207,16 @@ public class UIManager : MonoBehaviour
         // 设置默认鼠标图案
         SetDefaultCursor();
         
-        // World Space回合文本初始化
-        if (roundText != null)
+        // 初始化World Space回合文本
+        if (roundText1 != null)
         {
-            roundText.text = "ROUND 1/5";
-            roundText.gameObject.SetActive(true);
+            roundText1.text = "ROUND 1/5";
+            roundText1.gameObject.SetActive(true);
+        }
+        if (roundText2 != null)
+        {
+            roundText2.text = "ROUND 1/5";
+            roundText2.gameObject.SetActive(true);
         }
 
         roundManager = FindObjectOfType<RoundManager>();
@@ -541,11 +555,17 @@ public class UIManager : MonoBehaviour
         }
         
         // 初始化World Space回合显示文本
-        if (roundText != null)
+        if (roundText1 != null)
         {
-            roundText.gameObject.SetActive(true);
-            roundText.text = "ROUND 1/5";
-            roundText.color = Color.white;
+            roundText1.gameObject.SetActive(true);
+            roundText1.text = "ROUND 1/5";
+            roundText1.color = Color.white;
+        }
+        if (roundText2 != null)
+        {
+            roundText2.gameObject.SetActive(true);
+            roundText2.text = "ROUND 1/5";
+            roundText2.color = Color.white;
         }
     }
 
@@ -652,22 +672,42 @@ public class UIManager : MonoBehaviour
     public void UpdateRoundText(int currentRound, int totalRounds = 5)
     {
         // 只在回合数真正改变时才更新文本
-        if (roundText != null && (currentRound != lastDisplayedRound || totalRounds != lastDisplayedTotalRounds))
+        if ((roundText1 != null || roundText2 != null) && 
+            (currentRound != lastDisplayedRound || totalRounds != lastDisplayedTotalRounds))
         {
             lastDisplayedRound = currentRound;
             lastDisplayedTotalRounds = totalRounds;
 
             string roundInfo = $"ROUND {currentRound}/{totalRounds}";
             
-            if (roundTextAnimator != null)
+            // 更新玩家1的回合显示
+            if (roundText1 != null)
             {
-                roundText.gameObject.SetActive(true);
-                roundTextAnimator.ShowText(roundInfo);
+                if (roundText1Animator != null)
+                {
+                    roundText1.gameObject.SetActive(true);
+                    roundText1Animator.ShowText(roundInfo);
+                }
+                else
+                {
+                    roundText1.text = roundInfo;
+                    roundText1.gameObject.SetActive(true);
+                }
             }
-            else
+            
+            // 更新玩家2的回合显示
+            if (roundText2 != null)
             {
-                roundText.text = roundInfo;
-                roundText.gameObject.SetActive(true);
+                if (roundText2Animator != null)
+                {
+                    roundText2.gameObject.SetActive(true);
+                    roundText2Animator.ShowText(roundInfo);
+                }
+                else
+                {
+                    roundText2.text = roundInfo;
+                    roundText2.gameObject.SetActive(true);
+                }
             }
         }
     }
@@ -751,19 +791,33 @@ public class UIManager : MonoBehaviour
     // 新增：更新Level信息显示
     public void UpdateLevelInfo(string info)
     {
-        if (levelText != null)
+        // 更新玩家1的关卡显示
+        if (levelText1 != null)
         {
-            if (levelTextAnimator != null)
+            if (levelText1Animator != null)
             {
-                // 使用Text Animator显示带效果的文本
-                levelText.gameObject.SetActive(true);
-                levelTextAnimator.ShowText(info);
+                levelText1.gameObject.SetActive(true);
+                levelText1Animator.ShowText(info);
             }
             else
             {
-                // 普通文本显示
-                levelText.text = info;
-                levelText.gameObject.SetActive(true);
+                levelText1.text = info;
+                levelText1.gameObject.SetActive(true);
+            }
+        }
+        
+        // 更新玩家2的关卡显示
+        if (levelText2 != null)
+        {
+            if (levelText2Animator != null)
+            {
+                levelText2.gameObject.SetActive(true);
+                levelText2Animator.ShowText(info);
+            }
+            else
+            {
+                levelText2.text = info;
+                levelText2.gameObject.SetActive(true);
             }
         }
     }

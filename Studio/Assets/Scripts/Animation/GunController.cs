@@ -180,6 +180,9 @@ public class GunController : NetworkBehaviour
             Debug.Log("Bang! A real bullet! The enemy is dead.");
             gameEnded.Value = true;  // 设置 gameEnded 的值
             
+            // 触发真子弹震动效果（在所有客户端）
+            TriggerRealBulletShakeClientRpc();
+            
             // 延迟播放击中音效
             Invoke("PlayBulletHitSound", 2f);
         }
@@ -436,5 +439,22 @@ public class GunController : NetworkBehaviour
     public void TriggerSpinEvent()
     {
         OnGunSpun?.Invoke(this);
+    }
+
+    // 新增：在所有客户端触发真子弹震动效果的 ClientRpc
+    [ClientRpc]
+    private void TriggerRealBulletShakeClientRpc()
+    {
+        // 在所有客户端触发枪支震动
+        if (GunShake.Instance != null)
+        {
+            GunShake.Instance.OnSuccessfulShot();
+        }
+        
+        // 同时触发相机震动，增强效果
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakeCamera(0.3f, 0.4f);
+        }
     }
 }

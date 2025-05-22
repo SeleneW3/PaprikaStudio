@@ -26,6 +26,7 @@ public class LobbyControl : NetworkBehaviour
     Transform content;
     GameObject cell;
     Button startButton;
+    Button exitButton;
     Toggle readyToggle;
 
     Dictionary<ulong, CellLogic> cellDictionary = new Dictionary<ulong, CellLogic>();
@@ -52,9 +53,11 @@ public class LobbyControl : NetworkBehaviour
         content = canvas.Find("PlayerList/Viewport/Content");
         cell = content.Find("Cell").gameObject;
         startButton = canvas.Find("StartButton").GetComponent<Button>();
+        exitButton = canvas.Find("ExitButton").GetComponent<Button>();
         readyToggle = canvas.Find("Ready?").GetComponent<Toggle>();
 
         startButton.onClick.AddListener(OnStartClick);
+        exitButton.onClick.AddListener(OnExitClick);
         readyToggle.onValueChanged.AddListener(OnReadyToggle);
 
         cellDictionary = new Dictionary<ulong, CellLogic>();
@@ -184,9 +187,38 @@ public class LobbyControl : NetworkBehaviour
         GameManager.Instance.LoadScene("Game");
     }
 
+    private void OnExitClick()
+    {
+        ExitGame();
+    }
+
+    private void ExitGame()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            if (NetworkManager.Singleton.IsHost)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+            else if (NetworkManager.Singleton.IsClient)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+        }
+
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
+    }
+
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ExitGame();
+        }
     }
 }

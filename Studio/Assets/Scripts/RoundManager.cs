@@ -90,16 +90,19 @@ public class RoundManager : NetworkBehaviour
             Debug.Log("正在设置UIManager的枪支引用");
             
             // 初始化回合显示，但默认隐藏
-            if (uiManager.roundText != null)
+            if (uiManager.roundText1 != null)
             {
-                uiManager.roundText.gameObject.SetActive(false);
+                uiManager.roundText1.gameObject.SetActive(false);
+            }
+            if (uiManager.roundText2 != null)
+            {
+                uiManager.roundText2.gameObject.SetActive(false);
             }
         }
         else if (uiManager == null)
         {
             Debug.LogError("UIManager未找到!");
         }
-        
     }
 
     private void OnEnable()
@@ -162,9 +165,13 @@ public class RoundManager : NetworkBehaviour
                 UIManager uiManager = FindObjectOfType<UIManager>();
                 if (uiManager != null)
                 {
-                    if (uiManager.roundText != null)
+                    if (uiManager.roundText1 != null)
                     {
-                        uiManager.roundText.gameObject.SetActive(true);
+                        uiManager.roundText1.gameObject.SetActive(true);
+                    }
+                    if (uiManager.roundText2 != null)
+                    {
+                        uiManager.roundText2.gameObject.SetActive(true);
                     }
                     uiManager.UpdateRoundText(currentRound.Value, totalRounds);
                 }
