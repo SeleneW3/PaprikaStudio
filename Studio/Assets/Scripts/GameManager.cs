@@ -62,7 +62,6 @@ public class GameManager : NetworkBehaviour
         dialogManager = FindObjectOfType<DialogManager>();
     }
 
-    // Start ڵһθǰ
     void Start()
     {
         if(SceneManager.GetActiveScene().name == "Init")

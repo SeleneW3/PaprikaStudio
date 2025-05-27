@@ -21,6 +21,7 @@ public class DialogManager : NetworkBehaviour
 
     [Header("Typing Settings")]
 
+
     // 对话内容定义
     private static readonly string[] Level3A_Dialog_Player1 = new string[]
     {
@@ -201,29 +202,7 @@ public class DialogManager : NetworkBehaviour
         DisplayCurrentLine();
     }
 
-    public void PlayLevelDialog(LevelManager.Level level, bool isPlayer1)
-    {
-        string[] levelDialog;
-        switch (level)
-        {
-            case LevelManager.Level.Level3A:
-                levelDialog = isPlayer1 ? Level3A_Dialog_Player1 : Level3A_Dialog_Player2;
-                break;
-            case LevelManager.Level.Level3B:
-                levelDialog = isPlayer1 ? Level3B_Dialog_Player1 : Level3B_Dialog_Player2;
-                break;
-            default:
-                Debug.LogError($"DialogManager: 未知关卡 {level}");
-                return;
-        }
 
-        currentDialog = levelDialog;
-        currentLineIndex = 0;
-        endLineIndex = levelDialog.Length - 1;
-
-        dialogPanel.SetActive(true);
-        DisplayCurrentLine();
-    }
     #endregion
 
     #region Core Logic

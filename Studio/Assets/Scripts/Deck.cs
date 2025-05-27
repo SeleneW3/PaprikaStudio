@@ -108,7 +108,7 @@ public class Deck
         var networkObj = cardObj.GetComponent<Unity.Netcode.NetworkObject>();
         if (networkObj != null && !networkObj.IsSpawned)
         {
-            networkObj.Spawn();
+            networkObj.Spawn(destroyWithScene: true);
         }
 
         CardLogic cardLogic = cardObj.GetComponent<CardLogic>();

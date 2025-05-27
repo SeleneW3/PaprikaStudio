@@ -71,6 +71,7 @@ public class RoundManager : NetworkBehaviour
     {
         // 初始化回合
         currentRound.Value = 1;
+        Debug.Log("RoundManagerStart");
 
         if (dialogManager != null)
         {
@@ -90,10 +91,10 @@ public class RoundManager : NetworkBehaviour
             Debug.Log("正在设置UIManager的枪支引用");
             
             // 初始化回合显示，但默认隐藏
-            if (uiManager.roundText != null)
+            /*if (uiManager.roundText != null)
             {
                 uiManager.roundText.gameObject.SetActive(false);
-            }
+            }*/
         }
         else if (uiManager == null)
         {
@@ -154,10 +155,10 @@ public class RoundManager : NetworkBehaviour
                 UIManager uiManager = FindObjectOfType<UIManager>();
                 if (uiManager != null)
                 {
-                    if (uiManager.roundText != null)
+                    /*if (uiManager.roundText != null)
                     {
                         uiManager.roundText.gameObject.SetActive(true);
-                    }
+                    }*/
                     uiManager.UpdateRoundText(currentRound.Value, totalRounds);
                 }
                 
@@ -269,7 +270,9 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
-            if (levelManager != null && levelManager.IsGunfightMode())
+            if (levelManager != null && 
+                (levelManager.currentMode == LevelManager.Mode.OnlyGun|| 
+                levelManager.currentMode == LevelManager.Mode.CardAndGun))
             {
                 CalculatePointWithGun();
             }
@@ -642,11 +645,7 @@ public class RoundManager : NetworkBehaviour
         Debug.Log($"{totalRounds} rounds completed.");
         gameEnded = true;
 
-        if (levelManager != null)
-        {
-            levelManager.ShowFirstPhaseSettlement();
-        }
-        else if (uiManager != null)
+        if (uiManager != null)
         {
             string winner = "";
             if (player1.point.Value > player2.point.Value)

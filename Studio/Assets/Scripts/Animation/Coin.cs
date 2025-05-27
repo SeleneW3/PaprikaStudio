@@ -62,7 +62,7 @@ public class Coin : NetworkBehaviour
             NetworkObject netObj = coin.GetComponent<NetworkObject>();
             if (netObj != null)
             {
-                netObj.Spawn();
+                netObj.Spawn(destroyWithScene: true);
             }
 
             yield return new WaitForSeconds(spawnDelay);

@@ -66,7 +66,7 @@ public class CardManager : NetworkBehaviour
 
                 // 生成并 Spawn（仅服务器）
                 GameObject cardObj = Instantiate(cardPrefab, deckTrans.position, deckTrans.rotation, player.handPos);
-                cardObj.GetComponent<NetworkObject>().Spawn();
+                cardObj.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
 
                 // 复制牌面数据
                 CardLogic cardLogic = cardObj.GetComponent<CardLogic>();
