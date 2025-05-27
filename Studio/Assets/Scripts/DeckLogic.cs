@@ -32,6 +32,8 @@ public class DeckLogic : NetworkBehaviour
     // 跟踪启动的协程，以便取消
     private Coroutine autoCollectCoroutine;
 
+    public CameraLogic cameraLogic;
+
     private void Start()
     {
         GameManager.Instance.deck = this;
@@ -71,6 +73,14 @@ public class DeckLogic : NetworkBehaviour
                 p2OriginalPos = player2SendCard.transform.position;
                 p2OriginalRot = player2SendCard.transform.rotation;
             }
+            if(NetworkManager.LocalClientId == 0)
+            {
+                cameraLogic.SwitchToPlayer1ShowCamera();
+            }
+            else if(NetworkManager.LocalClientId == 1)
+            {
+                cameraLogic.SwitchToPlayer2ShowCamera();
+            }
             hasShown = true;
         }
 
@@ -108,7 +118,7 @@ public class DeckLogic : NetworkBehaviour
     {
         yield return new WaitForSeconds(autoCollectDelay);
         CollectSentCards();
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
+        GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
     }
 
     /// <summary>
@@ -129,6 +139,15 @@ public class DeckLogic : NetworkBehaviour
             var t = player2SendCard.transform;
             t.position = p2OriginalPos;
             t.rotation = p2OriginalRot;
+        }
+
+        if(NetworkManager.LocalClientId == 0)
+        {
+            cameraLogic.SwitchToPlayer1Camera();
+        }
+        else if(NetworkManager.LocalClientId == 1)
+        {
+            cameraLogic.SwitchToPlayer2Camera();
         }
 
         hasShown = false;
@@ -157,11 +176,11 @@ public class DeckLogic : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ResetPlayerCardServerRpc()
     {
-        player1SendCard = null;
-        player2SendCard = null;
         player1SendCard.belong.Value = CardLogic.Belong.Deck;
         player2SendCard.belong.Value = CardLogic.Belong.Deck;
         player1SendCardBool.Value = false;
         player2SendCardBool.Value = false;
+        player1SendCard = null;
+        player2SendCard = null;
     }
 }

@@ -5,13 +5,17 @@ using UnityEngine;
 using Cinemachine;
 
 
-public class CameraLogic : NetworkManager
+public class CameraLogic : NetworkBehaviour
 {
     public Camera mainCam;
-    public GameObject player1GunState;
-    public GameObject player1BalanceState;
+
+    public CinemachineStateDrivenCamera player1GunState;
+    public CinemachineStateDrivenCamera player1BalanceState;
+    public CinemachineStateDrivenCamera player1ShowState;
+
     public CinemachineStateDrivenCamera player2CameraController_Gun;    
     public CinemachineStateDrivenCamera player2CameraController_Balance;
+    public CinemachineStateDrivenCamera player2ShowState;
 
     void Start()
     {
@@ -38,22 +42,48 @@ public class CameraLogic : NetworkManager
 
 
     // 切换到玩家1的虚拟摄像机控制器
-    private void SwitchToPlayer1Camera()
+    public void SwitchToPlayer1Camera()
     {
         player1GunState.gameObject.SetActive(true);
-        player1BalanceState.SetActive(false);
+        player1BalanceState.gameObject.SetActive(false);
+        player1ShowState.gameObject.SetActive(false);
 
         player2CameraController_Gun.gameObject.SetActive(false);
         player2CameraController_Balance.gameObject.SetActive(false);
+        player2ShowState.gameObject.SetActive(false);
     }
 
     // 切换到玩家2的虚拟摄像机控制器
-    private void SwitchToPlayer2Camera()
+    public void SwitchToPlayer2Camera()
     {
         player2CameraController_Gun.gameObject.SetActive(true);
         player2CameraController_Balance.gameObject.SetActive(false);
+        player2ShowState.gameObject.SetActive(false);
 
         player1GunState.gameObject.SetActive(false);
-        player1BalanceState.SetActive(false);
+        player1BalanceState.gameObject.SetActive(false);
+        player1ShowState.gameObject.SetActive(false);
+    }
+
+    public void SwitchToPlayer1ShowCamera()
+    {
+        player1GunState.gameObject.SetActive(false);
+        player1BalanceState.gameObject.SetActive(false);
+        player1ShowState.gameObject.SetActive(true);
+
+        player2CameraController_Gun.gameObject.SetActive(false);
+        player2CameraController_Balance.gameObject.SetActive(false);
+        player2ShowState.gameObject.SetActive(false);
+    }
+
+    public void SwitchToPlayer2ShowCamera()
+    {
+        player2CameraController_Gun.gameObject.SetActive(false);
+        player2CameraController_Balance.gameObject.SetActive(false);
+        player2ShowState.gameObject.SetActive(true);
+
+        player1GunState.gameObject.SetActive(false);
+        player1BalanceState.gameObject.SetActive(false);
+        player1ShowState.gameObject.SetActive(false);
     }
 }

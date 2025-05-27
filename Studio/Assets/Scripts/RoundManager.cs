@@ -150,15 +150,7 @@ public class RoundManager : NetworkBehaviour
             {
                 tutorState++;
                 DialogManager.Instance.PlayRange(10, 12);
-                
-                // 重置玩家分数，准备开始第一阶段
-                if (NetworkManager.Singleton.IsServer)
-                {
-                    player1.point.Value = 0;
-                    player2.point.Value = 0;
-                }
 
-                // 在教程结束后显示回合文本
                 UIManager uiManager = FindObjectOfType<UIManager>();
                 if (uiManager != null)
                 {
@@ -169,31 +161,16 @@ public class RoundManager : NetworkBehaviour
                     uiManager.UpdateRoundText(currentRound.Value, totalRounds);
                 }
                 
-                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-                return;
             }
-            GameManager.Instance.currentGameState = GameManager.GameState.TutorShowState;
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
         }
         else if (GameManager.Instance.currentGameState == GameManager.GameState.TutorShowState)
         {
 
-            if(deckLogic.player1SendCard != null && deckLogic.player2SendCard != null)
+            if(showCard == false)
             {
-                if (NetworkManager.LocalClientId == 0)
-                {
-                    Player1Camera.SetActive(false);
-                    ShowCamera1.SetActive(true);
-                }
-                else if (NetworkManager.LocalClientId == 1)
-                {
-                    Player2Camera.SetActive(false);
-                    ShowCamera2.SetActive(true);
-                }
-                if(showCard == false)
-                {
-                    deckLogic.ShowSentCards();
-                    showCard = true;
-                }
+                showCard = true;
+                deckLogic.ShowSentCards();
             }
             else
             {
@@ -202,6 +179,13 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
         {
+            if (tutorState == 5)
+            {
+                tutorState++;
+                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+                return;
+            }
+
             if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None
                 )
             {
@@ -213,9 +197,8 @@ public class RoundManager : NetworkBehaviour
 
                         MovePiecesToPositions();
 
-                        GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+                        GameManager.Instance.currentGameState = GameManager.GameState.TutorShowState;
                     }
-                    Debug.Log(tutorState);
                 }
                 else
                 {
@@ -224,26 +207,12 @@ public class RoundManager : NetworkBehaviour
                 }
             }
 
-            if(deckLogic.player1SendCard != null && deckLogic.player2SendCard != null)
-            {
-                if (NetworkManager.LocalClientId == 0)
-                {
-                    Player1Camera.SetActive(true);
-                    ShowCamera1.SetActive(false);
-                }
-                else if (NetworkManager.LocalClientId == 1)
-                {
-                    Player2Camera.SetActive(true);
-                    ShowCamera2.SetActive(false);
-                }
-                deckLogic.ResetPlayerCardServerRpc();
-            }
 
-            // 获取玩家选择状态
+    
             bool player1Selected = player1.choice != PlayerLogic.playerChoice.None;
             bool player2Selected = player2.choice != PlayerLogic.playerChoice.None;
             
-            // 更新UI显示
+ 
             UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
@@ -252,8 +221,7 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
         {
-            CalculatePointWithoutCardAndGun();
-            
+            CalculatePointWithoutGun();
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.Ready)
         {
@@ -290,11 +258,9 @@ public class RoundManager : NetworkBehaviour
                 }
             }
 
-            // 获取玩家选择状态
             bool player1Selected = player1.choice != PlayerLogic.playerChoice.None;
             bool player2Selected = player2.choice != PlayerLogic.playerChoice.None;
             
-            // 更新UI显示
             UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
@@ -303,14 +269,13 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
-            // 根据是否是枪战模式选择计分方法
             if (levelManager != null && levelManager.IsGunfightMode())
             {
-                CalculatePointWithGunAndCard();
+                CalculatePointWithGun();
             }
             else
             {
-            CalculatePointWithCardButWithoutGun();
+            CalculatePointWithoutGun();
             }
             
             ChessMoveBack();
@@ -320,7 +285,6 @@ public class RoundManager : NetworkBehaviour
             showCard = false;
             GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
 
-            // 使用UIManager更新回合UI
             UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
@@ -335,21 +299,9 @@ public class RoundManager : NetworkBehaviour
 
     void MovePiecesToPositions()
     {
-        // 只要双方都放置了棋子，调用棋子的移动方法
         foreach (var chess in GameManager.Instance.chessComponents)
         {
             chess.Move();
-        }
-    }
-
-    // 用于清空调试信息的方法
-    // 这个方法将在 Invoke 触发时被调用
-    private void ClearDebug()
-    {
-        UIManager uiManager = FindObjectOfType<UIManager>();
-        if (uiManager != null)
-        {
-            uiManager.ClearDebugInfo();
         }
     }
 
@@ -370,423 +322,59 @@ public class RoundManager : NetworkBehaviour
             balanceScale.UpdateScore(player1Score, player2Score);
         }
     }
-
-    void CalculatePointWithCardButWithoutGun()
+    void CalculatePointWithoutGun()
     {
-        if (gameEnded || !NetworkManager.Singleton.IsServer)
+        if (gameEnded)
         {
             return;
         }
 
-        // 计算完成后，构造调试信息字符串
-        string player1Debug = "+0";
-        string player2Debug = "+0";
-        UIManager uiManager = FindObjectOfType<UIManager>();
 
-        // 保存当前分数
-        float p1PointsBefore = player1.point.Value;
-        float p2PointsBefore = player2.point.Value;
-        float p1AddPoints = 0f;
-        float p2AddPoints = 0f;
-
-        ApplyEffect();
-
-        // 根据选择计算要增加的分数
-        if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
+        if (NetworkManager.LocalClientId == 0)
         {
-            p1AddPoints = player1.coopPoint.Value;
-            p2AddPoints = player2.coopPoint.Value;
-            player1Debug = $"+{p1AddPoints}";
-            player2Debug = $"+{p2AddPoints}";
+            ApplyEffect();
+            CalculatePoint(player1.choice, player2.choice);
+
         }
-        else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
-        {
-            p1AddPoints = player1.coopPoint.Value;
-            p2AddPoints = player2.cheatPoint.Value;
-            player1Debug = $"+{p1AddPoints}";
-            player2Debug = $"+{p2AddPoints}";
-        }
-        else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
-        {
-            p1AddPoints = player1.cheatPoint.Value;
-            p2AddPoints = player2.coopPoint.Value;
-            player1Debug = $"+{p1AddPoints}";
-            player2Debug = $"+{p2AddPoints}";
-        }
-        else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
-        {
-            p1AddPoints = 0f;
-            p2AddPoints = 0f;
-            player1Debug = "+0";
-            player2Debug = "+0";
-        }
-
-        // 更新调试信息并设置回调
-        if (uiManager != null)
-        {
-            uiManager.UpdateDebugInfo(player1Debug, player2Debug);
-            
-            // 在动画完成后更新分数和生成金币
-            uiManager.PlayDebugTextAnimationWithCallback(() => {
-                // 更新分数
-                player1.point.Value += p1AddPoints;
-                player2.point.Value += p2AddPoints;
-
-                // 计算增加了多少分并生成金币
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-                
-                if (p1PointsAdded > 0)
-                {
-                    coin.RequestSpawnCoins(player1ScoreAnchor.position ,p1PointsAdded);
-                }
-                if (p2PointsAdded > 0)
-                {
-                    coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-                }
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            });
-        }
-
-        // 更新网络变量
-        GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
-        GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
-
         ResetPlayersChoice();
         GameManager.Instance.ResetAllBlocksServerRpc();
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
-        chessIsMoved = false;
-
-        // 检查游戏是否结束
-        if (!gameEnded && currentRound.Value >= totalRounds)
+        Debug.LogWarning("Into Calculate");
+        if(showCard == true)
         {
-            EndGame(uiManager);
+            Debug.LogWarning("Resetting player cards");
+            if(NetworkManager.LocalClientId == 0)
+            {
+                GameManager.Instance.deck.ResetPlayerCardServerRpc();
+            }
+            showCard = false;
         }
-        else if (!gameEnded)
-        {
-            currentRound.Value++;
-            Debug.Log($"Round {currentRound.Value}");
-        }
-    }
-
-    private void EndGame(UIManager uiManager)
-    {
-        Debug.Log($"{totalRounds} rounds completed.");
-        gameEnded = true;
         
-        if (levelManager != null)
-        {
-            levelManager.ShowFirstPhaseSettlement();
-        }
-        else if (uiManager != null)
-        {
-            string winner = "";
-            if (player1.point.Value > player2.point.Value)
-            {
-                winner = "Player 1 wins!";
-            }
-            else if (player2.point.Value > player1.point.Value)
-            {
-                winner = "Player 2 wins!";
-            }
-            else
-            {
-                winner = "It's a tie!";
-            }
-            uiManager.ShowGameOver($"{totalRounds} rounds completed\n{winner}");
-        }
-    }
-
-    void CalculatePointWithoutCardAndGun()
-    {
-        if (gameEnded)
-        {
-            return;
-        }
-
-        // 计算完成后，构造调试信息字符串
-        string player1Debug = "+0";
-        string player2Debug = "+0";
-        UIManager uiManager = FindObjectOfType<UIManager>();
-
-        if (NetworkManager.LocalClientId == 0)
-        {
-            ApplyEffect();
-
-            if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += player1.coopPoint.Value;
-                player2.point.Value += player2.coopPoint.Value;
-
-                player1Debug = $"+{player1.coopPoint.Value}";
-                player2Debug = $"+{player2.coopPoint.Value}";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1CoinRespawnPos.position, p1PointsAdded);
-                Debug.Log($"Player 1 spawned {p1PointsAdded} coins at {player1ScoreAnchor.position}");
-                coin.RequestSpawnCoins(player2CoinRespawnPos.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += player1.coopPoint.Value;
-                player2.point.Value += player2.cheatPoint.Value;
-
-                player1Debug = $"+{player1.coopPoint.Value}";
-                player2Debug = $"+{player2.cheatPoint.Value}";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += player1.cheatPoint.Value;
-                player2.point.Value += player2.coopPoint.Value;
-
-                player1Debug = $"+{player1.cheatPoint.Value}";
-                player2Debug = $"+{player2.coopPoint.Value}";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += 0f;
-                player2.point.Value += 0f;
-
-                player1Debug = "+0";
-                player2Debug = "+0";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-
-            // 调用 UIManager 来更新调试信息
-            if (uiManager != null)
-            {
-                uiManager.UpdateDebugInfo(player1Debug, player2Debug);
-            }
-
-            // 关键部分：在服务器端更新网络变量，让所有客户端同步显示
-            if (NetworkManager.Singleton.IsServer)
-            {
-                GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
-                GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
-            }
-        }
-        ResetPlayersChoice();
-        GameManager.Instance.ResetAllBlocksServerRpc();
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
-        GameManager.Instance.chessComponents[0].backToOriginal = true;
-        GameManager.Instance.chessComponents[1].backToOriginal = true;
-        GameManager.Instance.deck.ResetPlayerCardServerRpc();
-        GameManager.Instance.deck.SetPlayerCardBoolServerRpc(1, false);
-        GameManager.Instance.deck.SetPlayerCardBoolServerRpc(2, false);
         chessIsMoved = false;
+        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
 
-        // 添加回合结束检查
-        if (!gameEnded && currentRound.Value >= totalRounds)
-        {
-            EndGame(uiManager);
-        }
-        else if (!gameEnded)
-        {
-            currentRound.Value++;
-            if (uiManager != null)
-            {
-                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
-            }
-            Debug.Log($"Round {currentRound.Value}");
-        }
     }
 
 
-    void CalculatePointWithGunAndCard()
+    void CalculatePointWithGun()
     {
         if (gameEnded)
         {
             return;
         }
-
-        // 计算完成后，构造调试信息字符串
-        string player1Debug = "+0";
-        string player2Debug = "+0";
         UIManager uiManager = FindObjectOfType<UIManager>();
 
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
 
-            if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-                
-                player1.point.Value += player1.coopPoint.Value;
-                player2.point.Value += player2.coopPoint.Value;
-
-                player1Debug = $"+{player1.coopPoint.Value}";
-                player2Debug = $"+{player2.coopPoint.Value}";
-
-                // 双方合作，都不能开枪
-                player1CanFire.Value = false;
-                player2CanFire.Value = false;
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
-                // 生成硬币
-                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-                
-                player1.point.Value += player1.coopPoint.Value;
-                player2.point.Value += player2.cheatPoint.Value;
-
-                player1Debug = $"+{player1.coopPoint.Value}";
-                player2Debug = $"+{player2.cheatPoint.Value}";
-
-                // 玩家1被欺骗，可以开枪
-                player1CanFire.Value = true;
-                player2CanFire.Value = false;
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
-                // 生成硬币
-                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-                
-                player1.point.Value += player1.cheatPoint.Value;
-                player2.point.Value += player2.coopPoint.Value;
-
-                player1Debug = $"+{player1.cheatPoint.Value}";
-                player2Debug = $"+{player2.coopPoint.Value}";
-
-                // 玩家2被欺骗，可以开枪
-                player1CanFire.Value = false;
-                player2CanFire.Value = true;
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
-                // 生成硬币
-                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-                
-                player1.point.Value += 0f;
-                player2.point.Value += 0f;
-
-                player1Debug = "+0";
-                player2Debug = "+0";
-
-                // 双方都欺骗，都可以开枪
-                player1CanFire.Value = true;
-                player2CanFire.Value = true;
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-                
-                // 生成硬币
-                //Coin.SpawnCoins(coinPrefab, player1ScoreAnchor, player1ScoreAnchor.position, p1PointsAdded);
-                //Coin.SpawnCoins(coinPrefab, player2ScoreAnchor, player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-
-            // 调用 UIManager 来更新调试信息（你可以通过 GameObject.FindObjectOfType<UIManager>() 获取到 UIManager 对象）
-            if (uiManager != null)
-            {
-                uiManager.UpdateDebugInfo(player1Debug, player2Debug);
-            }
-
-            // 关键部分：在服务器端更新网络变量，让所有客户端同步显示
-            if (NetworkManager.Singleton.IsServer)
-            {
-                GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
-                GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
-            }
+            CalculatePoint(player1.choice, player2.choice);
+            
 
 
-            // 检查是否有一方死亡
             if (Gun1.GetComponent<GunController>().gameEnded.Value)
             {
-                // 玩家2死亡
                 Debug.Log("Player 2 is dead! Game over.");
                 gameEnded = true;
                 if (uiManager != null)
@@ -796,7 +384,6 @@ public class RoundManager : NetworkBehaviour
             }
             else if (Gun2.GetComponent<GunController>().gameEnded.Value)
             {
-                // 玩家1死亡
                 Debug.Log("Player 1 is dead! Game over.");
                 gameEnded = true;
                 if (uiManager != null)
@@ -805,61 +392,24 @@ public class RoundManager : NetworkBehaviour
                 }
             }
 
-            // 检查是否回合数达到上限
-            if (!gameEnded && currentRound.Value >= totalRounds)
-            {
-                Debug.Log($"{totalRounds} rounds completed. Game over.");
-                gameEnded = true;
-                if (uiManager != null)
-                {
-                    // 判断获胜者
-                    string winner = "";
-                    if (player1.point.Value > player2.point.Value)
-                    {
-                        winner = "Player 1 wins!";
-                    }
-                    else if (player2.point.Value > player1.point.Value)
-                    {
-                        winner = "Player 2 wins!";
-                    }
-                    else
-                    {
-                        winner = "It's a tie!";
-                    }
-                    uiManager.NetworkShowGameOver($"{totalRounds} rounds completed\n{winner}");
-                }
-            }
-
-            // 如果游戏未结束，则继续进行下一回合
-            if (!gameEnded)
-            {
-                currentRound.Value++;
-                Debug.Log($"Round {currentRound.Value}");
-            }
-
         }
 
         ResetPlayersChoice();
         GameManager.Instance.ResetAllBlocksServerRpc();
-        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
-        chessIsMoved = false;
-
-        // 添加回合结束检查
-        if (!gameEnded && currentRound.Value >= totalRounds)
+        if (showCard == true)
         {
-            EndGame(uiManager);
-        }
-        else if (!gameEnded)
-        {
-            currentRound.Value++;
-            if (uiManager != null)
+            if (NetworkManager.LocalClientId == 0)
             {
-                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
+                GameManager.Instance.deck.ResetPlayerCardServerRpc();
             }
-            Debug.Log($"Round {currentRound.Value}");
+            showCard = false;
         }
+
+        chessIsMoved = false;
+        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+
     }
 
     public void ResetRound()
@@ -867,25 +417,20 @@ public class RoundManager : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer) return;
 
         gameEnded = false;
-        currentRound.Value = 1;  // 重置回合计数器
+        currentRound.Value = 1;
         
-        // 重置统计数据
         ResetAllStatistics();
         
-        // 重置枪支状态
         Gun1.GetComponent<GunController>().ResetGun();
         Gun2.GetComponent<GunController>().ResetGun();
 
-        // 重置玩家分数（这会间接触发天平更新）
         player1.point.Value = 0;
         player2.point.Value = 0;
 
-        // 清理所有硬币容器
         foreach (Transform anchor in new Transform[] { player1ScoreAnchor, player2ScoreAnchor })
         {
             if (anchor != null)
             {
-                // 从后向前遍历子对象
                 for (int i = anchor.childCount - 1; i >= 0; i--)
                 {
                     Transform container = anchor.GetChild(i);
@@ -898,7 +443,6 @@ public class RoundManager : NetworkBehaviour
             }
         }
 
-        // 强制更新天平位置
         if (balanceScale != null)
         {
             UpdateBalanceScaleServerRpc(0, 0);
@@ -906,12 +450,8 @@ public class RoundManager : NetworkBehaviour
     }
 
 
-
-    //###############################################卡牌优先级
-
     void ApplyEffect()
     {
-        // 1. 找到玩家1、玩家2各自打出的那张牌
         CardLogic p1Card = null;
         CardLogic p2Card = null;
 
@@ -930,12 +470,10 @@ public class RoundManager : NetworkBehaviour
             }
         }
 
-        // 2. 如果两张牌都找到了，就排下序，然后按优先级依次执行
         if (p1Card != null && p2Card != null)
         {
             ApplyCardEffects(p1Card, p2Card);
 
-            // 标记已经使用完
             p1Card.isOut = false;
             p2Card.isOut = false;
         }
@@ -943,22 +481,18 @@ public class RoundManager : NetworkBehaviour
 
     private void ApplyCardEffects(CardLogic player1Card, CardLogic player2Card)
     {
-        // 放进 List 准备排序
         List<CardLogic> cards = new List<CardLogic>() { player1Card, player2Card };
 
-        // 按优先级升序排序（数字小的先执行 => 优先级越高）
         cards.Sort((cardA, cardB) =>
             CardLogic.GetEffectPriority(cardA.effect).CompareTo(
             CardLogic.GetEffectPriority(cardB.effect)));
 
-        // 依次执行排序后的卡牌效果
         foreach (var card in cards)
         {
             card.OnEffect();
         }
     }
 
-    //#########################################
 
     void AssignPlayers()
     {
@@ -1009,29 +543,79 @@ public class RoundManager : NetworkBehaviour
         }
     }
 
-    private void UpdateChoiceStatistics()
+    void CalculatePoint(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)
     {
-        if (!NetworkManager.Singleton.IsServer) return;
+        UIManager uiManager = FindObjectOfType<UIManager>();
 
-        // 更新当前回合统计
-        player1CurrentRoundCoopCount.Value = (player1.choice == PlayerLogic.playerChoice.Cooperate) ? 1 : 0;
-        player1CurrentRoundCheatCount.Value = (player1.choice == PlayerLogic.playerChoice.Cheat) ? 1 : 0;
-        player2CurrentRoundCoopCount.Value = (player2.choice == PlayerLogic.playerChoice.Cooperate) ? 1 : 0;
-        player2CurrentRoundCheatCount.Value = (player2.choice == PlayerLogic.playerChoice.Cheat) ? 1 : 0;
+        float player1CurrentRoundPoint;
+        float player2CurrentRoundPoint;
 
-        // 更新总统计
-        if (player1.choice == PlayerLogic.playerChoice.Cooperate)
-            player1TotalCoopCount.Value++;
-        else if (player1.choice == PlayerLogic.playerChoice.Cheat)
-            player1TotalCheatCount.Value++;
+        if(player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cooperate)
+        {
+            player1CurrentRoundPoint = player1.coopPoint.Value;
+            player2CurrentRoundPoint = player2.coopPoint.Value;
+        }
+        else if (player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cheat)
+        {
+            player1CurrentRoundPoint = player1.coopPoint.Value;
+            player2CurrentRoundPoint = player2.cheatPoint.Value;
+        }
+        else if (player1Choice == PlayerLogic.playerChoice.Cheat && player2Choice == PlayerLogic.playerChoice.Cooperate)
+        {
+            player1CurrentRoundPoint = player1.cheatPoint.Value;
+            player2CurrentRoundPoint = player2.coopPoint.Value;
+        }
+        else
+        {
+            player1CurrentRoundPoint = 0f;
+            player2CurrentRoundPoint = 0f;
+        }
 
-        if (player2.choice == PlayerLogic.playerChoice.Cooperate)
-            player2TotalCoopCount.Value++;
-        else if (player2.choice == PlayerLogic.playerChoice.Cheat)
-            player2TotalCheatCount.Value++;
+        float p1PointsBefore = player1.point.Value;
+        float p2PointsBefore = player2.point.Value;
+
+        player1.point.Value += player1CurrentRoundPoint;
+        player2.point.Value += player2CurrentRoundPoint;
+
+        string player1Debug = "+" + player1CurrentRoundPoint.ToString();
+        string player2Debug = "+" + player2CurrentRoundPoint.ToString();
+
+        int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
+        int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
+
+        Coin coin = FindObjectOfType<Coin>();
+
+        coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
+        coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
+
+        UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
+
+        if (uiManager != null)
+        {
+            uiManager.UpdateDebugInfo(player1Debug, player2Debug);
+        }
+
+        if (NetworkManager.Singleton.IsServer)
+        {
+            GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
+            GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
+        }
+
+        if (!gameEnded && currentRound.Value >= totalRounds)
+        {
+            EndGame(uiManager);
+        }
+        else if (!gameEnded)
+        {
+            currentRound.Value++;
+            if (uiManager != null)
+            {
+                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
+            }
+            Debug.Log($"Round {currentRound.Value}");
+        }
     }
 
-    // 重置当前回合的统计
     private void ResetCurrentRoundStatistics()
     {
         if (!NetworkManager.Singleton.IsServer) return;
@@ -1042,7 +626,6 @@ public class RoundManager : NetworkBehaviour
         player2CurrentRoundCheatCount.Value = 0;
     }
 
-    // 重置所有统计
     public void ResetAllStatistics()
     {
         if (!NetworkManager.Singleton.IsServer) return;
@@ -1054,20 +637,46 @@ public class RoundManager : NetworkBehaviour
         player2TotalCheatCount.Value = 0;
     }
 
-    // 新增：手动开枪方法
+    private void EndGame(UIManager uiManager)
+    {
+        Debug.Log($"{totalRounds} rounds completed.");
+        gameEnded = true;
+
+        if (levelManager != null)
+        {
+            levelManager.ShowFirstPhaseSettlement();
+        }
+        else if (uiManager != null)
+        {
+            string winner = "";
+            if (player1.point.Value > player2.point.Value)
+            {
+                winner = "Player 1 wins!";
+            }
+            else if (player2.point.Value > player1.point.Value)
+            {
+                winner = "Player 2 wins!";
+            }
+            else
+            {
+                winner = "It's a tie!";
+            }
+            uiManager.ShowGameOver($"{totalRounds} rounds completed\n{winner}");
+        }
+    }
+
     [ServerRpc(RequireOwnership = false)]
     public void FireGunServerRpc(ulong clientId)
     {
-        // 检查是否有开枪权限
         if (clientId == 0 && player1CanFire.Value)
         {
             Gun1.GetComponent<GunController>().FireGun();
-            player1CanFire.Value = false;  // 开枪后失去开枪权限
+            player1CanFire.Value = false;
         }
         else if (clientId == 1 && player2CanFire.Value)
         {
             Gun2.GetComponent<GunController>().FireGun();
-            player2CanFire.Value = false;  // 开枪后失去开枪权限
+            player2CanFire.Value = false;
         }
     }
 }

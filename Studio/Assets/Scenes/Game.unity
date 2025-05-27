@@ -9864,6 +9864,7 @@ MonoBehaviour:
     m_InternalValue: 0
   player2SendCardBool:
     m_InternalValue: 0
+  cameraLogic: {fileID: 2031557195}
 --- !u!114 &1132786855
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15232,6 +15233,7 @@ GameObject:
   - component: {fileID: 2031557194}
   - component: {fileID: 2031557193}
   - component: {fileID: 2031557195}
+  - component: {fileID: 2031557196}
   m_Layer: 0
   m_Name: CameraManager
   m_TagString: Untagged
@@ -15283,35 +15285,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7acb31852d9996746b876c047db8b28f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NetworkConfig:
-    ProtocolVersion: 0
-    NetworkTransport: {fileID: 0}
-    PlayerPrefab: {fileID: 0}
-    Prefabs:
-      NetworkPrefabsLists: []
-    TickRate: 30
-    ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
-    ConnectionData: 
-    EnableTimeResync: 0
-    TimeResyncInterval: 30
-    EnsureNetworkVariableLengthSafety: 0
-    EnableSceneManagement: 1
-    ForceSamePrefabs: 1
-    RecycleNetworkIds: 1
-    NetworkIdRecycleDelay: 120
-    RpcHashSize: 0
-    LoadSceneTimeOut: 120
-    SpawnTimeout: 1
-    EnableNetworkLogs: 1
-    OldPrefabList: []
-  RunInBackground: 1
-  LogLevel: 1
-  mainCam: {fileID: 0}
-  player1GunState: {fileID: 0}
-  player1BalanceState: {fileID: 0}
-  player2CameraController_Gun: {fileID: 0}
-  player2CameraController_Balance: {fileID: 0}
+  mainCam: {fileID: 955254915}
+  player1GunState: {fileID: 1952696500}
+  player1BalanceState: {fileID: 1049006518}
+  player1ShowState: {fileID: 2101880893}
+  player2CameraController_Gun: {fileID: 138484847}
+  player2CameraController_Balance: {fileID: 1285022424}
+  player2ShowState: {fileID: 229485860}
+--- !u!114 &2031557196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031557192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2593843136
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &2065245938
 GameObject:
   m_ObjectHideFlags: 0
@@ -15843,79 +15843,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.429, y: -2.109, z: -7.15}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2120981069
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2120981071}
-  - component: {fileID: 2120981070}
-  m_Layer: 0
-  m_Name: CameraLogic
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2120981070
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2120981069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7acb31852d9996746b876c047db8b28f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  NetworkConfig:
-    ProtocolVersion: 0
-    NetworkTransport: {fileID: 0}
-    PlayerPrefab: {fileID: 0}
-    Prefabs:
-      NetworkPrefabsLists: []
-    TickRate: 30
-    ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
-    ConnectionData: 
-    EnableTimeResync: 0
-    TimeResyncInterval: 30
-    EnsureNetworkVariableLengthSafety: 0
-    EnableSceneManagement: 1
-    ForceSamePrefabs: 1
-    RecycleNetworkIds: 1
-    NetworkIdRecycleDelay: 120
-    RpcHashSize: 0
-    LoadSceneTimeOut: 120
-    SpawnTimeout: 1
-    EnableNetworkLogs: 1
-    OldPrefabList: []
-  RunInBackground: 1
-  LogLevel: 1
-  mainCam: {fileID: 955254915}
-  player1GunState: {fileID: 1952696499}
-  player1BalanceState: {fileID: 1049006517}
-  player2CameraController_Gun: {fileID: 138484847}
-  player2CameraController_Balance: {fileID: 1285022424}
---- !u!4 &2120981071
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2120981069}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.916154, y: -4.556643, z: -2.5057552}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16804,6 +16731,7 @@ SceneRoots:
   - {fileID: 837097504}
   - {fileID: 1825229691}
   - {fileID: 2071073360}
+  - {fileID: 2031557194}
   - {fileID: 143867526}
   - {fileID: 901300543}
   - {fileID: 1656763723}
@@ -16831,8 +16759,6 @@ SceneRoots:
   - {fileID: 1778826112}
   - {fileID: 1504394096}
   - {fileID: 955254916}
-  - {fileID: 2031557194}
-  - {fileID: 2120981071}
   - {fileID: 619800978}
   - {fileID: 581090866}
   - {fileID: 709893068}
