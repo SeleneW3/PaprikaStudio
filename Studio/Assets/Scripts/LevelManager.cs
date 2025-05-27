@@ -626,6 +626,7 @@ public class LevelManager : NetworkBehaviour
         string levelName = currentLevel.ToString();
         if (UIManager.Instance != null)
         {
+            // 使用新的 levelText1 和 levelText2
             UIManager.Instance.UpdateLevelInfo($"<shake a=0.2 f=0.8><wave a=0.3 f=0.1>{levelName}</wave></shake>");
         }
     }

@@ -3,7 +3,21 @@ using UnityEngine;
 public class GunShake : MonoBehaviour
 {
     private static GunShake instance;
-    public static GunShake Instance { get { return instance; } }
+    public static GunShake Instance 
+    { 
+        get 
+        { 
+            if (instance == null)
+            {
+                instance = FindObjectOfType<GunShake>();
+                if (instance == null)
+                {
+                    Debug.LogError("No GunShake instance found in scene!");
+                }
+            }
+            return instance;
+        } 
+    }
 
     [Header("Gun Shake Settings")]
     [SerializeField] private float shakeIntensity = 0.5f;     // 更大的抖动强度
@@ -23,8 +37,18 @@ public class GunShake : MonoBehaviour
 
     void Awake()
     {
-        if (instance == null)
-            instance = this;
+        // 单例模式检查
+        if (instance != null && instance != this)
+        {
+            Debug.LogWarning($"Found duplicate GunShake instance on {gameObject.name}. Destroying this instance.");
+            Destroy(gameObject);
+            return;
+        }
+        
+        instance = this;
+        
+        // 如果需要在场景切换时保留，取消下面的注释
+        // DontDestroyOnLoad(gameObject);
     }
 
     void Start()

@@ -77,6 +77,14 @@ public class ChessAnimation : MonoBehaviour
                 SoundManager.Instance.SetSFXVolumeForClip("ChessDown", volume);
                 SoundManager.Instance.PlaySFX("ChessDown");
             }
+
+            // 添加相机抖动效果，第一次碰撞强度更大
+            if (CameraShake.Instance != null)
+            {
+                float shakeIntensity = collisionCount > 1 ? 0.1f : 0.2f;  // 第二次碰撞抖动减半
+                float shakeDuration = collisionCount > 1 ? 0.15f : 0.3f;  // 第二次碰撞持续时间减半
+                CameraShake.Instance.ShakeCamera(shakeIntensity, shakeDuration);
+            }
             
             // 检查是否已经落地
             if (!hasLanded && rb.velocity.magnitude < 0.1f)
