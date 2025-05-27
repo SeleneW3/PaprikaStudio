@@ -7,7 +7,6 @@ using System.Collections.Generic;
 
 public class LevelManager : NetworkBehaviour
 {
-    // 单例实例
     public static LevelManager Instance { get; private set; }
 
     public enum Mode
