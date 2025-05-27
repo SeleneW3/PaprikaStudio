@@ -1142,12 +1142,14 @@ MonoBehaviour:
   handCardCursor: {fileID: 2800000, guid: e2b0be17981df0b44859b135f8a81c05, type: 3}
   selectedCardCursor: {fileID: 2800000, guid: 1806d0360844a6840b2f9b4dfabd2e99, type: 3}
   cursorHotspot: {x: 0, y: 0}
-  levelText1: {fileID: 1043976120}
-  levelText2: {fileID: 1209484796}
   roundText1: {fileID: 979922064}
   roundText2: {fileID: 786421655}
   player1TargetText: {fileID: 1474449665}
   player2TargetText: {fileID: 1687428322}
+  settlementPanel: {fileID: 230268220}
+  continueButton: {fileID: 1099419178}
+  exitButton: {fileID: 1577418586}
+  settlementScoreText: {fileID: 642010095}
 --- !u!4 &173729951
 Transform:
   m_ObjectHideFlags: 0
@@ -26538,39 +26540,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc25291f52dc9224cb58f7eadec72519, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentLevel: 0
-  currentLevelObjectives: []
-  objectiveCompleted:
-    m_InternalValue: 0
-  player1ObjectiveCompleted:
-    m_InternalValue: 0
-  player2ObjectiveCompleted:
-    m_InternalValue: 0
-  player1CheatTarget:
-    m_InternalValue: 15
-  player2CheatTarget:
-    m_InternalValue: 0
-  player1CoopTarget:
-    m_InternalValue: 0
-  player2CoopTarget:
-    m_InternalValue: 12
-  roundManager: {fileID: 1606319023}
-  Gun1: {fileID: 879893843}
-  Gun2: {fileID: 1007774844}
-  settlementPanel: {fileID: 230268220}
-  settlementScoreText: {fileID: 642010095}
-  continueButton: {fileID: 1099419178}
-  exitButton: {fileID: 1577418586}
-  isGunfightMode:
-    m_InternalValue: 0
-  firstPhaseScore1:
-    m_InternalValue: 0
-  firstPhaseScore2:
-    m_InternalValue: 0
-  player1Ready:
-    m_InternalValue: 0
-  player2Ready:
-    m_InternalValue: 0
+  currentMode: 0
 --- !u!4 &837097504
 Transform:
   m_ObjectHideFlags: 0

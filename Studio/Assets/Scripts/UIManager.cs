@@ -75,16 +75,16 @@ public class UIManager : MonoBehaviour
     public Vector2 cursorHotspot = Vector2.zero;  // 鼠标热点位置
 
     [Header("World Space UI")]
-    public TextMeshProUGUI levelText1;  // 玩家1的关卡显示
-    public TextMeshProUGUI levelText2;  // 玩家2的关卡显示
+    // public TextMeshProUGUI levelText1;  // 玩家1的关卡显示
+    // public TextMeshProUGUI levelText2;  // 玩家2的关卡显示
     public TextMeshProUGUI roundText1;  // 玩家1的回合显示
     public TextMeshProUGUI roundText2;  // 玩家2的回合显示
     public TextMeshProUGUI player1TargetText;
     public TextMeshProUGUI player2TargetText;
 
     // Text Animator Player组件引用
-    private TextAnimatorPlayer levelText1Animator;
-    private TextAnimatorPlayer levelText2Animator;
+    // private TextAnimatorPlayer levelText1Animator;
+    // private TextAnimatorPlayer levelText2Animator;
     private TextAnimatorPlayer roundText1Animator;
     private TextAnimatorPlayer roundText2Animator;
     private TextAnimatorPlayer player1TargetTextAnimator;
@@ -92,6 +92,12 @@ public class UIManager : MonoBehaviour
 
     private int lastDisplayedRound = -1; // 用于跟踪上一次显示的回合数
     private int lastDisplayedTotalRounds = -1; // 用于跟踪上一次显示的总回合数
+
+    [Header("Settlement Panel")]
+    public GameObject settlementPanel;
+    public Button continueButton;
+    public Button exitButton;
+    public TextMeshProUGUI settlementScoreText;
 
     void Awake()
     {
@@ -106,10 +112,10 @@ public class UIManager : MonoBehaviour
         }
 
         // 获取Text Animator组件
-        if (levelText1 != null)
-            levelText1Animator = levelText1.GetComponent<TextAnimatorPlayer>();
-        if (levelText2 != null)
-            levelText2Animator = levelText2.GetComponent<TextAnimatorPlayer>();
+        // if (levelText1 != null)
+        //     levelText1Animator = levelText1.GetComponent<TextAnimatorPlayer>();
+        // if (levelText2 != null)
+        //     levelText2Animator = levelText2.GetComponent<TextAnimatorPlayer>();
         if (roundText1 != null)
             roundText1Animator = roundText1.GetComponent<TextAnimatorPlayer>();
         if (roundText2 != null)
@@ -789,40 +795,40 @@ public class UIManager : MonoBehaviour
     }
 
     // 新增：更新Level信息显示
-    public void UpdateLevelInfo(string info)
-    {
-        // 更新玩家1的关卡显示
-        if (levelText1 != null)
-        {
-            if (levelText1Animator != null)
-            {
-                levelText1.gameObject.SetActive(true);
-                levelText1Animator.ShowText(info);
-            }
-            else
-            {
-                levelText1.text = info;
-                levelText1.gameObject.SetActive(true);
-            }
-        }
+    // public void UpdateLevelInfo(string info)
+    // {
+    //     // 更新玩家1的关卡显示
+    //     if (levelText1 != null)
+    //     {
+    //         if (levelText1Animator != null)
+    //         {
+    //             levelText1.gameObject.SetActive(true);
+    //             levelText1Animator.ShowText(info);
+    //         }
+    //         else
+    //         {
+    //             levelText1.text = info;
+    //             levelText1.gameObject.SetActive(true);
+    //         }
+    //     }
         
-        // 更新玩家2的关卡显示
-        if (levelText2 != null)
-        {
-            if (levelText2Animator != null)
-            {
-                levelText2.gameObject.SetActive(true);
-                levelText2Animator.ShowText(info);
-            }
-            else
-            {
-                levelText2.text = info;
-                levelText2.gameObject.SetActive(true);
-            }
-        }
-    }
+    //     // 更新玩家2的关卡显示
+    //     if (levelText2 != null)
+    //     {
+    //         if (levelText2Animator != null)
+    //         {
+    //             levelText2.gameObject.SetActive(true);
+    //             levelText2Animator.ShowText(info);
+    //         }
+    //         else
+    //         {
+    //             levelText2.text = info;
+    //             levelText2.gameObject.SetActive(true);
+    //         }
+    //     }
+    // }
 
-    // 设置玩家目标内容
+    /* 设置玩家目标内容
     public void SetPlayerTargetText(int playerIndex, string content)
     {
         if (playerIndex == 0 && player1TargetText != null)
@@ -849,6 +855,83 @@ public class UIManager : MonoBehaviour
             {
                 player2TargetText.text = content;
                 player2TargetText.gameObject.SetActive(true);
+            }
+        }
+    } */
+
+    // 显示结算面板
+    public void ShowSettlementPanel()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+        
+        ShowSettlementPanelClientRpc();
+    }
+
+    [ClientRpc]
+    private void ShowSettlementPanelClientRpc()
+    {
+        if (settlementPanel != null)
+        {
+            settlementPanel.SetActive(true);
+
+            // 启用按钮
+            if (continueButton != null)
+                continueButton.interactable = true;
+            if (exitButton != null)
+                exitButton.interactable = true;
+
+            // 更新结算面板显示
+            if (settlementScoreText != null && GameManager.Instance != null)
+            {
+                int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
+                int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
+                
+                string winner = player1Score > player2Score ? "Player 1" :
+                              player2Score > player1Score ? "Player 2" : "No one";
+                
+                settlementScoreText.text = $"Phase Complete!\n\n" +
+                                         $"Player 1: {player1Score}\n" +
+                                         $"Player 2: {player2Score}\n\n" +
+                                         $"{winner} wins this Phase!\n\n" +
+                                         "Continue to Next Phase?";
+            }
+        }
+    }
+
+    // 隐藏结算面板并重置游戏状态
+    public void HideSettlementPanelAndReset()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        HideSettlementPanelAndResetClientRpc();
+    }
+
+    [ClientRpc]
+    private void HideSettlementPanelAndResetClientRpc()
+    {
+        // 关闭结算面板
+        if (settlementPanel != null)
+            settlementPanel.SetActive(false);
+
+        // 隐藏游戏结束文本
+        HideGameOver();
+
+        if (NetworkManager.Singleton.IsServer)
+        {
+            // 重置回合和分数
+            if (roundManager != null)
+            {
+                roundManager.ResetRound();
+                
+                // 重置玩家分数
+                roundManager.player1.point.Value = 0f;
+                roundManager.player2.point.Value = 0f;
+            }
+            
+            // 重置游戏状态
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
             }
         }
     }
