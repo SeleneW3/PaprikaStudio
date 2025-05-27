@@ -118,7 +118,14 @@ public class DeckLogic : NetworkBehaviour
     {
         yield return new WaitForSeconds(autoCollectDelay);
         CollectSentCards();
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+        if(GameManager.Instance.currentGameState == GameManager.GameState.TutorShowState)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorCalculateTurn;
+        }
+        else
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+        }
     }
 
     /// <summary>

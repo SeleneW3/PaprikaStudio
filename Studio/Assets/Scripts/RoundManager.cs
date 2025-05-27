@@ -100,6 +100,15 @@ public class RoundManager : NetworkBehaviour
         {
             Debug.LogError("UIManager未找到!");
         }
+
+        if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+        {
+            totalRounds = 4;
+        }
+        else
+        {
+            totalRounds = 5;
+        }
         
     }
 
@@ -180,12 +189,6 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
         {
-            if (tutorState == 5)
-            {
-                tutorState++;
-                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-                return;
-            }
 
             if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None
                 )
@@ -227,15 +230,22 @@ public class RoundManager : NetworkBehaviour
         else if(GameManager.Instance.currentGameState == GameManager.GameState.Ready)
         {
             CardManager cardManager = FindObjectOfType<CardManager>();
-            if (cardManager != null)
+            if(LevelManager.Instance.currentMode == LevelManager.Mode.OnlyCard || 
+                              LevelManager.Instance.currentMode == LevelManager.Mode.CardAndGun)
             {
-                cardManager.StartDealCards(5);
-                GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
+                if (cardManager != null)
+                {
+                    cardManager.StartDealCards(5);
+                    playerGotCard = true;
+                }
+                else
+                {
+                    Debug.LogError("CardManager not found!");
+                }
             }
-            else
-            {
-                Debug.LogError("CardManager not found!");
-            }
+
+            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
+            
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.PlayerTurn)
         {
@@ -248,7 +258,7 @@ public class RoundManager : NetworkBehaviour
 
                         MovePiecesToPositions();
 
-                        GameManager.Instance.currentGameState = GameManager.GameState.CalculateTurn;
+                        GameManager.Instance.currentGameState = GameManager.GameState.PlayerShowState;
                     }
                     Debug.Log(tutorState);
                 }
@@ -266,6 +276,19 @@ public class RoundManager : NetworkBehaviour
             if (uiManager != null)
             {
                 uiManager.UpdateChoiceStatus(player1Selected, player2Selected);
+            }
+        }
+        else if (GameManager.Instance.currentGameState == GameManager.GameState.PlayerShowState)
+        {
+
+            if (showCard == false)
+            {
+                showCard = true;
+                deckLogic.ShowSentCards();
+            }
+            else
+            {
+                GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
             }
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
@@ -645,23 +668,7 @@ public class RoundManager : NetworkBehaviour
         Debug.Log($"{totalRounds} rounds completed.");
         gameEnded = true;
 
-        if (uiManager != null)
-        {
-            string winner = "";
-            if (player1.point.Value > player2.point.Value)
-            {
-                winner = "Player 1 wins!";
-            }
-            else if (player2.point.Value > player1.point.Value)
-            {
-                winner = "Player 2 wins!";
-            }
-            else
-            {
-                winner = "It's a tie!";
-            }
-            uiManager.ShowGameOver($"{totalRounds} rounds completed\n{winner}");
-        }
+        uiManager.ShowSettlementPanel();
     }
 
     [ServerRpc(RequireOwnership = false)]

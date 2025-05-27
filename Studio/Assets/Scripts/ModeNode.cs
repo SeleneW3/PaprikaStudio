@@ -14,8 +14,9 @@ public class ModeNode : MonoBehaviour
     private void OnMouseDown()
     {
         LevelManager.Instance.currentMode = type;
-        
+        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
         GameManager.Instance.LoadScene("Game");
+       
     }
 
 }

@@ -867,6 +867,11 @@ public class UIManager : MonoBehaviour
         ShowSettlementPanelClientRpc();
     }
 
+    public void OnContinueButtonClick()
+    {
+        GameManager.Instance.LoadScene("ModeScene");
+    }
+
     [ClientRpc]
     private void ShowSettlementPanelClientRpc()
     {
