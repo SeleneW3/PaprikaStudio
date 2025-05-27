@@ -17,6 +17,7 @@ public class LevelManager : NetworkBehaviour
         OnlyGun,
         CardAndGun
     }
+    
 
     [Header("当前模式")]
     public Mode currentMode = Mode.Tutor;
