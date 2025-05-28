@@ -59,16 +59,24 @@ public class CardLogic : NetworkBehaviour
 
     public bool disableHover = false;
 
+    private UIManager uiManager;  // 缓存 UIManager 引用
 
-// 在 Start 方法中初始化贴图，并监听 effectNetwork 的变化
+    // 在 Start 方法中初始化贴图，并监听 effectNetwork 的变化
     private void Start()
     {
-        Debug.Log("CardLogic Start() called");
+        //Debug.Log("CardLogic Start() called");
         UpdateSprite(); // 初始化时更新贴图
+        
+        // 获取并缓存 UIManager
+        uiManager = FindObjectOfType<UIManager>();
+        if (uiManager == null)
+        {
+            Debug.LogWarning("UIManager not found!");
+        }
 
         effectNetwork.OnValueChanged += (oldEffect, newEffect) =>
         {
-            Debug.Log($"客户端 {NetworkManager.LocalClientId} 收到 belonging 从 {oldEffect} → {newEffect}");
+            //Debug.Log($"客户端 {NetworkManager.LocalClientId} 收到 belonging 从 {oldEffect} → {newEffect}");
             UpdateSprite();
         };
     }
@@ -79,7 +87,7 @@ public class CardLogic : NetworkBehaviour
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
         {
-            Debug.LogError("SpriteRenderer not found on " + gameObject.name);
+            //Debug.LogError("SpriteRenderer not found on " + gameObject.name);
             return;
         }
 
@@ -116,7 +124,7 @@ public class CardLogic : NetworkBehaviour
                 break;
         }
 
-        Debug.Log("Sprite updated to: " + spriteRenderer.sprite.name);
+        //Debug.Log("Sprite updated to: " + spriteRenderer.sprite.name);
     }
 //  ！！！！！！！！！！！！！！！
 
@@ -202,13 +210,13 @@ public class CardLogic : NetworkBehaviour
     {
         float p1Before = GameManager.Instance.playerComponents[0].point.Value;
         float p2Before = GameManager.Instance.playerComponents[1].point.Value;
-        Debug.Log($"ReversePoint: Before Swap -> P1: {p1Before}, P2: {p2Before}");
+        //Debug.Log($"ReversePoint: Before Swap -> P1: {p1Before}, P2: {p2Before}");
 
         float temp = p2Before;
         GameManager.Instance.playerComponents[1].point.Value = p1Before;
         GameManager.Instance.playerComponents[0].point.Value = temp;
 
-        Debug.Log($"ReversePoint: After Swap -> P1: {GameManager.Instance.playerComponents[0].point.Value}, P2: {GameManager.Instance.playerComponents[1].point.Value}");
+        //Debug.Log($"ReversePoint: After Swap -> P1: {GameManager.Instance.playerComponents[0].point.Value}, P2: {GameManager.Instance.playerComponents[1].point.Value}");
     }
 
 
@@ -380,35 +388,38 @@ public static int GetEffectPriority(Effect effect)
 
     private void OnMouseEnter()
     {
-        if (!disableHover)
+        if (!disableHover && !isOut)
         {
-            if (!isOut)
+            if (NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>()?.belong == HandCardLogic.Belong.Player1)
             {
-                if (NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+                Debug.Log("Mouse Entered1");
+                GetComponentInParent<HandCardLogic>()?.Open();
+                // 设置手牌鼠标图案
+                if (uiManager != null)
                 {
-                    Debug.Log("Mouse Entered1");
-                    GetComponentInParent<HandCardLogic>().Open();
-                    // 设置手牌鼠标图案
-                    if (GameManager.Instance.playerComponents[0].selectCard == this)
+                    if (GameManager.Instance?.playerComponents[0]?.selectCard == this)
                     {
-                        FindObjectOfType<UIManager>().SetSelectedCardCursor();
+                        uiManager.SetSelectedCardCursor();
                     }
                     else
                     {
-                        FindObjectOfType<UIManager>().SetHandCardCursor();
+                        uiManager.SetHandCardCursor();
                     }
                 }
-                else if (NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
+            }
+            else if (NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>()?.belong == HandCardLogic.Belong.Player2)
+            {
+                GetComponentInParent<HandCardLogic>()?.Open();
+                // 设置手牌鼠标图案
+                if (uiManager != null)
                 {
-                    GetComponentInParent<HandCardLogic>().Open();
-                    // 设置手牌鼠标图案
-                    if (GameManager.Instance.playerComponents[1].selectCard == this)
+                    if (GameManager.Instance?.playerComponents[1]?.selectCard == this)
                     {
-                        FindObjectOfType<UIManager>().SetSelectedCardCursor();
+                        uiManager.SetSelectedCardCursor();
                     }
                     else
                     {
-                        FindObjectOfType<UIManager>().SetHandCardCursor();
+                        uiManager.SetHandCardCursor();
                     }
                 }
             }
@@ -420,17 +431,18 @@ public static int GetEffectPriority(Effect effect)
     {
         if (!isOut)
         {
-            if(NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player1)
+            HandCardLogic handCardLogic = GetComponentInParent<HandCardLogic>();
+            if (NetworkManager.LocalClientId == 0 && handCardLogic?.belong == HandCardLogic.Belong.Player1)
             {
-                GetComponentInParent<HandCardLogic>().Close();
+                handCardLogic.Close();
                 // 恢复默认鼠标图案
-                FindObjectOfType<UIManager>().SetDefaultCursor();
+                uiManager?.SetDefaultCursor();
             }
-            else if(NetworkManager.LocalClientId == 1 && GetComponentInParent<HandCardLogic>().belong == HandCardLogic.Belong.Player2)
+            else if (NetworkManager.LocalClientId == 1 && handCardLogic?.belong == HandCardLogic.Belong.Player2)
             {
-                GetComponentInParent<HandCardLogic>().Close();
+                handCardLogic.Close();
                 // 恢复默认鼠标图案
-                FindObjectOfType<UIManager>().SetDefaultCursor();
+                uiManager?.SetDefaultCursor();
             }
         }
         Debug.Log("Mouse Exited");

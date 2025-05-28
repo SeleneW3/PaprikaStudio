@@ -5,7 +5,7 @@ using Unity.Netcode;
 using System.Collections;
 using Febucci.UI;
 
-public class UIManager : MonoBehaviour
+public class UIManager : NetworkBehaviour
 {
     public static UIManager Instance { get; private set; }  // 单例模式
 
@@ -99,11 +99,14 @@ public class UIManager : MonoBehaviour
     public Button exitButton;
     public TextMeshProUGUI settlementScoreText;
 
-    void Awake()
+    private NetworkManager networkManager;
+
+    private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // 保持UI管理器在场景切换时不被销毁
         }
         else
         {
@@ -111,11 +114,10 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+        // 获取NetworkManager引用
+        networkManager = NetworkManager.Singleton;
+
         // 获取Text Animator组件
-        // if (levelText1 != null)
-        //     levelText1Animator = levelText1.GetComponent<TextAnimatorPlayer>();
-        // if (levelText2 != null)
-        //     levelText2Animator = levelText2.GetComponent<TextAnimatorPlayer>();
         if (roundText1 != null)
             roundText1Animator = roundText1.GetComponent<TextAnimatorPlayer>();
         if (roundText2 != null)
@@ -126,19 +128,64 @@ public class UIManager : MonoBehaviour
             player2TargetTextAnimator = player2TargetText.GetComponent<TextAnimatorPlayer>();
     }
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        // 获取父级Canvas
-        parentCanvas = GetComponentInParent<Canvas>();
+        base.OnNetworkSpawn();
+
+        Debug.Log($"[UIManager] OnNetworkSpawn called. IsClient={IsClient}, IsServer={IsServer}, IsOwner={IsOwner}, NetworkObjectId={NetworkObjectId}");
+
+        // 缓存引用
+        roundManager = FindObjectOfType<RoundManager>();
+        gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
+        gun2 = GameObject.Find("Gun2")?.GetComponent<GunController>();
+
+        if (IsClient)
+        {
+            // 请求服务器初始化UI
+            RequestUIInitializationServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestUIInitializationServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        // 服务器收到请求后，通知所有客户端初始化UI
+        InitializeUIClientRpc();
+    }
+
+    [ClientRpc]
+    private void InitializeUIClientRpc()
+    {
+        Debug.Log($"[UIManager] InitializeUIClientRpc called on client {NetworkManager.Singleton.LocalClientId}");
+        
+        // 初始化UI
+        InitializeUI();
+        
+        // 拉取初始状态
+        PullInitialValues();
+        
+        // 强制更新UI可见性
+        ForceUIVisibility();
+    }
+
+    private void InitializeUI()
+    {
+        Debug.Log("[UIManager] InitializeUI called");
+
+        // 确保有Canvas引用
         if (parentCanvas == null)
         {
-            Debug.LogError("UIManager: No parent Canvas found!");
-            return;
+            InitializeCanvasReference();
+            if (parentCanvas == null)
+            {
+                Debug.LogError("[UIManager] Cannot initialize UI: No Canvas found!");
+                return;
+            }
         }
-        
+
         // 设置高 sorting order 确保UI在其他物体前面
         parentCanvas.sortingOrder = 100;
-        
+
         // 初始化时隐藏游戏结束文本
         if (gameOverText != null)
         {
@@ -151,7 +198,7 @@ public class UIManager : MonoBehaviour
             roundText1.gameObject.SetActive(false);
             roundText2.gameObject.SetActive(false);
         }
-        
+
         // 获取GunController引用
         GameObject gun1Obj = GameObject.Find("Gun1");
         GameObject gun2Obj = GameObject.Find("Gun2");
@@ -163,23 +210,19 @@ public class UIManager : MonoBehaviour
         {
             Debug.LogWarning("无法找到枪支控制器引用");
         }
-        
-        // 检查子弹锚点是否存在
+
+        // 检查子弹锚点
         if (player1BulletsAnchor == null)
         {
             Debug.LogWarning("Player1BulletsAnchor未设置，将使用player1ScoreAnchor作为备用");
             player1BulletsAnchor = player1ScoreAnchor;
         }
-        
         if (player2BulletsAnchor == null)
         {
             Debug.LogWarning("Player2BulletsAnchor未设置，将使用player2ScoreAnchor作为备用");
             player2BulletsAnchor = player2ScoreAnchor;
         }
-        
-        // 强制UI可见性
-        ForceUIVisibility();
-        
+
         // 初始化选择状态文本
         if (player1ChoiceStatusText != null)
         {
@@ -207,12 +250,9 @@ public class UIManager : MonoBehaviour
             player2DebugText.gameObject.SetActive(false);
         }
 
-        // 订阅棋子动画完成事件
-        ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
-
         // 设置默认鼠标图案
         SetDefaultCursor();
-        
+
         // 初始化World Space回合文本
         if (roundText1 != null)
         {
@@ -225,23 +265,45 @@ public class UIManager : MonoBehaviour
             roundText2.gameObject.SetActive(true);
         }
 
+        // 获取RoundManager引用
         roundManager = FindObjectOfType<RoundManager>();
         if (roundManager == null)
         {
             Debug.LogWarning("RoundManager not found!");
         }
+
+        // 订阅棋子动画完成事件
+        ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
+
+        // 强制UI可见性
+        ForceUIVisibility();
     }
 
-    void OnDestroy()
+    public override void OnDestroy()
     {
         // 取消订阅事件
+        if (networkManager != null)
+        {
+            networkManager.OnClientConnectedCallback -= (id) => {
+                ForceUIVisibility();
+            };
+        }
         ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+        
+        base.OnDestroy();
+
+        // 取消事件订阅
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+        }
     }
 
     private void OnChessAnimationComplete()
     {
+        if (!IsClient) return;
         // 当棋子动画完成时，显示并播放debug text动画
-        StartCoroutine(PlayDebugTextAnimation());
+        RequestDebugTextAnimationServerRpc();
     }
 
     private IEnumerator PlayDebugTextAnimation()
@@ -322,8 +384,9 @@ public class UIManager : MonoBehaviour
     // 新增：播放debug text动画并在完成时执行回调
     public void PlayDebugTextAnimationWithCallback(System.Action callback)
     {
+        if (!IsClient) return;
         onDebugTextAnimationComplete = callback;
-        StartCoroutine(PlayDebugTextAnimation());
+        RequestDebugTextAnimationServerRpc();
     }
 
     // 辅助方法：设置文本透明度
@@ -336,7 +399,8 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
-        // 直接调用统一的位置更新方法
+        if (parentCanvas == null) return;
+
         UpdateUIPositions();
 
         if (roundManager != null)
@@ -344,30 +408,50 @@ public class UIManager : MonoBehaviour
             UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
         }
         
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
         {
-            // 更新分数
             UpdateScoreText();
-            
-            // 更新子弹数
             UpdateBulletsText();
-            
-            // 更新调试信息
-            if (player1DebugText != null && player2DebugText != null)
-            {
-                player1DebugText.text = GameManager.Instance.playerComponents[0].debugInfo.Value.ToString();
-                player2DebugText.text = GameManager.Instance.playerComponents[1].debugInfo.Value.ToString();
-            }
         }
     }
 
     void UpdateScoreText()
     {
-        if (player1ScoreText != null && player2ScoreText != null && 
-            GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
+        if (!IsClient) return;
+
+        // 确保所有必要的引用都存在
+        if (player1ScoreText == null || player2ScoreText == null)
+        {
+            Debug.LogWarning("[UIManager] Score text components are missing");
+            return;
+        }
+
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[UIManager] GameManager instance is null");
+            return;
+        }
+
+        if (GameManager.Instance.playerComponents == null)
+        {
+            Debug.LogWarning("[UIManager] Player components list is null");
+            return;
+        }
+
+        if (GameManager.Instance.playerComponents.Count < 2)
+        {
+            Debug.LogWarning("[UIManager] Not enough players initialized");
+            return;
+        }
+
+        try
         {
             player1ScoreText.text = $"Player 1: {GameManager.Instance.playerComponents[0].point.Value}";
             player2ScoreText.text = $"Player 2: {GameManager.Instance.playerComponents[1].point.Value}";
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[UIManager] Error updating score text: {e.Message}");
         }
     }
     
@@ -575,6 +659,50 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private void EnsureUIElementsInCanvas()
+    {
+        if (parentCanvas == null)
+        {
+            Debug.LogError("[UIManager] Cannot ensure UI elements in Canvas: Canvas is null");
+            return;
+        }
+
+        try
+        {
+            SafeEnsureElementInCanvas(player1ScoreText?.gameObject, "Player1ScoreText");
+            SafeEnsureElementInCanvas(player2ScoreText?.gameObject, "Player2ScoreText");
+            SafeEnsureElementInCanvas(player1BulletsText?.gameObject, "Player1BulletsText");
+            SafeEnsureElementInCanvas(player2BulletsText?.gameObject, "Player2BulletsText");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[UIManager] Error in EnsureUIElementsInCanvas: {e}");
+        }
+    }
+
+    private void SafeEnsureElementInCanvas(GameObject element, string elementName)
+    {
+        try
+        {
+            if (element != null && parentCanvas != null)
+            {
+                if (element.transform.parent != parentCanvas.transform)
+                {
+                    element.transform.SetParent(parentCanvas.transform, false);
+                    Debug.Log($"[UIManager] Successfully moved {elementName} to Canvas");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[UIManager] Cannot move {elementName} to Canvas: {(element == null ? "element is null" : "Canvas is null")}");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[UIManager] Error moving {elementName} to Canvas: {e}");
+        }
+    }
+
     // 显示游戏结束
     public void ShowGameOver(string reason = "")
     {
@@ -640,21 +768,54 @@ public class UIManager : MonoBehaviour
         Debug.Log($"Showing game over text on client: {reason}");
     }
 
-    // 修改UpdateDebugInfo方法
+    // 修改UpdateDebugInfo方法，添加网络同步
     public void UpdateDebugInfo(string player1Debug, string player2Debug)
     {
+        if (!IsClient) return;
+
+        // 请求服务器更新所有客户端的debug text内容
+        UpdateDebugInfoServerRpc(player1Debug, player2Debug);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void UpdateDebugInfoServerRpc(string player1Debug, string player2Debug, ServerRpcParams serverRpcParams = default)
+    {
+        // 服务器通知所有客户端更新debug text内容
+        UpdateDebugInfoClientRpc(player1Debug, player2Debug);
+    }
+
+    [ClientRpc]
+    private void UpdateDebugInfoClientRpc(string player1Debug, string player2Debug)
+    {
+        // 在所有客户端上更新debug text内容
         if (player1DebugText != null)
         {
             player1DebugText.text = player1Debug;
             player1DebugText.gameObject.SetActive(false);
-            SetTextAlpha(player1DebugText, 1f);  // 重置透明度
+            SetTextAlpha(player1DebugText, 1f);
         }
         if (player2DebugText != null)
         {
             player2DebugText.text = player2Debug;
             player2DebugText.gameObject.SetActive(false);
-            SetTextAlpha(player2DebugText, 1f);  // 重置透明度
+            SetTextAlpha(player2DebugText, 1f);
         }
+
+        // 请求服务器触发动画
+        RequestDebugTextAnimationServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestDebugTextAnimationServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        // 服务器通知所有客户端播放动画
+        PlayDebugTextAnimationClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayDebugTextAnimationClientRpc()
+    {
+        StartCoroutine(PlayDebugTextAnimation());
     }
 
     // 修改ClearDebugInfo方法
@@ -938,6 +1099,107 @@ public class UIManager : MonoBehaviour
             {
                 GameManager.Instance.currentGameState = GameManager.GameState.Ready;
             }
+        }
+    }
+
+    private void PullInitialValues()
+    {
+        if (!IsClient) return;
+
+        Debug.Log("[UIManager] PullInitialValues called");
+        Debug.Log($"[UIManager] Initial values - GameManager exists: {GameManager.Instance != null}, " +
+                 $"Players count: {GameManager.Instance?.playerComponents.Count}");
+
+        // 更新分数
+        UpdateScoreText();
+
+        // 更新子弹
+        UpdateBulletsText();
+
+        // 更新回合
+        if (roundManager != null)
+        {
+            UpdateRoundText(roundManager.currentRound.Value);
+            Debug.Log($"[UIManager] Round updated to: {roundManager.currentRound.Value}");
+        }
+        else
+        {
+            Debug.LogError("[UIManager] RoundManager is null in PullInitialValues!");
+        }
+
+        // 隐藏结算面板
+        if (settlementPanel != null)
+        {
+            settlementPanel.SetActive(false);
+            Debug.Log("[UIManager] Settlement panel hidden");
+        }
+        else
+        {
+            Debug.LogError("[UIManager] Settlement panel is null!");
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void TriggerSettlementServerRpc()
+    {
+        ShowSettlementPanelClientRpc();
+    }
+
+    [ClientRpc]
+    private void HideSettlementPanelClientRpc()
+    {
+        if (!IsClient) return;
+        settlementPanel.SetActive(false);
+    }
+
+    public void OnExitButtonClick()
+    {
+        if (IsClient)
+        {
+            Application.Quit();
+        }
+    }
+
+    private void InitializeCanvasReference()
+    {
+        // 首先尝试获取父级Canvas
+        parentCanvas = GetComponentInParent<Canvas>();
+        
+        // 如果在父级找不到，尝试在场景中查找
+        if (parentCanvas == null)
+        {
+            parentCanvas = FindObjectOfType<Canvas>();
+        }
+        
+        // 如果还是找不到，在当前对象所在的层级查找
+        if (parentCanvas == null)
+        {
+            var canvasObj = GameObject.Find("Canvas");
+            if (canvasObj != null)
+            {
+                parentCanvas = canvasObj.GetComponent<Canvas>();
+            }
+        }
+
+        if (parentCanvas != null)
+        {
+            Debug.Log($"[UIManager] Canvas found with render mode: {parentCanvas.renderMode}");
+            parentCanvas.sortingOrder = 100;
+        }
+        else
+        {
+            Debug.LogError("[UIManager] No Canvas found in the scene! UI elements will not be visible!");
+        }
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        Debug.Log($"[UIManager] Client {clientId} connected");
+        
+        // 当新客户端连接时，请求UI初始化
+        if (IsClient)
+        {
+            RequestUIInitializationServerRpc();
         }
     }
 } 

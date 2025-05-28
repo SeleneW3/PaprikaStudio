@@ -276,6 +276,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   levelManager: {fileID: 0}
+  dialogManager: {fileID: 0}
+  deck: {fileID: 0}
 --- !u!114 &1634598184
 MonoBehaviour:
   m_ObjectHideFlags: 0

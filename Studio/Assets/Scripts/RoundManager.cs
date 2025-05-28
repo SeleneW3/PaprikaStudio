@@ -547,8 +547,6 @@ public class RoundManager : NetworkBehaviour
         player2.choice = PlayerLogic.playerChoice.None;
         player1.SetUsedCardServerRpc(false);
         player2.SetUsedCardServerRpc(false);
-        player1CanFire.Value = false;
-        player2CanFire.Value = false;
     }
 
     void ChessMoveBack()
@@ -576,6 +574,19 @@ public class RoundManager : NetworkBehaviour
         float player1CurrentRoundPoint;
         float player2CurrentRoundPoint;
 
+        // 判断开枪条件：被欺骗就可以开枪
+        if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
+        {
+            // 玩家1被欺骗，玩家1开枪
+            Gun1.GetComponent<GunController>().FireGun();
+        }
+        if (player1Choice == PlayerLogic.playerChoice.Cheat && Gun2 != null)
+        {
+            // 玩家2被欺骗，玩家2开枪
+            Gun2.GetComponent<GunController>().FireGun();
+        }
+
+        // 计算得分
         if(player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cooperate)
         {
             player1CurrentRoundPoint = player1.coopPoint.Value;

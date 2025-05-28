@@ -3,20 +3,16 @@ using UnityEngine;
 
 public class CameraShake : MonoBehaviour
 {
-    private static CameraShake instance;
+    private static CameraShake _instance;
     public static CameraShake Instance 
     { 
         get 
         { 
-            if (instance == null)
+            if (_instance == null)
             {
-                instance = FindObjectOfType<CameraShake>();
-                if (instance == null)
-                {
-                    Debug.LogError("No CameraShake instance found in scene!");
-                }
+                _instance = FindObjectOfType<CameraShake>();
             }
-            return instance;
+            return _instance;
         } 
     }
 
@@ -31,28 +27,25 @@ public class CameraShake : MonoBehaviour
 
     void Awake()
     {
-        // 单例模式检查
-        if (instance != null && instance != this)
+        if (_instance == null)
         {
-            Debug.LogWarning($"Found duplicate CameraShake instance on {gameObject.name}. Destroying this instance.");
-            Destroy(gameObject);
+            _instance = this;
+            // DontDestroyOnLoad(gameObject);
+        }
+        else if (_instance != this)
+        {
+            Destroy(this);
             return;
         }
-        
-        instance = this;
-        
-        // 如果需要在场景切换时保留，取消下面的注释
-        // DontDestroyOnLoad(gameObject);
-    }
 
-    void Start()
-    {
         originalPosition = transform.localPosition;
     }
 
     // 公共方法：开始相机抖动
     public void ShakeCamera(float intensity = -1, float duration = -1)
     {
+        if (!gameObject.activeInHierarchy) return;
+
         // 如果没有指定参数，使用默认值
         float shakeAmount = intensity < 0 ? shakeIntensity : intensity;
         float shakeDur = duration < 0 ? shakeDuration : duration;
@@ -68,7 +61,7 @@ public class CameraShake : MonoBehaviour
 
         while (currentDuration > 0)
         {
-            if (!isShaking)
+            if (!isShaking || !gameObject.activeInHierarchy)
             {
                 transform.localPosition = originalPosition;
                 yield break;
@@ -92,9 +85,19 @@ public class CameraShake : MonoBehaviour
     // 停止抖动
     public void StopShake()
     {
+        if (!gameObject.activeInHierarchy) return;
+        
         isShaking = false;
         StopAllCoroutines();
         transform.localPosition = originalPosition;
+    }
+
+    void OnDisable()
+    {
+        if (isShaking)
+        {
+            StopShake();
+        }
     }
 
     // Update is called once per frame

@@ -54,13 +54,13 @@ public class CardUILogic : MonoBehaviour
     {
         transitioningToTarget = true;
         transitioningToOriginal = false;
-        Debug.Log("Mouse Entered");
+        //Debug.Log("Mouse Entered");
     }
 
     private void OnMouseExit()
     {
         transitioningToTarget = false;
         transitioningToOriginal = true;
-        Debug.Log("Mouse Exited");
+        //Debug.Log("Mouse Exited");
     }
 }

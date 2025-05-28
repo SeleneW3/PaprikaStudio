@@ -14,8 +14,10 @@ public class GunController : NetworkBehaviour
     public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(false);   // 游戏是否结束
     
     private Vector3 originalPosition;  // 记录原始位置
+    private Quaternion originalRotation; // 记录原始旋转
     private bool isHovered = false;    // 记录是否正在悬停
     private float hoverHeight = 0.1f;  // 抬起高度
+    private bool isAnimating = false;  // 记录是否正在播放动画
 
     [Header("UI Anchor")]
     public Transform gunUIAnchor;  // 用于放置UI按钮的锚点
@@ -29,7 +31,12 @@ public class GunController : NetworkBehaviour
     {
         // 在 Awake 中获取 NetworkObject，确保最早获取到组件
         networkObject = GetComponent<NetworkObject>();
-        Debug.Log($"Awake - NetworkObject component {(networkObject != null ? "found" : "not found")}");
+        //Debug.Log($"Awake - NetworkObject component {(networkObject != null ? "found" : "not found")}");
+
+        // 在 Awake 中记录初始位置和旋转
+        originalPosition = transform.position;
+        originalRotation = transform.rotation;
+        //Debug.Log($"Original position set for {gameObject.name}: {originalPosition}");
     }
 
     void Start()
@@ -42,7 +49,7 @@ public class GunController : NetworkBehaviour
 
         if (networkObject == null)
         {
-            Debug.LogError("NetworkObject component missing on GunController!");
+            //Debug.LogError("NetworkObject component missing on GunController!");
             return;
         }
 
@@ -50,7 +57,7 @@ public class GunController : NetworkBehaviour
         Collider collider = GetComponent<Collider>();
         if (collider == null)
         {
-            Debug.LogError($"[{gameObject.name}] Missing Collider component on parent object - required for mouse interactions!");
+            //Debug.LogError($"[{gameObject.name}] Missing Collider component on parent object - required for mouse interactions!");
             // 自动添加Box Collider
             BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
             // 获取所有子物体的渲染器
@@ -66,7 +73,7 @@ public class GunController : NetworkBehaviour
                 // 设置Box Collider的大小和中心点
                 boxCollider.center = transform.InverseTransformPoint(bounds.center);
                 boxCollider.size = bounds.size;
-                Debug.Log($"[{gameObject.name}] Added Box Collider with size: {boxCollider.size} and center: {boxCollider.center}");
+                //Debug.Log($"[{gameObject.name}] Added Box Collider with size: {boxCollider.size} and center: {boxCollider.center}");
             }
         }
 
@@ -74,30 +81,30 @@ public class GunController : NetworkBehaviour
         Renderer[] childRenderers = GetComponentsInChildren<Renderer>();
         if (childRenderers.Length == 0)
         {
-            Debug.LogError($"[{gameObject.name}] No Renderer found in children - required for mouse interactions!");
+            //Debug.LogError($"[{gameObject.name}] No Renderer found in children - required for mouse interactions!");
         }
         else
         {
-            Debug.Log($"[{gameObject.name}] Found {childRenderers.Length} renderers in children");
+            //Debug.Log($"[{gameObject.name}] Found {childRenderers.Length} renderers in children");
             foreach (Renderer renderer in childRenderers)
             {
                 if (!renderer.enabled)
                 {
-                    Debug.LogWarning($"[{gameObject.name}] Renderer '{renderer.name}' is disabled!");
+                    //Debug.LogWarning($"[{gameObject.name}] Renderer '{renderer.name}' is disabled!");
                 }
                 if (renderer.sharedMaterial == null)
                 {
-                    Debug.LogWarning($"[{gameObject.name}] Renderer '{renderer.name}' has no material assigned!");
+                    //Debug.LogWarning($"[{gameObject.name}] Renderer '{renderer.name}' has no material assigned!");
                 }
             }
         }
 
-        Debug.Log($"Start - NetworkObject state - IsSpawned: {networkObject.IsSpawned}, IsLocalPlayer: {networkObject.IsLocalPlayer}, IsOwner: {networkObject.IsOwner}");
+        //Debug.Log($"Start - NetworkObject state - IsSpawned: {networkObject.IsSpawned}, IsLocalPlayer: {networkObject.IsLocalPlayer}, IsOwner: {networkObject.IsOwner}");
         
         // 如果在服务器上且还没有生成，则生成对象
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && !networkObject.IsSpawned)
         {
-            Debug.Log("Start - Spawning NetworkObject for GunController");
+            //Debug.Log("Start - Spawning NetworkObject for GunController");
             networkObject.Spawn();
         }
 
@@ -105,38 +112,34 @@ public class GunController : NetworkBehaviour
         roundManager = FindObjectOfType<RoundManager>();
         if (roundManager == null)
         {
-            Debug.LogError("RoundManager not found!");
+            //Debug.LogError("RoundManager not found!");
         }
-
-        // 记录原始位置
-        originalPosition = transform.position;
-        Debug.Log($"Original position set for {gameObject.name}: {originalPosition}");
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        Debug.Log($"OnNetworkSpawn - IsServer: {IsServer}, NetworkManager.Singleton.IsServer: {NetworkManager.Singleton.IsServer}, IsSpawned: {IsSpawned}, IsClient: {IsClient}");
+        //Debug.Log($"OnNetworkSpawn - IsServer: {IsServer}, NetworkManager.Singleton.IsServer: {NetworkManager.Singleton.IsServer}, IsSpawned: {IsSpawned}, IsClient: {IsClient}");
         
         // 获取枪的 Animator 组件
         gunAnimator = GetComponent<Animator>();
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer) // 检查 NetworkManager 是否存在
         {
-            Debug.Log("Server side - About to call InitializeBulletChancesServerRpc");
+            //Debug.Log("Server side - About to call InitializeBulletChancesServerRpc");
             try 
             {
                 InitializeBulletChancesServerRpc();
-                Debug.Log("Successfully called InitializeBulletChancesServerRpc");
+                //Debug.Log("Successfully called InitializeBulletChancesServerRpc");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Failed to call InitializeBulletChancesServerRpc: {e.Message}");
+                //Debug.LogError($"Failed to call InitializeBulletChancesServerRpc: {e.Message}");
             }
         }
         else
         {
-            Debug.Log($"Client side or NetworkManager not ready - NetworkManager.Singleton is {(NetworkManager.Singleton == null ? "null" : "not null")}");
+            //Debug.Log($"Client side or NetworkManager not ready - NetworkManager.Singleton is {(NetworkManager.Singleton == null ? "null" : "not null")}");
         }
     }
 
@@ -154,13 +157,13 @@ public class GunController : NetworkBehaviour
     {
         if (gameEnded.Value)
         {
-            Debug.Log("The game has already ended.");
+            //Debug.Log("The game has already ended.");
             return;
         }
 
         if (remainingChances.Value <= 0)
         {
-            Debug.Log("No remaining chances.");
+            //Debug.Log("No remaining chances.");
             return;
         }
 
@@ -232,6 +235,7 @@ public class GunController : NetworkBehaviour
         Debug.Log("PlayFireAnimationClientRpc called on " + (IsServer ? "Server" : "Client"));
         if (gunAnimator != null)
         {
+            OnAnimationStart();
             gunAnimator.SetTrigger("Grab");
         }
         else
@@ -249,7 +253,7 @@ public class GunController : NetworkBehaviour
             gameEnded.Value = false;
             InitializeBulletChancesServerRpc(); // 在重置时重新初始化
             
-            Debug.Log("About to call PlayResetGunSoundClientRpc");
+            //Debug.Log("About to call PlayResetGunSoundClientRpc");
             // 播放重置枪音效
             PlayResetGunSoundClientRpc();
         }
@@ -258,7 +262,7 @@ public class GunController : NetworkBehaviour
     [ClientRpc]
     void PlayResetGunSoundClientRpc()
     {
-        Debug.Log("PlayResetGunSoundClientRpc called");
+        //Debug.Log("PlayResetGunSoundClientRpc called");
         // 延迟播放重置枪音效
         Invoke("PlayGunResetSound", 2f);
     }
@@ -266,15 +270,15 @@ public class GunController : NetworkBehaviour
     // 播放重置枪音效
     private void PlayGunResetSound()
     {
-        Debug.Log("PlayGunResetSound called");
+        //Debug.Log("PlayGunResetSound called");
         if (SoundManager.Instance != null)
         {
-            Debug.Log("Attempting to play GunReset sound");
+            //Debug.Log("Attempting to play GunReset sound");
             SoundManager.Instance.PlaySFX("GunReset");
         }
         else
         {
-            Debug.LogError("SoundManager.Instance is null");
+            //Debug.LogError("SoundManager.Instance is null");
         }
     }
 
@@ -283,7 +287,7 @@ public class GunController : NetworkBehaviour
     {
         if (networkObject != null && !networkObject.IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            Debug.Log("Manually spawning NetworkObject");
+            //  Debug.Log("Manually spawning NetworkObject");
             networkObject.Spawn();
         }
     }
@@ -345,8 +349,6 @@ public class GunController : NetworkBehaviour
         // 单机状态
         else
         {
-            //Debug.Log($"Executing hover effect on {gameObject.name} in single player mode");
-            // 直接执行悬停效果
             HoverGun(true);
         }
     }
@@ -379,6 +381,8 @@ public class GunController : NetworkBehaviour
     // 修改HoverGun方法，移除UI显示/隐藏逻辑
     private void HoverGun(bool hover)
     {
+        if (isAnimating) return; // 如果正在播放动画，不执行悬停效果
+
         if (hover && !isHovered)
         {
             // 抬起枪
@@ -447,17 +451,37 @@ public class GunController : NetworkBehaviour
     [ClientRpc]
     private void TriggerRealBulletShakeClientRpc()
     {
-        // 在所有客户端触发枪支震动
-        if (GunShake.Instance != null)
+        // 直接获取当前枪的 GunShake 组件
+        GunShake gunShake = GetComponent<GunShake>();
+        if (gunShake != null)
         {
-            GunShake.Instance.OnSuccessfulShot();
+            gunShake.OnSuccessfulShot();
+        }
+        else
+        {
+            Debug.LogError($"[{gameObject.name}] GunShake component not found!");
         }
         
-        // 同时触发相机震动，增强效果
+        // 相机震动保持不变
         if (CameraShake.Instance != null)
         {
             CameraShake.Instance.ShakeCamera(0.3f, 0.4f);
         }
+    }
+
+    // 在动画开始时调用
+    public void OnAnimationStart()
+    {
+        isAnimating = true;
+    }
+
+    // 在动画结束时调用
+    public void OnAnimationEnd()
+    {
+        isAnimating = false;
+        // 确保枪回到正确位置和旋转
+        transform.position = originalPosition;
+        transform.rotation = originalRotation;
     }
 
 }

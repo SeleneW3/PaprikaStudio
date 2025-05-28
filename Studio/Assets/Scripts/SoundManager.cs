@@ -89,7 +89,7 @@ public class SoundManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Music clip {name} not found!");
+            //Debug.LogWarning($"Music clip {name} not found!");
         }
     }
 
@@ -100,12 +100,12 @@ public class SoundManager : MonoBehaviour
         {
             // 使用全局音效音量乘以特定音效的单独音量
             float individualVolume = sfxVolumeDict.ContainsKey(name) ? sfxVolumeDict[name] : 1f;
-            Debug.Log($"Playing SFX: {name} with volume: {sfxVolume * individualVolume}");
+            //Debug.Log($"Playing SFX: {name} with volume: {sfxVolume * individualVolume}");
             sfxSource.PlayOneShot(sfxDict[name], sfxVolume * individualVolume);
         }
         else
         {
-            Debug.LogWarning($"SFX clip {name} not found! Available clips: {string.Join(", ", sfxDict.Keys)}");
+            //Debug.LogWarning($"SFX clip {name} not found! Available clips: {string.Join(", ", sfxDict.Keys)}");
         }
     }
 
