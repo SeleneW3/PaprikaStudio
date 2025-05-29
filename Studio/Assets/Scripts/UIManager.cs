@@ -7,6 +7,20 @@ using Febucci.UI;
 
 public class UIManager : NetworkBehaviour
 {
+    public enum State
+    {
+        Idle,           // 初始状态
+        DebugText,      // 更新DebugText
+        ScoreAndCoin,   // 更新分数、金币和天平
+        FireAnimation,  // 开枪动画
+        BulletUI,      // 更新子弹UI
+        RoundText,      // 更新回合文本
+        Settlement     // 结算面板
+    }
+
+    private NetworkVariable<State> currentState = new NetworkVariable<State>(State.Idle);
+    private Coroutine stateCoroutine;
+
     public static UIManager Instance { get; private set; }  // 单例模式
 
     [Header("Screen Space UI")]
@@ -31,10 +45,6 @@ public class UIManager : NetworkBehaviour
     public TextMeshProUGUI player2BulletsText; // 显示玩家2剩余子弹的文本
     public Transform player1BulletsAnchor; // 玩家1子弹数显示锚点
     public Transform player2BulletsAnchor; // 玩家2子弹数显示锚点
-
-
-    [Header("Screen Space UI")]
-    public TextMeshProUGUI gameOverText;
 
     [Header("Movement Settings")]
     [Range(1f, 50f)]
@@ -186,15 +196,6 @@ public class UIManager : NetworkBehaviour
             }
         }
 
-        // 设置高 sorting order 确保UI在其他物体前面
-        parentCanvas.sortingOrder = 100;
-
-        // 初始化时隐藏游戏结束文本
-        if (gameOverText != null)
-        {
-            gameOverText.gameObject.SetActive(false);
-        }
-
         // 初始化时隐藏World Space回合文本
         if (roundText1 != null || roundText2 != null)
         {
@@ -209,22 +210,6 @@ public class UIManager : NetworkBehaviour
         if (gun1Obj) gun1 = gun1Obj.GetComponent<GunController>();
         if (gun2Obj) gun2 = gun2Obj.GetComponent<GunController>();
         
-        if (gun1 == null || gun2 == null)
-        {
-            Debug.LogWarning("无法找到枪支控制器引用");
-        }
-
-        // 检查子弹锚点
-        if (player1BulletsAnchor == null)
-        {
-            Debug.LogWarning("Player1BulletsAnchor未设置，将使用player1ScoreAnchor作为备用");
-            player1BulletsAnchor = player1ScoreAnchor;
-        }
-        if (player2BulletsAnchor == null)
-        {
-            Debug.LogWarning("Player2BulletsAnchor未设置，将使用player2ScoreAnchor作为备用");
-            player2BulletsAnchor = player2ScoreAnchor;
-        }
 
         // 初始化选择状态文本
         if (player1ChoiceStatusText != null)
@@ -305,8 +290,12 @@ public class UIManager : NetworkBehaviour
     private void OnChessAnimationComplete()
     {
         if (!IsClient) return;
-        // 当棋子动画完成时，显示并播放debug text动画
-        RequestDebugTextAnimationServerRpc();
+        
+        // 启动状态机
+        if (IsServer)
+        {
+            StartStateMachine();
+        }
     }
 
     private IEnumerator PlayDebugTextAnimation()
@@ -384,12 +373,67 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    // 新增：播放debug text动画并在完成时执行回调
+    // 修改UpdateDebugInfo方法，添加网络同步
+    public void UpdateDebugInfo(string player1Debug, string player2Debug)
+    {
+        if (!IsClient) return;
+
+        // 如果是服务器，通知所有客户端更新debug text
+        if (IsServer)
+        {
+            UpdateDebugInfoClientRpc(player1Debug, player2Debug);
+        }
+    }
+
+    [ClientRpc]
+    private void UpdateDebugInfoClientRpc(string player1Debug, string player2Debug)
+    {
+        try
+        {
+            // 更新debug text内容
+            if (player1DebugText != null)
+            {
+                player1DebugText.text = player1Debug;
+                player1DebugText.gameObject.SetActive(false);
+                SetTextAlpha(player1DebugText, 1f);
+            }
+            if (player2DebugText != null)
+            {
+                player2DebugText.text = player2Debug;
+                player2DebugText.gameObject.SetActive(false);
+                SetTextAlpha(player2DebugText, 1f);
+            }
+
+            // 播放动画
+            StartCoroutine(PlayDebugTextAnimation());
+
+            // 启动状态机
+            if (IsServer)
+            {
+                StartStateMachine();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in UpdateDebugInfoClientRpc: {e.Message}");
+        }
+    }
+
+    // 修改PlayDebugTextAnimationWithCallback方法
     public void PlayDebugTextAnimationWithCallback(System.Action callback)
     {
         if (!IsClient) return;
         onDebugTextAnimationComplete = callback;
-        RequestDebugTextAnimationServerRpc();
+        if (IsServer)
+        {
+            PlayDebugTextAnimationClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void PlayDebugTextAnimationClientRpc()
+    {
+        StartCoroutine(PlayDebugTextAnimation());
     }
 
     // 辅助方法：设置文本透明度
@@ -424,12 +468,25 @@ public class UIManager : NetworkBehaviour
 
         try
         {
+            if (GameManager.Instance == null || GameManager.Instance.playerComponents == null || 
+                GameManager.Instance.playerComponents.Count < 2)
+            {
+                Debug.LogWarning("GameManager or player components not ready");
+                return;
+            }
+
             float player1Score = GameManager.Instance.playerComponents[0].point.Value;
             float player2Score = GameManager.Instance.playerComponents[1].point.Value;
             
             // 更新分数显示
-            player1ScoreText.text = $"Player 1: {player1Score}";
-            player2ScoreText.text = $"Player 2: {player2Score}";
+            if (player1ScoreText != null)
+            {
+                player1ScoreText.text = $"Player 1: {player1Score}";
+            }
+            if (player2ScoreText != null)
+            {
+                player2ScoreText.text = $"Player 2: {player2Score}";
+            }
 
             // 更新天平
             BalanceScale balanceScale = FindObjectOfType<BalanceScale>();
@@ -443,7 +500,7 @@ public class UIManager : NetworkBehaviour
                 Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
             {
                 Coin coin = FindObjectOfType<Coin>();
-                if (coin != null)
+                if (coin != null && player1ScoreAnchor != null && player2ScoreAnchor != null)
                 {
                     int p1Added = Mathf.FloorToInt(player1Score - lastPlayer1Score);
                     int p2Added = Mathf.FloorToInt(player2Score - lastPlayer2Score);
@@ -453,10 +510,10 @@ public class UIManager : NetworkBehaviour
                     if (p2Added > 0)
                         coin.RequestSpawnCoins(player2ScoreAnchor.position, p2Added);
 
-                    // 等待所有客户端完成分数更新后再显示结算面板
-                    if (NetworkManager.Singleton.IsServer && 
+                    // 修改结算面板显示条件
+                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && 
                         roundManager != null && 
-                        roundManager.currentRound.Value >= roundManager.totalRounds)
+                        roundManager.currentRound.Value > roundManager.totalRounds)
                     {
                         StartCoroutine(DelayShowSettlement());
                     }
@@ -469,7 +526,7 @@ public class UIManager : NetworkBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[UIManager] Error updating score text: {e.Message}");
+            Debug.LogError($"Error updating score text: {e.Message}");
         }
     }
 
@@ -477,7 +534,12 @@ public class UIManager : NetworkBehaviour
     {
         // 等待一帧确保所有分数更新完成
         yield return null;
-        ShowSettlementPanel();
+        
+        // 修改判断条件：只有在完成最后一轮后才显示结算面板
+        if (roundManager != null && roundManager.currentRound.Value > roundManager.totalRounds)
+        {
+            ShowSettlementPanel();
+        }
     }
     
     void UpdateBulletsText()
@@ -684,182 +746,6 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    private void EnsureUIElementsInCanvas()
-    {
-        if (parentCanvas == null)
-        {
-            Debug.LogError("[UIManager] Cannot ensure UI elements in Canvas: Canvas is null");
-            return;
-        }
-
-        try
-        {
-            SafeEnsureElementInCanvas(player1ScoreText?.gameObject, "Player1ScoreText");
-            SafeEnsureElementInCanvas(player2ScoreText?.gameObject, "Player2ScoreText");
-            SafeEnsureElementInCanvas(player1BulletsText?.gameObject, "Player1BulletsText");
-            SafeEnsureElementInCanvas(player2BulletsText?.gameObject, "Player2BulletsText");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[UIManager] Error in EnsureUIElementsInCanvas: {e}");
-        }
-    }
-
-    private void SafeEnsureElementInCanvas(GameObject element, string elementName)
-    {
-        try
-        {
-            if (element != null && parentCanvas != null)
-            {
-                if (element.transform.parent != parentCanvas.transform)
-                {
-                    element.transform.SetParent(parentCanvas.transform, false);
-                    Debug.Log($"[UIManager] Successfully moved {elementName} to Canvas");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[UIManager] Cannot move {elementName} to Canvas: {(element == null ? "element is null" : "Canvas is null")}");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[UIManager] Error moving {elementName} to Canvas: {e}");
-        }
-    }
-
-    // 显示游戏结束
-    public void ShowGameOver(string reason = "")
-    {
-        if (gameOverText != null)
-        {
-            // 存储文本内容供延迟方法使用
-            gameOverText.text = "GAME OVER" + (string.IsNullOrEmpty(reason) ? "" : "\n" + reason);
-            
-            // 先隐藏文本
-            gameOverText.gameObject.SetActive(false);
-            
-            // 延迟2秒显示
-            Invoke("DisplayGameOverText", 2f);
-        }
-    }
-    
-    // 延迟调用的方法，显示游戏结束文本
-    private void DisplayGameOverText()
-    {
-        if (gameOverText != null)
-        {
-            gameOverText.gameObject.SetActive(true);
-            
-            // 可选：播放游戏结束音效
-            if (SoundManager.Instance != null)
-            {
-                SoundManager.Instance.PlaySFX("GameOver");
-            }
-        }
-    }
-
-    // 隐藏游戏结束
-    public void HideGameOver()
-    {
-        if (gameOverText != null)
-        {
-            gameOverText.gameObject.SetActive(false);
-        }
-    }
-
-    // 网络同步版本的显示游戏结束文本
-    public void NetworkShowGameOver(string reason = "")
-    {
-        if (NetworkManager.Singleton == null)
-        {
-            // 如果没有网络管理器，直接显示
-            ShowGameOver(reason);
-            return;
-        }
-
-        if (NetworkManager.Singleton.IsServer)
-        {
-            // 如果是服务器，则通知所有客户端显示游戏结束文本
-            NetworkShowGameOverClientRpc(reason);
-        }
-    }
-
-    [ClientRpc]
-    private void NetworkShowGameOverClientRpc(string reason)
-    {
-        // 确保在所有客户端上显示
-        ShowGameOver(reason);
-        Debug.Log($"Showing game over text on client: {reason}");
-    }
-
-    // 修改UpdateDebugInfo方法，添加网络同步
-    public void UpdateDebugInfo(string player1Debug, string player2Debug)
-    {
-        if (!IsClient) return;
-
-        // 请求服务器更新所有客户端的debug text内容
-        UpdateDebugInfoServerRpc(player1Debug, player2Debug);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void UpdateDebugInfoServerRpc(string player1Debug, string player2Debug, ServerRpcParams serverRpcParams = default)
-    {
-        // 服务器通知所有客户端更新debug text内容
-        UpdateDebugInfoClientRpc(player1Debug, player2Debug);
-    }
-
-    [ClientRpc]
-    private void UpdateDebugInfoClientRpc(string player1Debug, string player2Debug)
-    {
-        // 在所有客户端上更新debug text内容
-        if (player1DebugText != null)
-        {
-            player1DebugText.text = player1Debug;
-            player1DebugText.gameObject.SetActive(false);
-            SetTextAlpha(player1DebugText, 1f);
-        }
-        if (player2DebugText != null)
-        {
-            player2DebugText.text = player2Debug;
-            player2DebugText.gameObject.SetActive(false);
-            SetTextAlpha(player2DebugText, 1f);
-        }
-
-        // 请求服务器触发动画
-        RequestDebugTextAnimationServerRpc();
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestDebugTextAnimationServerRpc(ServerRpcParams serverRpcParams = default)
-    {
-        // 服务器通知所有客户端播放动画
-        PlayDebugTextAnimationClientRpc();
-    }
-
-    [ClientRpc]
-    private void PlayDebugTextAnimationClientRpc()
-    {
-        StartCoroutine(PlayDebugTextAnimation());
-    }
-
-    // 修改ClearDebugInfo方法
-    public void ClearDebugInfo()
-    {
-        if (player1DebugText != null)
-        {
-            player1DebugText.text = "";
-            player1DebugText.gameObject.SetActive(false);
-            SetTextAlpha(player1DebugText, 1f);  // 重置透明度
-        }
-        if (player2DebugText != null)
-        {
-            player2DebugText.text = "";
-            player2DebugText.gameObject.SetActive(false);
-            SetTextAlpha(player2DebugText, 1f);  // 重置透明度
-        }
-    }
-
     // 修改更新回合文本的方法
     public void UpdateRoundText(int currentRound, int totalRounds = 5)
     {
@@ -980,150 +866,109 @@ public class UIManager : NetworkBehaviour
         return false;
     }
 
-    // 新增：更新Level信息显示
-    // public void UpdateLevelInfo(string info)
-    // {
-    //     // 更新玩家1的关卡显示
-    //     if (levelText1 != null)
-    //     {
-    //         if (levelText1Animator != null)
-    //         {
-    //             levelText1.gameObject.SetActive(true);
-    //             levelText1Animator.ShowText(info);
-    //         }
-    //         else
-    //         {
-    //             levelText1.text = info;
-    //             levelText1.gameObject.SetActive(true);
-    //         }
-    //     }
-        
-    //     // 更新玩家2的关卡显示
-    //     if (levelText2 != null)
-    //     {
-    //         if (levelText2Animator != null)
-    //         {
-    //             levelText2.gameObject.SetActive(true);
-    //             levelText2Animator.ShowText(info);
-    //         }
-    //         else
-    //         {
-    //             levelText2.text = info;
-    //             levelText2.gameObject.SetActive(true);
-    //         }
-    //     }
-    // }
-
-    /* 设置玩家目标内容
-    public void SetPlayerTargetText(int playerIndex, string content)
-    {
-        if (playerIndex == 0 && player1TargetText != null)
-        {
-            if (player1TargetTextAnimator != null)
-            {
-                player1TargetText.gameObject.SetActive(true);
-                player1TargetTextAnimator.ShowText(content);
-            }
-            else
-            {
-                player1TargetText.text = content;
-                player1TargetText.gameObject.SetActive(true);
-            }
-        }
-        else if (playerIndex == 1 && player2TargetText != null)
-        {
-            if (player2TargetTextAnimator != null)
-            {
-                player2TargetText.gameObject.SetActive(true);
-                player2TargetTextAnimator.ShowText(content);
-            }
-            else
-            {
-                player2TargetText.text = content;
-                player2TargetText.gameObject.SetActive(true);
-            }
-        }
-    } */
-
     // 显示结算面板
     public void ShowSettlementPanel()
     {
-        if (!NetworkManager.Singleton.IsServer) return;
-        
+        if (!IsServer) return;
         ShowSettlementPanelClientRpc();
     }
 
-    public void OnContinueButtonClick()
+    // 修改隐藏结算面板的方法
+    public void HideSettlementPanelAndReset()
     {
-        GameManager.Instance.LoadScene("ModeScene");
+        if (!IsServer) return;
+        HideSettlementPanelClientRpc();
     }
 
     [ClientRpc]
     private void ShowSettlementPanelClientRpc()
     {
-        if (settlementPanel != null)
+        try
         {
-            settlementPanel.SetActive(true);
-
-            // 启用按钮
-            if (continueButton != null)
-                continueButton.interactable = true;
-            if (exitButton != null)
-                exitButton.interactable = true;
-
-            // 更新结算面板显示
-            if (settlementScoreText != null && GameManager.Instance != null)
+            if (settlementPanel == null || GameManager.Instance == null || 
+                GameManager.Instance.playerComponents == null || 
+                GameManager.Instance.playerComponents.Count < 2)
             {
-                int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
-                int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
-                
-                string winner = player1Score > player2Score ? "Player 1" :
-                              player2Score > player1Score ? "Player 2" : "No one";
-                
-                settlementScoreText.text = $"Phase Complete!\n\n" +
-                                         $"Player 1: {player1Score}\n" +
-                                         $"Player 2: {player2Score}\n\n" +
-                                         $"{winner} wins this Phase!\n\n" +
-                                         "Continue to Next Phase?";
+                Debug.LogError("Required components missing for settlement panel");
+                return;
             }
+
+            // 等待一帧确保分数已更新
+            StartCoroutine(UpdateSettlementPanelWithDelay());
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error showing settlement panel: {e.Message}");
         }
     }
 
-    // 隐藏结算面板并重置游戏状态
-    public void HideSettlementPanelAndReset()
+    private IEnumerator UpdateSettlementPanelWithDelay()
     {
-        if (!NetworkManager.Singleton.IsServer) return;
+        // 等待一帧确保所有分数更新完成
+        yield return new WaitForEndOfFrame();
 
-        HideSettlementPanelAndResetClientRpc();
+        settlementPanel.SetActive(true);
+
+        // 启用按钮
+        if (continueButton != null)
+            continueButton.interactable = true;
+        if (exitButton != null)
+            exitButton.interactable = true;
+
+        // 更新结算面板显示
+        if (settlementScoreText != null)
+        {
+            int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
+            int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
+            
+            string winner = player1Score > player2Score ? "Player 1" :
+                          player2Score > player1Score ? "Player 2" : "No one";
+            
+            settlementScoreText.text = $"Phase Complete!\n\n" +
+                                     $"Player 1: {player1Score}\n" +
+                                     $"Player 2: {player2Score}\n\n" +
+                                     $"{winner} wins this Phase!\n\n" +
+                                     "Continue to Next Phase?";
+        }
+    }
+
+    // 修改继续按钮的点击处理方法
+    public void OnContinueButtonClick()
+    {
+        if (!IsClient) return;
+
+        if (IsServer)
+        {
+            // 服务器端发起场景加载
+            LoadNextSceneServerRpc();
+        }
+        else
+        {
+            // 客户端请求服务器加载场景
+            RequestLoadNextSceneServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestLoadNextSceneServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        // 服务器收到客户端请求后，执行场景加载
+        LoadNextSceneServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void LoadNextSceneServerRpc()
+    {
+        // 在服务器端执行场景加载
+        LoadNextSceneClientRpc();
     }
 
     [ClientRpc]
-    private void HideSettlementPanelAndResetClientRpc()
+    private void LoadNextSceneClientRpc()
     {
-        // 关闭结算面板
-        if (settlementPanel != null)
-            settlementPanel.SetActive(false);
-
-        // 隐藏游戏结束文本
-        HideGameOver();
-
-        if (NetworkManager.Singleton.IsServer)
+        if (GameManager.Instance != null)
         {
-            // 重置回合和分数
-            if (roundManager != null)
-            {
-                roundManager.ResetRound();
-                
-                // 重置玩家分数
-                roundManager.player1.point.Value = 0f;
-                roundManager.player2.point.Value = 0f;
-            }
-            
-            // 重置游戏状态
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-            }
+            GameManager.Instance.LoadScene("ModeScene");
         }
     }
 
@@ -1170,18 +1015,42 @@ public class UIManager : NetworkBehaviour
         ShowSettlementPanelClientRpc();
     }
 
-    [ClientRpc]
-    private void HideSettlementPanelClientRpc()
+    // 添加回合文本更新方法
+    public void RequestRoundTextUpdate(int currentRound, int totalRounds)
     {
-        if (!IsClient) return;
-        settlementPanel.SetActive(false);
+        if (!IsServer) return;
+        UpdateRoundTextClientRpc(currentRound, totalRounds);
     }
 
-    public void OnExitButtonClick()
+    [ClientRpc]
+    private void UpdateRoundTextClientRpc(int currentRound, int totalRounds)
     {
-        if (IsClient)
+        if (roundText1 != null)
         {
-            Application.Quit();
+            if (roundText1Animator != null)
+            {
+                roundText1.gameObject.SetActive(true);
+                roundText1Animator.ShowText($"ROUND {currentRound}/{totalRounds}");
+            }
+            else
+            {
+                roundText1.text = $"ROUND {currentRound}/{totalRounds}";
+                roundText1.gameObject.SetActive(true);
+            }
+        }
+        
+        if (roundText2 != null)
+        {
+            if (roundText2Animator != null)
+            {
+                roundText2.gameObject.SetActive(true);
+                roundText2Animator.ShowText($"ROUND {currentRound}/{totalRounds}");
+            }
+            else
+            {
+                roundText2.text = $"ROUND {currentRound}/{totalRounds}";
+                roundText2.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -1225,6 +1094,209 @@ public class UIManager : NetworkBehaviour
         if (IsClient)
         {
             RequestUIInitializationServerRpc();
+        }
+    }
+
+    // 状态转换方法
+    private void TransitionToNextState()
+    {
+        if (!IsServer) return;
+
+        State nextState = currentState.Value switch
+        {
+            State.Idle => State.DebugText,
+            State.DebugText => State.ScoreAndCoin,
+            State.ScoreAndCoin => State.FireAnimation,
+            State.FireAnimation => State.BulletUI,
+            State.BulletUI => State.RoundText,
+            State.RoundText => State.Settlement,
+            State.Settlement => State.Idle,
+            _ => State.Idle
+        };
+
+        currentState.Value = nextState;
+        ExecuteStateLogicClientRpc();
+    }
+
+    [ClientRpc]
+    private void ExecuteStateLogicClientRpc()
+    {
+        if (stateCoroutine != null)
+        {
+            StopCoroutine(stateCoroutine);
+        }
+        stateCoroutine = StartCoroutine(ExecuteStateLogic());
+    }
+
+    private IEnumerator ExecuteStateLogic()
+    {
+        switch (currentState.Value)
+        {
+            case State.DebugText:
+                yield return StartCoroutine(HandleDebugTextState());
+                break;
+            case State.ScoreAndCoin:
+                yield return StartCoroutine(HandleScoreAndCoinState());
+                break;
+            case State.FireAnimation:
+                yield return StartCoroutine(HandleFireAnimationState());
+                break;
+            case State.BulletUI:
+                yield return StartCoroutine(HandleBulletUIState());
+                break;
+            case State.RoundText:
+                yield return StartCoroutine(HandleRoundTextState());
+                break;
+            case State.Settlement:
+                yield return StartCoroutine(HandleSettlementState());
+                break;
+        }
+
+        if (IsServer)
+        {
+            // 如果不是Settlement状态，继续转换到下一个状态
+            if (currentState.Value != State.Settlement)
+            {
+                TransitionToNextState();
+            }
+            // 如果是Settlement状态，且不是游戏最后一轮，重置状态机
+            else if (roundManager != null && roundManager.currentRound.Value < roundManager.totalRounds)
+            {
+                ResetStateMachine();
+            }
+        }
+    }
+
+    private IEnumerator HandleDebugTextState()
+    {
+        if (player1DebugText != null && player2DebugText != null)
+        {
+            player1DebugText.gameObject.SetActive(true);
+            player2DebugText.gameObject.SetActive(true);
+            StartCoroutine(PlayDebugTextAnimation());
+        }
+        yield return new WaitForSeconds(2f);
+    }
+
+    private IEnumerator HandleScoreAndCoinState()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
+        {
+            UpdateScoreText();
+        }
+        yield return new WaitForSeconds(2f);
+    }
+
+    private IEnumerator HandleFireAnimationState()
+    {
+        
+        // 等待动画完成的时间
+        yield return new WaitForSeconds(3f);
+    }
+
+    private IEnumerator HandleBulletUIState()
+    {
+        // 更新子弹UI
+        UpdateBulletsText();
+        yield return new WaitForSeconds(1f);
+    }
+
+    private IEnumerator HandleRoundTextState()
+    {
+        // 更新回合文本
+        if (roundManager != null)
+        {
+            UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
+        }
+        yield return new WaitForSeconds(1f);
+    }
+
+    private IEnumerator HandleSettlementState()
+    {
+        // 只在服务器端判断是否显示结算面板
+        if (IsServer && roundManager != null)
+        {
+            // 修改判断条件：只有在完成最后一轮后才显示结算面板
+            if (roundManager.currentRound.Value > roundManager.totalRounds)
+            {
+                ShowSettlementPanelClientRpc();
+            }
+        }
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    // 开始状态机
+    public void StartStateMachine()
+    {
+        if (IsServer)
+        {
+            currentState.Value = State.Idle;
+            TransitionToNextState();
+        }
+    }
+
+    // 重置状态机
+    public void ResetStateMachine()
+    {
+        if (IsServer)
+        {
+            currentState.Value = State.Idle;
+        }
+    }
+
+    public void OnExitButtonClick()
+    {
+        if (IsClient)
+        {
+            Application.Quit();
+        }
+    }
+
+    // 添加公共方法用于在回合结算时启动状态机
+    public void StartRoundSettlementUI()
+    {
+        if (IsServer)
+        {
+            currentState.Value = State.Idle;
+            TransitionToNextState();
+        }
+    }
+
+    // 添加方法检查状态机是否正在运行
+    public bool IsStateMachineRunning()
+    {
+        return currentState.Value != State.Idle;
+    }
+
+    [ClientRpc]
+    private void HideSettlementPanelClientRpc()
+    {
+        if (settlementPanel != null)
+        {
+            settlementPanel.SetActive(false);
+        }
+
+        // 只在服务器端执行重置逻辑
+        if (IsServer)
+        {
+            // 重置回合和分数
+            if (roundManager != null)
+            {
+                roundManager.ResetRound();
+                
+                // 重置玩家分数
+                roundManager.player1.point.Value = 0f;
+                roundManager.player2.point.Value = 0f;
+            }
+            
+            // 重置游戏状态
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+            }
+
+            // 重置状态机
+            ResetStateMachine();
         }
     }
 } 

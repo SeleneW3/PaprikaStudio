@@ -1124,7 +1124,6 @@ MonoBehaviour:
   player2BulletsText: {fileID: 1349427238}
   player1BulletsAnchor: {fileID: 1488086808}
   player2BulletsAnchor: {fileID: 824181839}
-  gameOverText: {fileID: 598646529}
   smoothSpeed: 20
   scoreOffset: {x: 0, y: 0}
   bulletsOffset: {x: 0, y: 70}
@@ -1135,10 +1134,10 @@ MonoBehaviour:
   player1ChoiceStatusAnchor: {fileID: 752471548}
   player2ChoiceStatusAnchor: {fileID: 1011043904}
   choiceStatusOffset: {x: 0, y: 0}
-  debugTextAnimDuration: 0.5
-  scaleAmount: 1.5
-  showDuration: 1.5
-  fadeOutDuration: 0.3
+  debugTextAnimDuration: 0.6
+  scaleAmount: 2.5
+  showDuration: 2.5
+  fadeOutDuration: 0.4
   defaultCursor: {fileID: 2800000, guid: 74581f653187aa443b12b39baff54901, type: 3}
   handCardCursor: {fileID: 2800000, guid: e2b0be17981df0b44859b135f8a81c05, type: 3}
   selectedCardCursor: {fileID: 2800000, guid: 1806d0360844a6840b2f9b4dfabd2e99, type: 3}
@@ -76535,7 +76534,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   deckLogic: {fileID: 1132786854}
   dialogManager: {fileID: 1504394095}
-  roundText: {fileID: 0}
   baseBet: 1
   betMultiplier: 2
   levelManager: {fileID: 837097503}

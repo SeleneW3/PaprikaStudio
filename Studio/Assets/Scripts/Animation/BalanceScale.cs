@@ -47,19 +47,19 @@ public class BalanceScale : MonoBehaviour
             animator.speed = 0;
 
             // 添加调试信息
-            Debug.Log($"设置动画 - normalizedTime: {normalizedTime}");
-            Debug.Log($"Layer 0 (Rotate): {animator.GetCurrentAnimatorStateInfo(0).normalizedTime}");
-            Debug.Log($"Layer 1 (Player1): {animator.GetCurrentAnimatorStateInfo(1).normalizedTime}");
-            Debug.Log($"Layer 2 (Player2): {animator.GetCurrentAnimatorStateInfo(2).normalizedTime}");
+            // Debug.Log($"设置动画 - normalizedTime: {normalizedTime}");
+            //Debug.Log($"Layer 0 (Rotate): {animator.GetCurrentAnimatorStateInfo(0).normalizedTime}");
+            //Debug.Log($"Layer 1 (Player1): {animator.GetCurrentAnimatorStateInfo(1).normalizedTime}");
+            //Debug.Log($"Layer 2 (Player2): {animator.GetCurrentAnimatorStateInfo(2).normalizedTime}");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"设置动画帧时出错: {e.Message}");
+            //Debug.LogError($"设置动画帧时出错: {e.Message}");
         }
     }
     else
     {
-        Debug.LogError("Animator未设置!");
+        //  Debug.LogError("Animator未设置!");
     }
     }
 
@@ -101,7 +101,7 @@ public class BalanceScale : MonoBehaviour
             float normalizedTime = currentFrame / 100f;
             
             // 添加调试信息
-            Debug.Log($"更新动画 - 当前帧: {currentFrame}, 目标帧: {targetFrame}, 正规化时间: {normalizedTime}");
+            //Debug.Log($"更新动画 - 当前帧: {currentFrame}, 目标帧: {targetFrame}, 正规化时间: {normalizedTime}");
             
             SetAllAnimationsFrame(normalizedTime);
         }
@@ -112,26 +112,26 @@ public class BalanceScale : MonoBehaviour
             // 测试玩家1领先
             if (Input.GetKeyDown(testPlayer1WinKey))
             {
-                Debug.Log($"测试：玩家1领先 {testScoreAmount} 分");
+                //Debug.Log($"测试：玩家1领先 {testScoreAmount} 分");
                 UpdateScore(testScoreAmount, 0);
             }
             // 测试玩家2领先
             else if (Input.GetKeyDown(testPlayer2WinKey))
             {
-                Debug.Log($"测试：玩家2领先 {testScoreAmount} 分");
+                //Debug.Log($"测试：玩家2领先 {testScoreAmount} 分");
                 UpdateScore(0, testScoreAmount);
             }
             // 测试平衡状态
             else if (Input.GetKeyDown(testNeutralKey))
             {
-                Debug.Log("测试：分数相等");
+                //Debug.Log("测试：分数相等");
                 UpdateScore(0, 0);
             }
 
             // 显示当前帧信息
             if (Input.GetKey(KeyCode.Tab))
             {
-                Debug.Log($"当前帧: {currentFrame}, 目标帧: {targetFrame}");
+                //Debug.Log($"当前帧: {currentFrame}, 目标帧: {targetFrame}");
             }
         }
     }

@@ -8,7 +8,6 @@ public class RoundManager : NetworkBehaviour
 {
     public DeckLogic deckLogic;
     public DialogManager dialogManager;
-    public TMP_Text roundText;
     public float baseBet = 1f;
     public float betMultiplier = 2f;
     public LevelManager levelManager;  // 添加LevelManager引用
@@ -71,32 +70,15 @@ public class RoundManager : NetworkBehaviour
     {
         // 初始化回合
         currentRound.Value = 1;
-        Debug.Log("RoundManagerStart");
 
-        if (dialogManager != null)
-        {
-            Debug.Log("Dialog Manager found, but not starting dialog automatically");
-            // 移除自动调用StartDialog的代码
-            // dialogManager.StartDialog();
-        }
-        else
+        if (dialogManager == null)
         {
             Debug.LogError("Dialog Manager is not assigned in the inspector!");
         }
 
         // 给UIManager设置枪支引用
         UIManager uiManager = FindObjectOfType<UIManager>();
-        if (uiManager != null && Gun1 != null && Gun2 != null)
-        {
-            Debug.Log("正在设置UIManager的枪支引用");
-            
-            // 初始化回合显示，但默认隐藏
-            /*if (uiManager.roundText != null)
-            {
-                uiManager.roundText.gameObject.SetActive(false);
-            }*/
-        }
-        else if (uiManager == null)
+        if (uiManager == null)
         {
             Debug.LogError("UIManager未找到!");
         }
@@ -109,7 +91,6 @@ public class RoundManager : NetworkBehaviour
         {
             totalRounds = 5;
         }
-        
     }
 
     private void OnEnable()
@@ -164,11 +145,7 @@ public class RoundManager : NetworkBehaviour
                 UIManager uiManager = FindObjectOfType<UIManager>();
                 if (uiManager != null)
                 {
-                    /*if (uiManager.roundText != null)
-                    {
-                        uiManager.roundText.gameObject.SetActive(true);
-                    }*/
-                    uiManager.UpdateRoundText(currentRound.Value, totalRounds);
+                    uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds);
                 }
                 
             }
@@ -176,7 +153,6 @@ public class RoundManager : NetworkBehaviour
         }
         else if (GameManager.Instance.currentGameState == GameManager.GameState.TutorShowState)
         {
-
             if(showCard == false)
             {
                 showCard = true;
@@ -189,18 +165,13 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.TutorPlayerTurn)
         {
-
-            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None
-                )
+            if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
             {
-               
                 if (playerGotCard)
                 {
                     if (player1.usedCard.Value == true && player2.usedCard.Value == true)
                     {
-
                         MovePiecesToPositions();
-
                         GameManager.Instance.currentGameState = GameManager.GameState.TutorShowState;
                     }
                 }
@@ -211,12 +182,9 @@ public class RoundManager : NetworkBehaviour
                 }
             }
 
-
-    
             bool player1Selected = player1.choice != PlayerLogic.playerChoice.None;
             bool player2Selected = player2.choice != PlayerLogic.playerChoice.None;
             
- 
             UIManager uiManager = FindObjectOfType<UIManager>();
             if (uiManager != null)
             {
@@ -255,12 +223,9 @@ public class RoundManager : NetworkBehaviour
                 {
                     if (player1.usedCard.Value == true && player2.usedCard.Value == true)
                     {
-
                         MovePiecesToPositions();
-
                         GameManager.Instance.currentGameState = GameManager.GameState.PlayerShowState;
                     }
-                    Debug.Log(tutorState);
                 }
                 else
                 {
@@ -280,7 +245,6 @@ public class RoundManager : NetworkBehaviour
         }
         else if (GameManager.Instance.currentGameState == GameManager.GameState.PlayerShowState)
         {
-
             if (showCard == false)
             {
                 showCard = true;
@@ -301,7 +265,7 @@ public class RoundManager : NetworkBehaviour
             }
             else
             {
-            CalculatePointWithoutGun();
+                CalculatePointWithoutGun();
             }
             
             ChessMoveBack();
@@ -310,16 +274,6 @@ public class RoundManager : NetworkBehaviour
             ResetPlayers();
             showCard = false;
             GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
-
-            UIManager uiManager = FindObjectOfType<UIManager>();
-            if (uiManager != null)
-            {
-                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
-            }
-            else if (roundText != null)
-            {
-                roundText.text = $"ROUND {currentRound.Value}/{totalRounds}";
-            }
         }
     }
 
@@ -348,6 +302,27 @@ public class RoundManager : NetworkBehaviour
             balanceScale.UpdateScore(player1Score, player2Score);
         }
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void UpdateRoundServerRpc()
+    {
+        if (!gameEnded)
+        {
+            currentRound.Value++;
+            UpdateRoundClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void UpdateRoundClientRpc()
+    {
+        UIManager uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds);
+        }
+    }
+
     void CalculatePointWithoutGun()
     {
         if (gameEnded)
@@ -355,21 +330,18 @@ public class RoundManager : NetworkBehaviour
             return;
         }
 
-
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
             CalculatePoint(player1.choice, player2.choice);
-
         }
         ResetPlayersChoice();
         GameManager.Instance.ResetAllBlocksServerRpc();
         GameManager.Instance.chessComponents[0].backToOriginal = true;
         GameManager.Instance.chessComponents[1].backToOriginal = true;
-        Debug.LogWarning("Into Calculate");
+        
         if(showCard == true)
         {
-            Debug.LogWarning("Resetting player cards");
             if(NetworkManager.LocalClientId == 0)
             {
                 GameManager.Instance.deck.ResetPlayerCardServerRpc();
@@ -379,9 +351,7 @@ public class RoundManager : NetworkBehaviour
         
         chessIsMoved = false;
         GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
-
     }
-
 
     void CalculatePointWithGun()
     {
@@ -394,30 +364,18 @@ public class RoundManager : NetworkBehaviour
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
-
             CalculatePoint(player1.choice, player2.choice);
-            
 
-
-            if (Gun1.GetComponent<GunController>().gameEnded.Value)
+            if (Gun1.GetComponent<GunController>().gameEnded.Value || 
+                Gun2.GetComponent<GunController>().gameEnded.Value)
             {
-                Debug.Log("Player 2 is dead! Game over.");
+                Debug.Log("Game ended due to gunshot!");
                 gameEnded = true;
                 if (uiManager != null)
                 {
-                    uiManager.NetworkShowGameOver("Player 2 is dead!");
+                    uiManager.ShowSettlementPanel();
                 }
             }
-            else if (Gun2.GetComponent<GunController>().gameEnded.Value)
-            {
-                Debug.Log("Player 1 is dead! Game over.");
-                gameEnded = true;
-                if (uiManager != null)
-                {
-                    uiManager.NetworkShowGameOver("Player 1 is dead!");
-                }
-            }
-
         }
 
         ResetPlayersChoice();
@@ -435,136 +393,6 @@ public class RoundManager : NetworkBehaviour
 
         chessIsMoved = false;
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-
-    }
-
-    public void ResetRound()
-    {
-        if (!NetworkManager.Singleton.IsServer) return;
-
-        gameEnded = false;
-        currentRound.Value = 1;
-        
-        ResetAllStatistics();
-        
-        Gun1.GetComponent<GunController>().ResetGun();
-        Gun2.GetComponent<GunController>().ResetGun();
-
-        player1.point.Value = 0;
-        player2.point.Value = 0;
-
-        foreach (Transform anchor in new Transform[] { player1ScoreAnchor, player2ScoreAnchor })
-        {
-            if (anchor != null)
-            {
-                for (int i = anchor.childCount - 1; i >= 0; i--)
-                {
-                    Transform container = anchor.GetChild(i);
-                    NetworkObject netObj = container.GetComponent<NetworkObject>();
-                    if (netObj != null && netObj.IsSpawned)
-                    {
-                        netObj.Despawn();
-                    }
-                }
-            }
-        }
-
-        if (balanceScale != null)
-        {
-            UpdateBalanceScaleServerRpc(0, 0);
-        }
-    }
-
-
-    void ApplyEffect()
-    {
-        CardLogic p1Card = null;
-        CardLogic p2Card = null;
-
-        foreach (CardLogic cardLogic in deckLogic.cardLogics)
-        {
-            if (cardLogic.isOut)
-            {
-                if (cardLogic.belong.Value == CardLogic.Belong.Player1)
-                {
-                    p1Card = cardLogic;
-                }
-                else if (cardLogic.belong.Value == CardLogic.Belong.Player2)
-                {
-                    p2Card = cardLogic;
-                }
-            }
-        }
-
-        if (p1Card != null && p2Card != null)
-        {
-            ApplyCardEffects(p1Card, p2Card);
-
-            p1Card.isOut = false;
-            p2Card.isOut = false;
-        }
-    }
-
-    private void ApplyCardEffects(CardLogic player1Card, CardLogic player2Card)
-    {
-        List<CardLogic> cards = new List<CardLogic>() { player1Card, player2Card };
-
-        cards.Sort((cardA, cardB) =>
-            CardLogic.GetEffectPriority(cardA.effect).CompareTo(
-            CardLogic.GetEffectPriority(cardB.effect)));
-
-        foreach (var card in cards)
-        {
-            card.OnEffect();
-        }
-    }
-
-
-    void AssignPlayers()
-    {
-        foreach (var player in GameManager.Instance.playerComponents)
-        {
-            if (player.playerID == 1)
-            {
-                player1 = player;
-            }
-            else if (player.playerID == 2)
-            {
-                player2 = player;
-            }
-        }
-    }
-
-    void ResetPlayers()
-    {
-        player1.ResetToInitial();
-        player2.ResetToInitial();
-    }
-
-    void ResetPlayersChoice()
-    {
-        player1.choice = PlayerLogic.playerChoice.None;
-        player2.choice = PlayerLogic.playerChoice.None;
-        player1.SetUsedCardServerRpc(false);
-        player2.SetUsedCardServerRpc(false);
-    }
-
-    void ChessMoveBack()
-    {
-        foreach (var chess in GameManager.Instance.chessComponents)
-        {
-
-             chess.backToOriginal = true;
-
-        }
-    }
-
-    void ResetChess()
-    {
-        foreach (var chess in GameManager.Instance.chessComponents)
-        {
-            chess.isOnGround = false;
-        }
     }
 
     void CalculatePoint(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)
@@ -629,7 +457,14 @@ public class RoundManager : NetworkBehaviour
 
         if (uiManager != null)
         {
+            // 更新debug信息并启动UI状态机
             uiManager.UpdateDebugInfo(player1Debug, player2Debug);
+            
+            // 如果状态机没有在运行，启动它
+            if (!uiManager.IsStateMachineRunning())
+            {
+                uiManager.StartRoundSettlementUI();
+            }
         }
 
         if (NetworkManager.Singleton.IsServer)
@@ -642,14 +477,9 @@ public class RoundManager : NetworkBehaviour
         {
             EndGame(uiManager);
         }
-        else if (!gameEnded)
+        else if (!gameEnded && NetworkManager.Singleton.IsServer)
         {
-            currentRound.Value++;
-            if (uiManager != null)
-            {
-                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
-            }
-            Debug.Log($"Round {currentRound.Value}");
+            UpdateRoundServerRpc();
         }
     }
 
@@ -676,9 +506,7 @@ public class RoundManager : NetworkBehaviour
 
     private void EndGame(UIManager uiManager)
     {
-        Debug.Log($"{totalRounds} rounds completed.");
         gameEnded = true;
-
         uiManager.ShowSettlementPanel();
     }
 
@@ -694,6 +522,133 @@ public class RoundManager : NetworkBehaviour
         {
             Gun2.GetComponent<GunController>().FireGun();
             player2CanFire.Value = false;
+        }
+    }
+
+    void AssignPlayers()
+    {
+        foreach (var player in GameManager.Instance.playerComponents)
+        {
+            if (player.playerID == 1)
+            {
+                player1 = player;
+            }
+            else if (player.playerID == 2)
+            {
+                player2 = player;
+            }
+        }
+    }
+
+    void ResetPlayers()
+    {
+        player1.ResetToInitial();
+        player2.ResetToInitial();
+    }
+
+    void ResetPlayersChoice()
+    {
+        player1.choice = PlayerLogic.playerChoice.None;
+        player2.choice = PlayerLogic.playerChoice.None;
+        player1.SetUsedCardServerRpc(false);
+        player2.SetUsedCardServerRpc(false);
+    }
+
+    void ChessMoveBack()
+    {
+        foreach (var chess in GameManager.Instance.chessComponents)
+        {
+
+             chess.backToOriginal = true;
+
+        }
+    }
+
+    void ResetChess()
+    {
+        foreach (var chess in GameManager.Instance.chessComponents)
+        {
+            chess.isOnGround = false;
+        }
+    }
+
+    void ApplyEffect()
+    {
+        CardLogic p1Card = null;
+        CardLogic p2Card = null;
+
+        foreach (CardLogic cardLogic in deckLogic.cardLogics)
+        {
+            if (cardLogic.isOut)
+            {
+                if (cardLogic.belong.Value == CardLogic.Belong.Player1)
+                {
+                    p1Card = cardLogic;
+                }
+                else if (cardLogic.belong.Value == CardLogic.Belong.Player2)
+                {
+                    p2Card = cardLogic;
+                }
+            }
+        }
+
+        if (p1Card != null && p2Card != null)
+        {
+            ApplyCardEffects(p1Card, p2Card);
+
+            p1Card.isOut = false;
+            p2Card.isOut = false;
+        }
+    }
+
+    private void ApplyCardEffects(CardLogic player1Card, CardLogic player2Card)
+    {
+        List<CardLogic> cards = new List<CardLogic>() { player1Card, player2Card };
+
+        cards.Sort((cardA, cardB) =>
+            CardLogic.GetEffectPriority(cardA.effect).CompareTo(
+            CardLogic.GetEffectPriority(cardB.effect)));
+
+        foreach (var card in cards)
+        {
+            card.OnEffect();
+        }
+    }
+
+    public void ResetRound()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        gameEnded = false;
+        currentRound.Value = 1;
+        
+        ResetAllStatistics();
+        
+        Gun1.GetComponent<GunController>().ResetGun();
+        Gun2.GetComponent<GunController>().ResetGun();
+
+        player1.point.Value = 0;
+        player2.point.Value = 0;
+
+        foreach (Transform anchor in new Transform[] { player1ScoreAnchor, player2ScoreAnchor })
+        {
+            if (anchor != null)
+            {
+                for (int i = anchor.childCount - 1; i >= 0; i--)
+                {
+                    Transform container = anchor.GetChild(i);
+                    NetworkObject netObj = container.GetComponent<NetworkObject>();
+                    if (netObj != null && netObj.IsSpawned)
+                    {
+                        netObj.Despawn();
+                    }
+                }
+            }
+        }
+
+        if (balanceScale != null)
+        {
+            UpdateBalanceScaleServerRpc(0, 0);
         }
     }
 }

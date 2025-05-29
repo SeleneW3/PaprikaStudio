@@ -34,14 +34,12 @@ public class GunButton3D : MonoBehaviour
     {
         if (rend != null)
             rend.material.color = hoverColor;
-        Debug.Log($"[GunButton3D] MouseEnter: Player{playerIndex} {buttonType} 按钮");
     }
 
     void OnMouseExit()
     {
         if (rend != null)
             rend.material.color = originalColor;
-        Debug.Log($"[GunButton3D] MouseExit: Player{playerIndex} {buttonType} 按钮");
     }
 
     void OnMouseDown()

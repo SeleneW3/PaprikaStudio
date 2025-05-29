@@ -17,7 +17,7 @@ public class GunController : NetworkBehaviour
     private Quaternion originalRotation; // 记录原始旋转
     private bool isHovered = false;    // 记录是否正在悬停
     private float hoverHeight = 0.1f;  // 抬起高度
-    private bool isAnimating = false;  // 记录是否正在播放动画
+    public bool isAnimating = false;  // 记录是否正在播放动画
 
     [Header("UI Anchor")]
     public Transform gunUIAnchor;  // 用于放置UI按钮的锚点
@@ -157,13 +157,13 @@ public class GunController : NetworkBehaviour
     {
         if (gameEnded.Value)
         {
-            //Debug.Log("The game has already ended.");
+            Debug.Log("The game has already ended.");
             return;
         }
 
         if (remainingChances.Value <= 0)
         {
-            //Debug.Log("No remaining chances.");
+            Debug.Log("No remaining chances.");
             return;
         }
 
@@ -235,7 +235,7 @@ public class GunController : NetworkBehaviour
         Debug.Log("PlayFireAnimationClientRpc called on " + (IsServer ? "Server" : "Client"));
         if (gunAnimator != null)
         {
-            OnAnimationStart();
+            isAnimating = true;
             gunAnimator.SetTrigger("Grab");
         }
         else
@@ -253,7 +253,7 @@ public class GunController : NetworkBehaviour
             gameEnded.Value = false;
             InitializeBulletChancesServerRpc(); // 在重置时重新初始化
             
-            //Debug.Log("About to call PlayResetGunSoundClientRpc");
+            Debug.Log("About to call PlayResetGunSoundClientRpc");
             // 播放重置枪音效
             PlayResetGunSoundClientRpc();
         }
@@ -262,7 +262,7 @@ public class GunController : NetworkBehaviour
     [ClientRpc]
     void PlayResetGunSoundClientRpc()
     {
-        //Debug.Log("PlayResetGunSoundClientRpc called");
+        Debug.Log("PlayResetGunSoundClientRpc called");
         // 延迟播放重置枪音效
         Invoke("PlayGunResetSound", 2f);
     }
@@ -270,15 +270,15 @@ public class GunController : NetworkBehaviour
     // 播放重置枪音效
     private void PlayGunResetSound()
     {
-        //Debug.Log("PlayGunResetSound called");
+        Debug.Log("PlayGunResetSound called");
         if (SoundManager.Instance != null)
         {
-            //Debug.Log("Attempting to play GunReset sound");
+            Debug.Log("Attempting to play GunReset sound");
             SoundManager.Instance.PlaySFX("GunReset");
         }
         else
         {
-            //Debug.LogError("SoundManager.Instance is null");
+            Debug.LogError("SoundManager.Instance is null");
         }
     }
 
@@ -432,8 +432,17 @@ public class GunController : NetworkBehaviour
     {
         if (gunAnimator != null)
         {
+            isAnimating = true;
             gunAnimator.SetTrigger("Spin");
+            // 根据动画实际长度设置延时
+            StartCoroutine(ResetAnimatingAfterDelay(1f)); // 假设动画长度为1秒，请根据实际动画长度调整
         }
+    }
+
+    private IEnumerator ResetAnimatingAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        isAnimating = false;
     }
 
     // 添加事件触发方法
@@ -473,12 +482,14 @@ public class GunController : NetworkBehaviour
     public void OnAnimationStart()
     {
         isAnimating = true;
+        Debug.LogWarning($"[GunController] Animation started on {gameObject.name}, isAnimating set to: {isAnimating}");
     }
 
     // 在动画结束时调用
     public void OnAnimationEnd()
     {
         isAnimating = false;
+        Debug.LogWarning($"[GunController] Animation ended on {gameObject.name}, isAnimating set to: {isAnimating}");
         // 确保枪回到正确位置和旋转
         transform.position = originalPosition;
         transform.rotation = originalRotation;

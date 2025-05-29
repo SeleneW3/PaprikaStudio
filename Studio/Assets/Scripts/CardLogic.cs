@@ -392,7 +392,7 @@ public static int GetEffectPriority(Effect effect)
         {
             if (NetworkManager.LocalClientId == 0 && GetComponentInParent<HandCardLogic>()?.belong == HandCardLogic.Belong.Player1)
             {
-                Debug.Log("Mouse Entered1");
+                //Debug.Log("Mouse Entered1");
                 GetComponentInParent<HandCardLogic>()?.Open();
                 // 设置手牌鼠标图案
                 if (uiManager != null)
@@ -423,7 +423,7 @@ public static int GetEffectPriority(Effect effect)
                     }
                 }
             }
-            Debug.Log("Mouse Entered");
+            //Debug.Log("Mouse Entered");
         }
     }
 
@@ -445,7 +445,7 @@ public static int GetEffectPriority(Effect effect)
                 uiManager?.SetDefaultCursor();
             }
         }
-        Debug.Log("Mouse Exited");
+        //Debug.Log("Mouse Exited");
     }
 
     private void OnMouseDown()
