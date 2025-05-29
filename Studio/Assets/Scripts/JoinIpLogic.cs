@@ -2,23 +2,71 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class JoinIpLogic : MonoBehaviour
 {
     public TMP_InputField joinIP;
+    public GameObject joinPanel;
+    public Button confirmButton;
+    public Button exitButton;
+    private ButtonLogic buttonLogic;
+
     void Start()
     {
-        joinIP.text = GameManager.Instance.localIP;
-        joinIP.onEndEdit.AddListener(OnJoinIPEndEdit);
+        // 初始化时隐藏面板
+        if (joinPanel != null)
+        {
+            joinPanel.SetActive(false);
+        }
+
+        // 设置按钮监听
+        if (confirmButton != null)
+        {
+            confirmButton.onClick.AddListener(() => {
+                if (buttonLogic != null)
+                {
+                    buttonLogic.ExecuteJoin();
+                }
+                joinPanel.SetActive(false);
+            });
+        }
+
+        if (exitButton != null)
+        {
+            exitButton.onClick.AddListener(() => {
+                joinPanel.SetActive(false);
+            });
+        }
     }
 
-    private void OnJoinIPEndEdit(string ip)
+    void Update()
     {
-        // 移除可能存在的"Join IP:"前缀
-        ip = ip.Replace("Join IP:", "").Trim();
-        
-        // 存储纯IP地址
-        GameManager.Instance.joinIP = ip;
-        Debug.Log($"Join IP set to: {ip}");
+        // 只保留ESC关闭功能
+        if (joinPanel.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            joinPanel.SetActive(false);
+        }
+    }
+
+    public void Initialize(ButtonLogic logic)
+    {
+        buttonLogic = logic;
+    }
+
+    public void ShowJoinPanel()
+    {
+        if (joinPanel != null)
+        {
+            joinPanel.SetActive(true);
+            
+            if (joinIP != null)
+            {
+                joinIP.text = GameManager.Instance.localIP;
+                joinIP.Select();
+                joinIP.ActivateInputField();
+            }
+        }
     }
 }
+

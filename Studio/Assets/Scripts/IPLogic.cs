@@ -29,6 +29,6 @@ public class IPLogic : MonoBehaviour
                 return ip.ToString();
             }
         }
-        throw new Exception("系统中没有找到IPv4地址的网络适配器！");
+        throw new Exception("系统锟斤拷没锟斤拷锟揭碉拷IPv4锟斤拷址锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷");
     }
 }

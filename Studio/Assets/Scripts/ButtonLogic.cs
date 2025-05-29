@@ -7,6 +7,7 @@ using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using TMPro;
+using UnityEngine.EventSystems;
 
 public class ButtonLogic : MonoBehaviour
 {
@@ -19,16 +20,24 @@ public class ButtonLogic : MonoBehaviour
     }
 
     public ButtonType buttonType;
-
+    public JoinIpLogic joinIpLogic;  // 新增：JoinIpLogic引用
 
     private void Start()
     {
-       
+        if (joinIpLogic != null)
+        {
+            joinIpLogic.Initialize(this);
+        }
     }
 
-    
     private void OnMouseDown()
     {
+        // 如果点击在UI上，不处理按钮点击
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+
         Debug.Log($"Button clicked: {buttonType}");
         if(buttonType == ButtonType.Create)
         {
@@ -36,7 +45,15 @@ public class ButtonLogic : MonoBehaviour
         }
         else if(buttonType == ButtonType.Join)
         {
-            JoinClick();
+            Debug.Log("Join button clicked, attempting to show panel...");
+            if (joinIpLogic != null)
+            {
+                joinIpLogic.ShowJoinPanel();
+            }
+            else
+            {
+                Debug.LogError("joinIpLogic reference is null!");
+            }
         }
         else if(buttonType == ButtonType.Settings)
         {
@@ -79,7 +96,8 @@ public class ButtonLogic : MonoBehaviour
         }
     }
 
-    private void JoinClick()
+    // 新增：将原来的JoinClick改名并设为public，供JoinIpLogic调用
+    public void ExecuteJoin()
     {
         try
         {

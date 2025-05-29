@@ -130,11 +130,11 @@ public class GunController : NetworkBehaviour
             try 
             {
                 InitializeBulletChancesServerRpc();
-                //Debug.Log("Successfully called InitializeBulletChancesServerRpc");
+                Debug.Log("Successfully called InitializeBulletChancesServerRpc");
             }
             catch (System.Exception e)
             {
-                //Debug.LogError($"Failed to call InitializeBulletChancesServerRpc: {e.Message}");
+                Debug.LogError($"Failed to call InitializeBulletChancesServerRpc: {e.Message}");
             }
         }
         else
