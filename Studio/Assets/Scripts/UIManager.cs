@@ -101,6 +101,9 @@ public class UIManager : NetworkBehaviour
 
     private NetworkManager networkManager;
 
+    private float lastPlayer1Score = 0f;
+    private float lastPlayer2Score = 0f;
+
     private void Awake()
     {
         if (Instance == null)
@@ -419,40 +422,62 @@ public class UIManager : NetworkBehaviour
     {
         if (!IsClient) return;
 
-        // 确保所有必要的引用都存在
-        if (player1ScoreText == null || player2ScoreText == null)
-        {
-            Debug.LogWarning("[UIManager] Score text components are missing");
-            return;
-        }
-
-        if (GameManager.Instance == null)
-        {
-            Debug.LogWarning("[UIManager] GameManager instance is null");
-            return;
-        }
-
-        if (GameManager.Instance.playerComponents == null)
-        {
-            Debug.LogWarning("[UIManager] Player components list is null");
-            return;
-        }
-
-        if (GameManager.Instance.playerComponents.Count < 2)
-        {
-            Debug.LogWarning("[UIManager] Not enough players initialized");
-            return;
-        }
-
         try
         {
-            player1ScoreText.text = $"Player 1: {GameManager.Instance.playerComponents[0].point.Value}";
-            player2ScoreText.text = $"Player 2: {GameManager.Instance.playerComponents[1].point.Value}";
+            float player1Score = GameManager.Instance.playerComponents[0].point.Value;
+            float player2Score = GameManager.Instance.playerComponents[1].point.Value;
+            
+            // 更新分数显示
+            player1ScoreText.text = $"Player 1: {player1Score}";
+            player2ScoreText.text = $"Player 2: {player2Score}";
+
+            // 更新天平
+            BalanceScale balanceScale = FindObjectOfType<BalanceScale>();
+            if (balanceScale != null)
+            {
+                balanceScale.UpdateScore(player1Score, player2Score);
+            }
+
+            // 如果分数发生变化，生成金币
+            if (Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
+                Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
+            {
+                Coin coin = FindObjectOfType<Coin>();
+                if (coin != null)
+                {
+                    int p1Added = Mathf.FloorToInt(player1Score - lastPlayer1Score);
+                    int p2Added = Mathf.FloorToInt(player2Score - lastPlayer2Score);
+                    
+                    if (p1Added > 0)
+                        coin.RequestSpawnCoins(player1ScoreAnchor.position, p1Added);
+                    if (p2Added > 0)
+                        coin.RequestSpawnCoins(player2ScoreAnchor.position, p2Added);
+
+                    // 等待所有客户端完成分数更新后再显示结算面板
+                    if (NetworkManager.Singleton.IsServer && 
+                        roundManager != null && 
+                        roundManager.currentRound.Value >= roundManager.totalRounds)
+                    {
+                        StartCoroutine(DelayShowSettlement());
+                    }
+                }
+            }
+
+            // 更新上一次的分数记录
+            lastPlayer1Score = player1Score;
+            lastPlayer2Score = player2Score;
         }
         catch (System.Exception e)
         {
             Debug.LogError($"[UIManager] Error updating score text: {e.Message}");
         }
+    }
+
+    private IEnumerator DelayShowSettlement()
+    {
+        // 等待一帧确保所有分数更新完成
+        yield return null;
+        ShowSettlementPanel();
     }
     
     void UpdateBulletsText()
