@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 5201644756644357349}
   - component: {fileID: 1342076474392098579}
   - component: {fileID: 7689339796889205809}
-  - component: {fileID: 4392075134404380082}
   - component: {fileID: 6790646030711876628}
-  - component: {fileID: 389168509253197305}
+  - component: {fileID: 5657444449240247711}
   - component: {fileID: -2296710958732734177}
   - component: {fileID: 2731688270681173294}
   m_Layer: 0
@@ -33,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.5977972, y: 0.021981323, z: -0.014545744, w: 0.801214}
   m_LocalPosition: {x: -2.971, y: -2.209, z: 0.916}
-  m_LocalScale: {x: 22.757719, y: 22.78999, z: 29.74368}
+  m_LocalScale: {x: 21.148521, y: 21.178509, z: 27.640503}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -88,28 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &4392075134404380082
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4274701198760140147}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -915712872417006085, guid: dda82dc784f75ce418b2d7eba0c620fb, type: 3}
 --- !u!54 &6790646030711876628
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -137,24 +114,27 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &389168509253197305
-MonoBehaviour:
+--- !u!65 &5657444449240247711
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4274701198760140147}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3f69c61888762443a13e2f59afae555, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  initialForce: 0.2
-  randomForceRange: {x: 1, y: 2, z: 1}
-  randomPositionRange: 0.05
-  possibleColors:
-  - {r: 1, g: 0.8, b: 0, a: 1}
-  - {r: 0.8, g: 0.8, b: 0.8, a: 1}
+  serializedVersion: 3
+  m_Size: {x: 0.018174455, y: 0.017780526, z: 0.0011964891}
+  m_Center: {x: 0.000033022214, y: 0.00005577869, z: 1.0639865e-12}
 --- !u!114 &-2296710958732734177
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -402,16 +402,16 @@ public class RoundManager : NetworkBehaviour
         float player1CurrentRoundPoint;
         float player2CurrentRoundPoint;
 
-        // 判断开枪条件：被欺骗就可以开枪
+        // 存储开枪判断结果而不是直接开枪
         if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
         {
-            // 玩家1被欺骗，玩家1开枪
-            Gun1.GetComponent<GunController>().FireGun();
+            // 玩家1被欺骗，标记玩家1可以开枪
+            player1CanFire.Value = true;
         }
         if (player1Choice == PlayerLogic.playerChoice.Cheat && Gun2 != null)
         {
-            // 玩家2被欺骗，玩家2开枪
-            Gun2.GetComponent<GunController>().FireGun();
+            // 玩家2被欺骗，标记玩家2可以开枪
+            player2CanFire.Value = true;
         }
 
         // 计算得分
