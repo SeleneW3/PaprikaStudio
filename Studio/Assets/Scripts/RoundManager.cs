@@ -436,24 +436,11 @@ public class RoundManager : NetworkBehaviour
             player2CurrentRoundPoint = 0f;
         }
 
-        float p1PointsBefore = player1.point.Value;
-        float p2PointsBefore = player2.point.Value;
-
         player1.point.Value += player1CurrentRoundPoint;
         player2.point.Value += player2CurrentRoundPoint;
 
         string player1Debug = "+" + player1CurrentRoundPoint.ToString();
         string player2Debug = "+" + player2CurrentRoundPoint.ToString();
-
-        int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-        int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-        Coin coin = FindObjectOfType<Coin>();
-
-        coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-        coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-        UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
 
         if (uiManager != null)
         {

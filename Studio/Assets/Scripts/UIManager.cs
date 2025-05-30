@@ -911,7 +911,7 @@ public class UIManager : NetworkBehaviour
                 return;
             }
 
-            // 等待一帧确保分数已更新
+            // 等待足够长的时间确保所有状态都执行完毕
             StartCoroutine(UpdateSettlementPanelWithDelay());
         }
         catch (System.Exception e)
@@ -922,8 +922,8 @@ public class UIManager : NetworkBehaviour
 
     private IEnumerator UpdateSettlementPanelWithDelay()
     {
-        // 等待一帧确保所有分数更新完成
-        yield return new WaitForEndOfFrame();
+        // 等待足够长的时间确保所有状态都执行完毕
+        yield return new WaitForSeconds(0.5f);
 
         settlementPanel.SetActive(true);
 
@@ -934,7 +934,7 @@ public class UIManager : NetworkBehaviour
             exitButton.interactable = true;
 
         // 更新结算面板显示
-        if (settlementScoreText != null)
+        if (settlementScoreText != null && GameManager.Instance != null)
         {
             int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
             int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
@@ -947,6 +947,8 @@ public class UIManager : NetworkBehaviour
                                      $"Player 2: {player2Score}\n\n" +
                                      $"{winner} wins this Phase!\n\n" +
                                      "Continue to Next Phase?";
+
+            Debug.Log($"[UIManager] Settlement panel updated with scores - P1: {player1Score}, P2: {player2Score}");
         }
     }
 
@@ -1165,10 +1167,6 @@ public class UIManager : NetworkBehaviour
         {
             case State.DebugText:
                 Debug.Log("[UIManager State Machine] DebugText: Starting debug text animation");
-                if (player1DebugText != null && player2DebugText != null)
-                {
-                    StartCoroutine(PlayDebugTextAnimation());
-                }
                 break;
             case State.ScoreAndCoin:
                 Debug.Log("[UIManager State Machine] ScoreAndCoin: Updating score display");
