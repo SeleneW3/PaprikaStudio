@@ -1152,7 +1152,7 @@ public class UIManager : NetworkBehaviour
     {
         float waitTime = currentState.Value switch
         {
-            State.DebugText => 2f,
+            State.DebugText => 1f,
             State.ScoreAndCoin => 2f,
             State.FireAnimation => 3f,
             State.BulletUI => 1f,
