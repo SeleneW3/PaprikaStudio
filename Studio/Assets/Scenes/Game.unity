@@ -7776,7 +7776,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   coinPrefab: {fileID: 4274701198760140147, guid: 258b544794366544a8aa69ee8b1432fe, type: 3}
-  spawnDelay: 0.2
+  spawnDelay: 0.25
 --- !u!4 &432970276
 Transform:
   m_ObjectHideFlags: 0

@@ -226,8 +226,21 @@ public class GunController : NetworkBehaviour
             CameraShake.Instance.ShakeCamera(0.3f, 0.4f);
         }
 
+        // 延迟触发血迹特效
+        StartCoroutine(PlayHitScreenEffectWithDelay(2.5f));
+        
         // 延迟播放击中音效
         StartCoroutine(PlaySoundWithDelay("BulletHit", 2f));
+    }
+
+    private IEnumerator PlayHitScreenEffectWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        HitScreen hitScreen = FindObjectOfType<HitScreen>();
+        if (hitScreen != null)
+        {
+            hitScreen.TriggerHitEffect();
+        }
     }
 
     [ClientRpc]
@@ -480,6 +493,15 @@ public class GunController : NetworkBehaviour
         // 确保枪回到正确位置和旋转
         transform.position = originalPosition;
         transform.rotation = originalRotation;
+    }
+
+    public void CancelHitScreenEffect()
+    {
+        HitScreen hitScreen = FindObjectOfType<HitScreen>();
+        if (hitScreen != null)
+        {
+            hitScreen.CancelEffect();
+        }
     }
 
 }

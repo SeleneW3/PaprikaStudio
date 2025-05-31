@@ -151,6 +151,20 @@ public class UIManager : NetworkBehaviour
         {
             // 请求服务器初始化UI
             RequestUIInitializationServerRpc();
+
+            // 订阅事件
+            ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        if (IsClient)
+        {
+            // 取消订阅事件
+            ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
         }
     }
 
@@ -255,9 +269,6 @@ public class UIManager : NetworkBehaviour
             Debug.LogWarning("RoundManager not found!");
         }
 
-        // 订阅棋子动画完成事件
-        ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
-
         // 强制UI可见性
         ForceUIVisibility();
     }
@@ -271,7 +282,11 @@ public class UIManager : NetworkBehaviour
                 ForceUIVisibility();
             };
         }
-        ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+        
+        if (IsClient)
+        {
+            ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+        }
         
         base.OnDestroy();
 
@@ -286,9 +301,10 @@ public class UIManager : NetworkBehaviour
     {
         if (!IsClient) return;
         
-        // 启动状态机
+        // 只在服务器端启动状态机
         if (IsServer)
         {
+            Debug.Log("[UIManager] Starting state machine after chess animation");
             StartStateMachine();
         }
     }
@@ -510,45 +526,45 @@ public class UIManager : NetworkBehaviour
                 Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreText is null");
             }
 
-            // 更新天平
-            BalanceScale balanceScale = FindObjectOfType<BalanceScale>();
-            if (balanceScale != null)
+            // 如果是服务器，更新天平
+            if (IsServer)
             {
-                balanceScale.UpdateScore(player1Score, player2Score);
-            }
-            else
-            {
-                Debug.LogWarning("[UIManager] UpdateScoreText: BalanceScale not found");
-            }
-
-            // 如果分数发生变化，生成金币
-            if (Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
-                Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
-            {
-                Coin coin = FindObjectOfType<Coin>();
-                if (coin != null && player1ScoreAnchor != null && player2ScoreAnchor != null)
+                BalanceScale balanceScale = FindObjectOfType<BalanceScale>();
+                if (balanceScale != null)
                 {
-                    int p1Added = Mathf.FloorToInt(player1Score - lastPlayer1Score);
-                    int p2Added = Mathf.FloorToInt(player2Score - lastPlayer2Score);
-                    
-                    if (p1Added > 0)
-                        coin.RequestSpawnCoins(player1ScoreAnchor.position, p1Added);
-                    if (p2Added > 0)
-                        coin.RequestSpawnCoins(player2ScoreAnchor.position, p2Added);
-
-                    // 修改结算面板显示条件
-                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && 
-                        roundManager != null && 
-                        roundManager.currentRound.Value > roundManager.totalRounds)
-                    {
-                        StartCoroutine(DelayShowSettlement());
-                    }
+                    // 直接设置分数差值
+                    balanceScale.SetScoreDiffServerRpc(player1Score - player2Score);
                 }
-                else
+
+                // 如果分数发生变化，生成金币
+                if (Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
+                    Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
                 {
-                    if (coin == null) Debug.LogWarning("[UIManager] UpdateScoreText: Coin component not found");
-                    if (player1ScoreAnchor == null) Debug.LogWarning("[UIManager] UpdateScoreText: player1ScoreAnchor is null");
-                    if (player2ScoreAnchor == null) Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreAnchor is null");
+                    Coin coin = FindObjectOfType<Coin>();
+                    if (coin != null && player1ScoreAnchor != null && player2ScoreAnchor != null)
+                    {
+                        int p1Added = Mathf.FloorToInt(player1Score - lastPlayer1Score);
+                        int p2Added = Mathf.FloorToInt(player2Score - lastPlayer2Score);
+                        
+                        if (p1Added > 0)
+                            coin.RequestSpawnCoins(player1ScoreAnchor.position, p1Added);
+                        if (p2Added > 0)
+                            coin.RequestSpawnCoins(player2ScoreAnchor.position, p2Added);
+
+                        // 修改结算面板显示条件
+                        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && 
+                            roundManager != null && 
+                            roundManager.currentRound.Value > roundManager.totalRounds)
+                        {
+                            StartCoroutine(DelayShowSettlement());
+                        }
+                    }
+                    else
+                    {
+                        if (coin == null) Debug.LogWarning("[UIManager] UpdateScoreText: Coin component not found");
+                        if (player1ScoreAnchor == null) Debug.LogWarning("[UIManager] UpdateScoreText: player1ScoreAnchor is null");
+                        if (player2ScoreAnchor == null) Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreAnchor is null");
+                    }
                 }
             }
 
@@ -939,8 +955,26 @@ public class UIManager : NetworkBehaviour
             int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
             int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
             
-            string winner = player1Score > player2Score ? "Player 1" :
-                          player2Score > player1Score ? "Player 2" : "No one";
+            string winner;
+            
+            // 检查是否是因为真子弹结束游戏
+            GunController gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
+            GunController gun2 = GameObject.Find("Gun2")?.GetComponent<GunController>();
+            
+            if (gun1 != null && gun1.gameEnded.Value)
+            {
+                winner = "Player 2"; // 玩家1被击中，玩家2获胜
+            }
+            else if (gun2 != null && gun2.gameEnded.Value)
+            {
+                winner = "Player 1"; // 玩家2被击中，玩家1获胜
+            }
+            else
+            {
+                // 正常回合结束，比较分数
+                winner = player1Score > player2Score ? "Player 1" :
+                        player2Score > player1Score ? "Player 2" : "No one";
+            }
             
             settlementScoreText.text = $"Phase Complete!\n\n" +
                                      $"Player 1: {player1Score}\n" +
@@ -948,7 +982,7 @@ public class UIManager : NetworkBehaviour
                                      $"{winner} wins this Phase!\n\n" +
                                      "Continue to Next Phase?";
 
-            Debug.Log($"[UIManager] Settlement panel updated with scores - P1: {player1Score}, P2: {player2Score}");
+            Debug.Log($"[UIManager] Settlement panel updated with scores - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
         }
     }
 

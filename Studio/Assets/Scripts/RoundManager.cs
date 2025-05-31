@@ -290,16 +290,7 @@ public class RoundManager : NetworkBehaviour
     {
         if (balanceScale != null)
         {
-            UpdateBalanceScaleClientRpc(player1Score, player2Score);
-        }
-    }
-
-    [ClientRpc]
-    private void UpdateBalanceScaleClientRpc(float player1Score, float player2Score)
-    {
-        if (balanceScale != null)
-        {
-            balanceScale.UpdateScore(player1Score, player2Score);
+            balanceScale.SetScoreDiffServerRpc(player1Score - player2Score);
         }
     }
 

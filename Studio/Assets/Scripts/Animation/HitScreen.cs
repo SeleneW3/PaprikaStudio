@@ -35,33 +35,45 @@ public class HitScreen : MonoBehaviour
         defaultSpeed = changeSpeed;
     }
 
+    public void TriggerHitEffect()
+    {
+        // 模拟按 A 键的效果
+        screenDamage.CurrentHealth = hitHealth;
+        screenDamage.ShowDamage(hitHealth);
+        screenDamage.ShowBlur();
+
+        changeSpeed = defaultSpeed;  // 确保使用默认速度
+        recoverGoal = targetOnA;
+        isRecovering = true;
+
+        Debug.Log($"Hit Effect Triggered: 血量设为 {hitHealth}，开始恢复到 {targetOnA}");
+    }
+
+    public void CancelEffect()
+    {
+        // 模拟按 D 键的效果
+        screenDamage.CurrentHealth = startOnD;
+        screenDamage.ShowDamage(startOnD);
+
+        changeSpeed = defaultSpeed;
+        recoverGoal = targetOnD;
+        isRecovering = true;
+
+        Debug.Log($"Hit Effect Cancelled: 血量设为 {startOnD}，开始恢复到 {targetOnD}");
+    }
+
     void Update()
     {
         // 按 A：设血量到 hitHealth，触发模糊，开始恢复到 targetOnA
         if (Input.GetKeyDown(KeyCode.A))
         {
-            screenDamage.CurrentHealth = hitHealth;
-            screenDamage.ShowDamage(hitHealth);
-            screenDamage.ShowBlur();
-
-            changeSpeed = defaultSpeed;  // 确保使用默认速度
-            recoverGoal = targetOnA;
-            isRecovering = true;
-
-            Debug.Log($"按 A：血量设为 {hitHealth}，开始恢复到 {targetOnA}");
+            TriggerHitEffect();
         }
 
         // 按 D：设血量到 startOnD，清除模糊，开始恢复到 targetOnD
         if (Input.GetKeyDown(KeyCode.D))
         {
-            screenDamage.CurrentHealth = startOnD;
-            screenDamage.ShowDamage(startOnD);
-
-            changeSpeed = defaultSpeed;
-            recoverGoal = targetOnD;
-            isRecovering = true;
-
-            Debug.Log($"按 D：血量设为 {startOnD}，开始恢复到 {targetOnD}");
+            CancelEffect();
         }
 
         // 渐变恢复逻辑

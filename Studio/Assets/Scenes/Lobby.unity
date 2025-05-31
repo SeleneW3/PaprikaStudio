@@ -1685,7 +1685,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: State
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -1749,7 +1749,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &819471654
@@ -1814,8 +1814,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
+  m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2338,6 +2338,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Chess2
       objectReference: {fileID: 0}
+    - target: {fileID: 8482533181643221819, guid: 7595435b85a8c9f478d510c36807da22, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3152221741
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1478653033504413175, guid: 7595435b85a8c9f478d510c36807da22, type: 3}
     m_RemovedGameObjects: []
@@ -2550,7 +2554,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Player1
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -2614,7 +2618,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1660866660
@@ -2708,7 +2712,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 88795087}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999854
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2818,6 +2822,10 @@ PrefabInstance:
     - target: {fileID: 4536517519789297945, guid: 7595435b85a8c9f478d510c36807da22, type: 3}
       propertyPath: m_Name
       value: Chess1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8482533181643221819, guid: 7595435b85a8c9f478d510c36807da22, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 950250807
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1478653033504413175, guid: 7595435b85a8c9f478d510c36807da22, type: 3}
@@ -3034,7 +3042,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00000025432257}
+  m_AnchoredPosition: {x: 0, y: 0.00009524256}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2013375097

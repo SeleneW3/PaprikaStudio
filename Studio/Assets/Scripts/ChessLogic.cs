@@ -4,11 +4,17 @@ using Unity.Netcode;
 using UnityEngine;
 using System;  // 添加这行用于事件系统
 
-public class ChessLogic : MonoBehaviour
+public class ChessLogic : NetworkBehaviour
 {
     // 添加静态事件用于通知动画完成
     public static event Action OnBothChessAnimationComplete;
     private static int completedAnimationCount = 0;
+
+    private NetworkObject networkObject;
+    private bool isInitialized = false;
+
+    // 将 NetworkVariable 的初始化移到 OnNetworkSpawn 中
+    private NetworkVariable<bool> hasCompletedAnimation;
 
     public Transform stateBeingClicked;
 
@@ -41,18 +47,75 @@ public class ChessLogic : MonoBehaviour
 
     public Belonging belonging;
 
-    // Start is called before the first frame update
+    private void Awake()
+    {
+        networkObject = GetComponent<NetworkObject>();
+        if (networkObject == null)
+        {
+            Debug.LogError($"[ChessLogic] NetworkObject component missing on {gameObject.name}!");
+        }
+        
+        // 在 Awake 中初始化 NetworkVariable
+        hasCompletedAnimation = new NetworkVariable<bool>(false);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        Debug.Log($"[ChessLogic] OnNetworkSpawn called for {gameObject.name}. IsServer: {IsServer}, IsClient: {IsClient}, IsSpawned: {IsSpawned}");
+        
+        if (!IsSpawned)
+        {
+            Debug.LogError($"[ChessLogic] {gameObject.name} is not properly spawned!");
+            return;
+        }
+        
+        InitializeChess();
+    }
+
+    private void InitializeChess()
+    {
+        try
+        {
+            if (GameManager.Instance == null)
+            {
+                Debug.LogError($"[ChessLogic] GameManager.Instance is null during initialization of {gameObject.name}");
+                return;
+            }
+
+            originalPos = transform.position;
+            originalRot = transform.rotation;
+
+            if (GameManager.Instance.chessComponents == null)
+            {
+                Debug.LogError($"[ChessLogic] GameManager.Instance.chessComponents is null during initialization of {gameObject.name}");
+                return;
+            }
+
+            int index = belonging == Belonging.Player1 ? 0 : 1;
+            if (index < GameManager.Instance.chessComponents.Count)
+            {
+                GameManager.Instance.chessComponents[index] = this;
+                Debug.Log($"[ChessLogic] Successfully registered {gameObject.name} as {belonging}'s chess");
+            }
+            else
+            {
+                Debug.LogError($"[ChessLogic] Invalid index {index} for chess registration");
+            }
+
+            isInitialized = true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[ChessLogic] Error during initialization of {gameObject.name}: {e.Message}\nStack trace: {e.StackTrace}");
+        }
+    }
+
     void Start()
     {
-        originalPos = transform.position;
-        originalRot = transform.rotation;
-        if(belonging == Belonging.Player1)
+        if (!isInitialized)
         {
-            GameManager.Instance.chessComponents[0] = this;
-        }
-        else
-        {
-            GameManager.Instance.chessComponents[1] = this;
+            InitializeChess();
         }
     }
 
@@ -110,20 +173,57 @@ public class ChessLogic : MonoBehaviour
 
     private void OnMouseDown()
     {
-        // 播放棋子悬置音效
-        if (SoundManager.Instance != null)
+        // 先检查网络管理器
+        if (NetworkManager.Singleton == null)
         {
-            SoundManager.Instance.PlaySFX("ChessUp");
+            Debug.LogError("[ChessLogic] NetworkManager.Singleton is null in OnMouseDown!");
+            return;
         }
 
-        if (NetworkManager.Singleton.LocalClientId == 0)
+        // 检查是否已经生成
+        if (!IsSpawned)
         {
-            GameManager.Instance.ChangeChess1StateServerRpc();
+            Debug.LogError($"[ChessLogic] Attempting to handle OnMouseDown but {gameObject.name} is not spawned!");
+            return;
         }
 
-        if (NetworkManager.Singleton.LocalClientId == 1)
+        // 检查是否初始化
+        if (!isInitialized)
         {
-            GameManager.Instance.ChangeChess2StateServerRpc();
+            Debug.LogError($"[ChessLogic] Attempting to handle OnMouseDown but {gameObject.name} is not initialized!");
+            return;
+        }
+
+        // 检查 GameManager
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[ChessLogic] GameManager.Instance is null in OnMouseDown!");
+            return;
+        }
+
+        try
+        {
+            // 播放音效
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("ChessUp");
+            }
+
+            // 根据玩家ID处理点击
+            if (NetworkManager.Singleton.LocalClientId == 0 && belonging == Belonging.Player1)
+            {
+                Debug.Log("[ChessLogic] Player1 attempting to change state via ServerRpc");
+                GameManager.Instance.ChangeChess1StateServerRpc();
+            }
+            else if (NetworkManager.Singleton.LocalClientId == 1 && belonging == Belonging.Player2)
+            {
+                Debug.Log("[ChessLogic] Player2 attempting to change state via ServerRpc");
+                GameManager.Instance.ChangeChess2StateServerRpc();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[ChessLogic] Error in OnMouseDown: {e.Message}\nStack trace: {e.StackTrace}");
         }
     }
 
@@ -175,11 +275,68 @@ public class ChessLogic : MonoBehaviour
 
     private void NotifyAnimationComplete()
     {
-        completedAnimationCount++;
-        if (completedAnimationCount >= 2)  // 当两个棋子都完成动画时
+        if (!IsSpawned || !isInitialized)
         {
+            Debug.LogWarning($"[ChessLogic] NotifyAnimationComplete called but object not ready. IsSpawned: {IsSpawned}, IsInitialized: {isInitialized}");
+            return;
+        }
+
+        // 如果是客户端，请求服务器执行
+        if (!IsServer)
+        {
+            NotifyAnimationCompleteServerRpc();
+            return;
+        }
+
+        try
+        {
+            if (GameManager.Instance == null)
+            {
+                Debug.LogError("[ChessLogic] GameManager.Instance is null in NotifyAnimationComplete");
+                return;
+            }
+
+            hasCompletedAnimation.Value = true;
+            completedAnimationCount++;
+            Debug.Log($"[ChessLogic] Animation completed for {gameObject.name}. Total completed: {completedAnimationCount}");
+
+            if (completedAnimationCount >= 2)
+            {
+                Debug.Log("[ChessLogic] Both chess pieces completed animation, invoking event");
+                completedAnimationCount = 0;
+                NotifyBothAnimationsCompleteClientRpc();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[ChessLogic] Error in NotifyAnimationComplete: {e.Message}\nStack trace: {e.StackTrace}");
             completedAnimationCount = 0;
-            OnBothChessAnimationComplete?.Invoke();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void NotifyAnimationCompleteServerRpc()
+    {
+        NotifyAnimationComplete();
+    }
+
+    [ClientRpc]
+    private void NotifyBothAnimationsCompleteClientRpc()
+    {
+        try 
+        {
+            if (OnBothChessAnimationComplete != null)
+            {
+                OnBothChessAnimationComplete.Invoke();
+            }
+            else
+            {
+                Debug.LogWarning("[ChessLogic] OnBothChessAnimationComplete is null");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[ChessLogic] Error in NotifyBothAnimationsCompleteClientRpc: {e.Message}");
         }
     }
 }
