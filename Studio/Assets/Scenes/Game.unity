@@ -2231,7 +2231,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <bounce>2</bounce>
+  m_text: <bounce> </bounce>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
@@ -37207,7 +37207,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <bounce>1</bounce>
+  m_text: <bounce> </bounce>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
@@ -76918,7 +76918,8 @@ MonoBehaviour:
     m_InternalValue: 0
   player2TotalCheatCount:
     m_InternalValue: 0
-  totalRounds: 5
+  totalRounds:
+    m_InternalValue: 5
   player1: {fileID: 1428714012605416748}
   player2: {fileID: 1209255488}
   Gun1: {fileID: 879893843}

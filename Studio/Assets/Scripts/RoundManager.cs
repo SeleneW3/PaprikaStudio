@@ -142,15 +142,7 @@ public class RoundManager : NetworkBehaviour
             {
                 tutorState++;
                 DialogManager.Instance.PlayRange(10, 12);
-
-                // 注释掉对UIManager的调用，让UI更新由状态机统一处理
-                // UIManager uiManager = FindObjectOfType<UIManager>();
-                // if (uiManager != null)
-                // {
-                //     uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds.Value);
-                // }
-                
-                // 只在调试日志中记录
+            
                 Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
@@ -314,14 +306,6 @@ public class RoundManager : NetworkBehaviour
     [ClientRpc]
     private void UpdateRoundClientRpc()
     {
-        // 注释掉对UIManager的调用，让UI更新由状态机统一处理
-        // UIManager uiManager = FindObjectOfType<UIManager>();
-        // if (uiManager != null)
-        // {
-        //     uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds.Value);
-        // }
-        
-        // 只在调试日志中记录回合更新，不更新UI
         Debug.Log($"[RoundManager] 回合已更新: 当前回合 {currentRound.Value}/{totalRounds.Value}");
     }
 

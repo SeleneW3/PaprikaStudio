@@ -52,7 +52,7 @@ public class Coin : NetworkBehaviour
     /// </summary>
     private IEnumerator SpawnCoinsCoroutine(Vector3 position, int amount)
     {
-        yield return new WaitForSeconds(0.5f);  // 可以调整这个时间
+        yield return new WaitForSeconds(0.1f);  // 可以调整这个时间
 
         for (int i = 0; i < amount; i++)
         {

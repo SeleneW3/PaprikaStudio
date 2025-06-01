@@ -206,6 +206,17 @@ public class UIManager : NetworkBehaviour
             }
         }
 
+        // 获取RoundManager引用 - 移到方法开始处
+        roundManager = FindObjectOfType<RoundManager>();
+        if (roundManager == null)
+        {
+            Debug.LogWarning("[UIManager] RoundManager not found in InitializeUI!");
+        }
+        else
+        {
+            Debug.Log($"[UIManager] RoundManager found, totalRounds: {roundManager.totalRounds.Value}");
+        }
+
         // 初始化时隐藏World Space回合文本
         if (roundText1 != null || roundText2 != null)
         {
@@ -254,13 +265,23 @@ public class UIManager : NetworkBehaviour
         // 初始化World Space回合文本
         if (roundText1 != null && roundText2 != null)
         {
-            // 根据游戏模式设置正确的回合显示
-            int initialTotalRounds = 5; // 默认为5回合
+            // 从RoundManager获取总回合数，如果可用
+            int initialTotalRounds = 5; // 默认值
             
-            // 如果是Tutor模式，则设置为4回合
-            if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+            if (roundManager != null)
             {
-                initialTotalRounds = 4;
+                // 直接使用RoundManager中的值，确保客户端和服务器一致
+                initialTotalRounds = roundManager.totalRounds.Value;
+                Debug.Log($"[UIManager] InitializeUI: 从RoundManager获取总回合数: {initialTotalRounds}");
+            }
+            else
+            {
+                // 如果RoundManager不可用，尝试从LevelManager获取
+                if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+                {
+                    initialTotalRounds = 4;
+                }
+                Debug.Log($"[UIManager] InitializeUI: 从LevelManager获取总回合数: {initialTotalRounds}");
             }
             
             string roundInfo = $"ROUND 1/{initialTotalRounds}";
@@ -270,13 +291,6 @@ public class UIManager : NetworkBehaviour
             roundText2.gameObject.SetActive(true);
             
             Debug.Log($"[UIManager] 初始化回合显示为: {roundInfo}");
-        }
-
-        // 获取RoundManager引用
-        roundManager = FindObjectOfType<RoundManager>();
-        if (roundManager == null)
-        {
-            Debug.LogWarning("RoundManager not found!");
         }
 
         // 强制UI可见性
@@ -765,13 +779,23 @@ public class UIManager : NetworkBehaviour
         // 初始化World Space回合显示文本
         if (roundText1 != null && roundText2 != null)
         {
-            // 根据游戏模式设置正确的回合显示
-            int initialTotalRounds = 5; // 默认为5回合
+            // 从RoundManager获取总回合数，如果可用
+            int initialTotalRounds = 5; // 默认值
             
-            // 如果是Tutor模式，则设置为4回合
-            if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+            if (roundManager != null)
             {
-                initialTotalRounds = 4;
+                // 直接使用RoundManager中的值，确保客户端和服务器一致
+                initialTotalRounds = roundManager.totalRounds.Value;
+                Debug.Log($"[UIManager] ForceUIVisibility: 从RoundManager获取总回合数: {initialTotalRounds}");
+            }
+            else
+            {
+                // 如果RoundManager不可用，尝试从LevelManager获取
+                if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+                {
+                    initialTotalRounds = 4;
+                }
+                Debug.Log($"[UIManager] ForceUIVisibility: 从LevelManager获取总回合数: {initialTotalRounds}");
             }
             
             string roundInfo = $"ROUND 1/{initialTotalRounds}";
@@ -1078,12 +1102,25 @@ public class UIManager : NetworkBehaviour
         {
             // 确保使用正确的总回合数
             int totalRounds = roundManager.totalRounds.Value;
-            UpdateRoundText(roundManager.currentRound.Value, totalRounds);
-            Debug.Log($"[UIManager] Round updated to: {roundManager.currentRound.Value}/{totalRounds}");
+            int currentRound = roundManager.currentRound.Value;
+            UpdateRoundText(currentRound, totalRounds);
+            Debug.Log($"[UIManager] PullInitialValues: 回合更新为 {currentRound}/{totalRounds}, 客户端ID: {NetworkManager.Singleton.LocalClientId}");
         }
         else
         {
-            Debug.LogError("[UIManager] RoundManager is null in PullInitialValues!");
+            Debug.LogError("[UIManager] RoundManager is null in PullInitialValues! 尝试重新获取");
+            roundManager = FindObjectOfType<RoundManager>();
+            if (roundManager != null)
+            {
+                int totalRounds = roundManager.totalRounds.Value;
+                int currentRound = roundManager.currentRound.Value;
+                UpdateRoundText(currentRound, totalRounds);
+                Debug.Log($"[UIManager] PullInitialValues: 重新获取后回合更新为 {currentRound}/{totalRounds}");
+            }
+            else
+            {
+                Debug.LogError("[UIManager] 重新获取RoundManager仍然失败!");
+            }
         }
 
         // 隐藏结算面板
@@ -1112,7 +1149,7 @@ public class UIManager : NetworkBehaviour
         int displayRound = Mathf.Min(currentRound, totalRounds);
         string roundInfo = $"ROUND {displayRound}/{totalRounds}";
         
-        Debug.Log($"[UIManager] UpdateRoundTextClientRpc: 更新回合显示为 {roundInfo}");
+        Debug.Log($"[UIManager] UpdateRoundTextClientRpc: 更新回合显示为 {roundInfo}, 客户端ID: {NetworkManager.Singleton.LocalClientId}");
         
         if (roundText1 != null)
         {
@@ -1221,10 +1258,10 @@ public class UIManager : NetworkBehaviour
     {
         float waitTime = currentState.Value switch
         {
-            State.DebugText => 1f,
+            State.DebugText => 1.5f,
             State.ScoreAndCoin => 2f,
-            State.FireAnimation => 3f,
-            State.BulletUI => 1f,
+            State.FireAnimation => 2.5f,
+            State.BulletUI => 0.5f,
             State.RoundText => 0.5f,
             State.Settlement => 0.5f,
             _ => 0f
