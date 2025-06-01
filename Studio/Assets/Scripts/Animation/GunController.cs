@@ -11,7 +11,11 @@ public class GunController : NetworkBehaviour
 
     public NetworkVariable<int> remainingChances = new NetworkVariable<int>(6);  // 剩余的机会次数
     public NetworkVariable<int> realBulletPosition = new NetworkVariable<int>(0); // 真子弹的位置，初始为 0（无效值）
-    public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(false);   // 游戏是否结束
+    public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
     
     private Vector3 originalPosition;  // 记录原始位置
     private Quaternion originalRotation; // 记录原始旋转
@@ -175,11 +179,10 @@ public class GunController : NetworkBehaviour
         // 使用ClientRpc来同步动画和音效
         PlayFireAnimationAndSoundClientRpc();
 
-        if (currentPosition == realBulletPosition.Value) // 检查当前位置是否是真子弹位置
+        if (currentPosition == realBulletPosition.Value)
         {
             Debug.Log("Bang! A real bullet! The enemy is dead.");
-            gameEnded.Value = true;  // 设置 gameEnded 的值
-            
+            gameEnded.Value = true;
             // 触发真子弹震动效果和音效
             TriggerRealBulletEffectsClientRpc();
         }

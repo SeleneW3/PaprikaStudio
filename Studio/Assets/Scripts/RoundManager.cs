@@ -26,7 +26,7 @@ public class RoundManager : NetworkBehaviour
     public NetworkVariable<int> player2TotalCheatCount = new NetworkVariable<int>(0);
 
     [Header("Game Settings")]
-    public int totalRounds = 5; // 游戏总回合数
+    public NetworkVariable<int> totalRounds = new NetworkVariable<int>(5); // 游戏总回合数
 
     public PlayerLogic player1;
     public PlayerLogic player2;
@@ -65,6 +65,7 @@ public class RoundManager : NetworkBehaviour
     [Header("Gun Control")]
     public NetworkVariable<bool> player1CanFire = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> player2CanFire = new NetworkVariable<bool>(false);
+    //public bool isGunRound = false;
 
     void Start()
     {
@@ -85,11 +86,11 @@ public class RoundManager : NetworkBehaviour
 
         if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
         {
-            totalRounds = 4;
+            totalRounds.Value = 4;
         }
         else
         {
-            totalRounds = 5;
+            totalRounds.Value = 5;
         }
     }
 
@@ -142,12 +143,15 @@ public class RoundManager : NetworkBehaviour
                 tutorState++;
                 DialogManager.Instance.PlayRange(10, 12);
 
-                UIManager uiManager = FindObjectOfType<UIManager>();
-                if (uiManager != null)
-                {
-                    uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds);
-                }
+                // 注释掉对UIManager的调用，让UI更新由状态机统一处理
+                // UIManager uiManager = FindObjectOfType<UIManager>();
+                // if (uiManager != null)
+                // {
+                //     uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds.Value);
+                // }
                 
+                // 只在调试日志中记录
+                Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
         }
@@ -257,14 +261,17 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
+            Debug.Log($"[RoundManager] Current Mode: {levelManager.currentMode}");
             if (levelManager != null && 
                 (levelManager.currentMode == LevelManager.Mode.OnlyGun|| 
                 levelManager.currentMode == LevelManager.Mode.CardAndGun))
             {
+                Debug.Log("[RoundManager] Using gun calculation mode");
                 CalculatePointWithGun();
             }
             else
             {
+                Debug.Log("[RoundManager] Using non-gun calculation mode");
                 CalculatePointWithoutGun();
             }
             
@@ -307,15 +314,20 @@ public class RoundManager : NetworkBehaviour
     [ClientRpc]
     private void UpdateRoundClientRpc()
     {
-        UIManager uiManager = FindObjectOfType<UIManager>();
-        if (uiManager != null)
-        {
-            uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds);
-        }
+        // 注释掉对UIManager的调用，让UI更新由状态机统一处理
+        // UIManager uiManager = FindObjectOfType<UIManager>();
+        // if (uiManager != null)
+        // {
+        //     uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds.Value);
+        // }
+        
+        // 只在调试日志中记录回合更新，不更新UI
+        Debug.Log($"[RoundManager] 回合已更新: 当前回合 {currentRound.Value}/{totalRounds.Value}");
     }
 
     void CalculatePointWithoutGun()
     {
+        Debug.Log("[RoundManager] Using CalculatePointWithoutGun");
         if (gameEnded)
         {
             return;
@@ -346,11 +358,14 @@ public class RoundManager : NetworkBehaviour
 
     void CalculatePointWithGun()
     {
+        Debug.Log("[RoundManager] Using CalculatePointWithGun");
         if (gameEnded)
         {
             return;
         }
         UIManager uiManager = FindObjectOfType<UIManager>();
+
+        //isGunRound = true;
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -362,10 +377,6 @@ public class RoundManager : NetworkBehaviour
             {
                 Debug.Log("Game ended due to gunshot!");
                 gameEnded = true;
-                if (uiManager != null)
-                {
-                    uiManager.ShowSettlementPanel();
-                }
             }
         }
 
@@ -384,6 +395,8 @@ public class RoundManager : NetworkBehaviour
 
         chessIsMoved = false;
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+
+        //isGunRound = false;
     }
 
     void CalculatePoint(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)
@@ -393,17 +406,18 @@ public class RoundManager : NetworkBehaviour
         float player1CurrentRoundPoint;
         float player2CurrentRoundPoint;
 
-        // 存储开枪判断结果而不是直接开枪
-        if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
-        {
-            // 玩家1被欺骗，标记玩家1可以开枪
-            player1CanFire.Value = true;
-        }
-        if (player1Choice == PlayerLogic.playerChoice.Cheat && Gun2 != null)
-        {
-            // 玩家2被欺骗，标记玩家2可以开枪
-            player2CanFire.Value = true;
-        }
+        // 只有 isGunRound==true 才判断开枪标记
+        //if (isGunRound)
+        //{
+            if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
+            {
+                player1CanFire.Value = true;
+            }
+            if (player1Choice == PlayerLogic.playerChoice.Cheat && Gun2 != null)
+            {
+                player2CanFire.Value = true;
+            }
+        //}
 
         // 计算得分
         if(player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cooperate)
@@ -451,13 +465,16 @@ public class RoundManager : NetworkBehaviour
             GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
         }
 
-        if (!gameEnded && currentRound.Value >= totalRounds)
-        {
-            EndGame(uiManager);
-        }
-        else if (!gameEnded && NetworkManager.Singleton.IsServer)
+        // 修改这里：始终更新回合数，然后再检查是否结束游戏
+        if (!gameEnded && NetworkManager.Singleton.IsServer)
         {
             UpdateRoundServerRpc();
+            
+            // 在更新回合数后检查是否达到游戏结束条件
+            if (currentRound.Value > totalRounds.Value)
+            {
+                EndGame(uiManager);
+            }
         }
     }
 
@@ -485,7 +502,6 @@ public class RoundManager : NetworkBehaviour
     private void EndGame(UIManager uiManager)
     {
         gameEnded = true;
-        uiManager.ShowSettlementPanel();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -599,6 +615,19 @@ public class RoundManager : NetworkBehaviour
 
         gameEnded = false;
         currentRound.Value = 1;
+        
+        // 根据游戏模式重置总回合数
+        if(LevelManager.Instance != null)
+        {
+            if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+            {
+                totalRounds.Value = 4;
+            }
+            else
+            {
+                totalRounds.Value = 5;
+            }
+        }
         
         ResetAllStatistics();
         

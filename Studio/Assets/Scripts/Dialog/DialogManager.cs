@@ -202,6 +202,11 @@ public class DialogManager : NetworkBehaviour
         DisplayCurrentLine();
     }
 
+    public void OnSceneUnload()
+    {
+        StopAllCoroutines();
+        // ... 其他清理代码
+    }
 
     #endregion
 
