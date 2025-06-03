@@ -24,7 +24,7 @@ public class DeckLogic : NetworkBehaviour
     private Quaternion p1OriginalRot;
     private Vector3 p2OriginalPos;
     private Quaternion p2OriginalRot;
-    private bool hasShown = false;
+    public bool hasShown = false;
 
     public NetworkVariable<bool> player1SendCardBool = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> player2SendCardBool = new NetworkVariable<bool>(false);
@@ -62,6 +62,7 @@ public class DeckLogic : NetworkBehaviour
     {
         if (!hasShown)
         {
+            hasShown = true;
             // 记录原始状态
             if (player1SendCard != null)
             {
@@ -79,9 +80,10 @@ public class DeckLogic : NetworkBehaviour
             }
             else if(NetworkManager.LocalClientId == 1)
             {
+                Debug.LogError("Switching to Player 2 Show Camera");
                 cameraLogic.SwitchToPlayer2ShowCamera();
             }
-            hasShown = true;
+            
         }
 
         // 移动并翻面
@@ -117,6 +119,7 @@ public class DeckLogic : NetworkBehaviour
     private IEnumerator AutoCollectAfterDelay()
     {
         yield return new WaitForSeconds(autoCollectDelay);
+        Debug.LogError("自动收牌触发");
         CollectSentCards();
         if(GameManager.Instance.currentGameState == GameManager.GameState.TutorShowState)
         {
@@ -133,7 +136,6 @@ public class DeckLogic : NetworkBehaviour
     /// </summary>
     public void CollectSentCards()
     {
-        if (!hasShown) return;
 
         if (player1SendCard != null)
         {
@@ -154,6 +156,7 @@ public class DeckLogic : NetworkBehaviour
         }
         else if(NetworkManager.LocalClientId == 1)
         {
+            Debug.LogError("Switching to Player 2 Camera");
             cameraLogic.SwitchToPlayer2Camera();
         }
 

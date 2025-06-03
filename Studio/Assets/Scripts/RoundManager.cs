@@ -6,6 +6,9 @@ using Unity.Netcode;
 
 public class RoundManager : NetworkBehaviour
 {
+    private static RoundManager _instance;
+    public static RoundManager Instance => _instance;
+
     public DeckLogic deckLogic;
     public DialogManager dialogManager;
     public float baseBet = 1f;
@@ -50,7 +53,7 @@ public class RoundManager : NetworkBehaviour
     public Transform player2CoinRespawnPos;
 
     public NetworkVariable<int> currentRound = new NetworkVariable<int>(0);
-    private bool gameEnded = false;
+    public bool gameEnded = false;
 
     public int tutorState = 0;
     public int dialogIndex = 0;
@@ -60,16 +63,30 @@ public class RoundManager : NetworkBehaviour
     [Header("Bool")]
     public bool chessIsMoved = false;
     public bool playerGotCard = false;
+    public NetworkVariable<bool> showCard1 = new NetworkVariable<bool>(false);
     public bool showCard = false;
 
     [Header("Gun Control")]
     public NetworkVariable<bool> player1CanFire = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> player2CanFire = new NetworkVariable<bool>(false);
 
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        _instance = this;
+        DontDestroyOnLoad(gameObject);
+
+    }
+
     void Start()
     {
         // 初始化回合
         currentRound.Value = 1;
+        Debug.LogError("RoundManager Start");
 
         if (dialogManager == null)
         {
@@ -81,6 +98,18 @@ public class RoundManager : NetworkBehaviour
         if (uiManager == null)
         {
             Debug.LogError("UIManager未找到!");
+        }
+
+        dialogManager = FindObjectOfType<DialogManager>();
+        if (dialogManager == null)
+        {
+            Debug.LogError("DialogManager未找到!");
+        }
+
+        levelManager = FindObjectOfType<LevelManager>();
+        if (levelManager == null)
+        {
+            Debug.LogError("LevelManager未找到!");
         }
 
         if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
@@ -121,16 +150,8 @@ public class RoundManager : NetworkBehaviour
                 tutorState++;
                 DialogManager.Instance.PlayRange(4, 5);
 
-                CardManager cardManager = FindObjectOfType<CardManager>();
-                if (cardManager != null)
-                {
-                    cardManager.StartDealCards(2);
-                    playerGotCard = true;
-                }
-                else
-                {
-                    Debug.LogError("CardManager not found!");
-                }
+
+                CardManager.Instance.StartDealCards(2);
                 DialogManager.Instance.PlayRange(6, 9);
             }
             else if(tutorState == 3)
@@ -203,8 +224,11 @@ public class RoundManager : NetworkBehaviour
             {
                 if (cardManager != null)
                 {
-                    cardManager.StartDealCards(5);
-                    playerGotCard = true;
+                    if(!playerGotCard)
+                    {
+                        cardManager.StartDealCards(totalRounds);
+                        playerGotCard = true;
+                    }
                 }
                 else
                 {
@@ -247,6 +271,7 @@ public class RoundManager : NetworkBehaviour
         {
             if (showCard == false)
             {
+                Debug.LogError("Showing cards for both players.");
                 showCard = true;
                 deckLogic.ShowSentCards();
             }
@@ -268,12 +293,12 @@ public class RoundManager : NetworkBehaviour
                 CalculatePointWithoutGun();
             }
             
-            ChessMoveBack();
+            /*ChessMoveBack();
             ResetChess();
             ResetPlayersChoice();
             ResetPlayers();
-            showCard = false;
-            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
+            showCard.Value = false;
+            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;*/
         }
     }
 
@@ -347,10 +372,19 @@ public class RoundManager : NetworkBehaviour
                 GameManager.Instance.deck.ResetPlayerCardServerRpc();
             }
             showCard = false;
+
         }
         
         chessIsMoved = false;
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
+
+        if(GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
+        }
+        else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        }
     }
 
     void CalculatePointWithGun()
@@ -392,7 +426,14 @@ public class RoundManager : NetworkBehaviour
         }
 
         chessIsMoved = false;
-        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        if (GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
+        }
+        else if (GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        }
     }
 
     void CalculatePoint(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)
@@ -477,8 +518,10 @@ public class RoundManager : NetworkBehaviour
         {
             EndGame(uiManager);
         }
-        else if (!gameEnded && NetworkManager.Singleton.IsServer)
+        else if (!gameEnded && NetworkManager.LocalClientId==0)
         {
+            Debug.LogError("Round update");
+            currentRound.Value = currentRound.Value + 1;
             UpdateRoundServerRpc();
         }
     }

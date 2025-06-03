@@ -18,6 +18,10 @@ public class CardManager : NetworkBehaviour
     public HandCardLogic handCardLogic2;
 
     private Deck deck;
+    #region Singleton
+    private static CardManager _instance;
+    public static CardManager Instance => _instance;
+    #endregion
 
     #region Unity Life‑cycle
     private void Start()
@@ -47,6 +51,13 @@ public class CardManager : NetworkBehaviour
         StartDealCards(defaultCardsToDeal);
     }
     #endregion
+
+    private void Awake()
+    {
+
+        _instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
     #region Core Logic
     private IEnumerator WaitAndStartDeal(int cardsPerPlayer)
