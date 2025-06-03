@@ -17,6 +17,8 @@ public class Coin : NetworkBehaviour
     [SerializeField] private string coinSpawnSound = "Coin"; // 金币生成音效名称
     [SerializeField] private float minVolume = 0.6f; // 最小音量
     [SerializeField] private float maxVolume = 1.0f; // 最大音量
+    [SerializeField] private float minPitch = 0.9f; // 最低音调
+    [SerializeField] private float maxPitch = 1.1f; // 最高音调
 
     private void Awake()
     {
@@ -83,15 +85,16 @@ public class Coin : NetworkBehaviour
             {
                 netObj.Spawn(destroyWithScene: true);
                 
-                // 直接尝试在服务器上播放音效，使用随机音量
+                // 直接尝试在服务器上播放音效，使用随机音量和音调
                 if (SoundManager.Instance != null)
                 {
                     float randomVolume = Random.Range(minVolume, maxVolume);
-                    Debug.Log("[Coin] 服务器直接播放金币音效: " + coinSpawnSound + "，音量: " + randomVolume);
+                    float randomPitch = Random.Range(minPitch, maxPitch);
+                    Debug.Log($"[Coin] 服务器直接播放金币音效: {coinSpawnSound}，音量: {randomVolume}，音调: {randomPitch}");
                     
-                    // 先设置该音效的音量，然后播放
+                    // 设置该音效的音量，然后用随机音调播放
                     SoundManager.Instance.SetSFXVolumeForClip(coinSpawnSound, randomVolume);
-                    SoundManager.Instance.PlaySFX(coinSpawnSound);
+                    SoundManager.Instance.PlaySFXWithPitch(coinSpawnSound, randomPitch);
                 }
             }
             else

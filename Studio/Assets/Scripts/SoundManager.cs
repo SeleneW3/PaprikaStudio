@@ -97,11 +97,17 @@ public class SoundManager : MonoBehaviour
     // 播放音效
     public void PlaySFX(string name)
     {
+        PlaySFXWithPitch(name, 1.0f);
+    }
+    
+    // 播放带有指定音调的音效
+    public void PlaySFXWithPitch(string name, float pitch)
+    {
         if (sfxDict.ContainsKey(name))
         {
             // 使用全局音效音量乘以特定音效的单独音量
             float individualVolume = sfxVolumeDict.ContainsKey(name) ? sfxVolumeDict[name] : 1f;
-            //Debug.Log($"Playing SFX: {name} with volume: {sfxVolume * individualVolume}");
+            //Debug.Log($"Playing SFX: {name} with volume: {sfxVolume * individualVolume} and pitch: {pitch}");
             
             // 对于需要循环播放或可能需要停止的音效，创建专用AudioSource
             if (name == "Type" || name.Contains("Loop"))
@@ -113,6 +119,7 @@ public class SoundManager : MonoBehaviour
                     {
                         activeSfxSources[name].clip = sfxDict[name];
                         activeSfxSources[name].volume = sfxVolume * individualVolume;
+                        activeSfxSources[name].pitch = pitch;
                         activeSfxSources[name].loop = true;
                         activeSfxSources[name].Play();
                     }
@@ -123,6 +130,7 @@ public class SoundManager : MonoBehaviour
                 AudioSource newSource = gameObject.AddComponent<AudioSource>();
                 newSource.clip = sfxDict[name];
                 newSource.volume = sfxVolume * individualVolume;
+                newSource.pitch = pitch;
                 newSource.loop = true;
                 newSource.Play();
                 
@@ -132,13 +140,25 @@ public class SoundManager : MonoBehaviour
             else
             {
                 // 一次性音效使用共享的sfxSource
+                float originalPitch = sfxSource.pitch;
+                sfxSource.pitch = pitch;
                 sfxSource.PlayOneShot(sfxDict[name], sfxVolume * individualVolume);
+                // 在播放后恢复原始音调
+                StartCoroutine(RestorePitchAfterPlayOneShot(originalPitch));
             }
         }
         else
         {
             //Debug.LogWarning($"SFX clip {name} not found! Available clips: {string.Join(", ", sfxDict.Keys)}");
         }
+    }
+    
+    // 在PlayOneShot完成后恢复原始音调
+    private IEnumerator RestorePitchAfterPlayOneShot(float originalPitch)
+    {
+        // 等待一小段时间，确保音效开始播放
+        yield return new WaitForSeconds(0.1f);
+        sfxSource.pitch = originalPitch;
     }
 
     // 停止特定音效
