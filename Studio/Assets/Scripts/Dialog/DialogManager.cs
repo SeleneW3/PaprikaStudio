@@ -20,7 +20,10 @@ public class DialogManager : NetworkBehaviour
     public string[] dialogLines;  // 用于教程对话
 
     [Header("Typing Settings")]
-
+    [Header("Sound Effects")]
+    [SerializeField] private string typeSoundName = "Type";       // 打字音效名称
+    [SerializeField] private string typeConfirmSoundName = "TypeConfirm"; // 打字完成音效名称
+    [SerializeField] private bool useTypingSound = true;         // 是否使用打字音效
 
     // 对话内容定义
     private static readonly string[] Level3A_Dialog_Player1 = new string[]
@@ -162,7 +165,10 @@ public class DialogManager : NetworkBehaviour
             animatorPlayer = dialogText.GetComponent<TextAnimatorPlayer>();
         }
         if (animatorPlayer != null)
+        {
             animatorPlayer.onTextShowed.AddListener(OnTypingComplete);
+            animatorPlayer.onTypewriterStart.AddListener(OnTypewriterStart);
+        }
     }
 
     private void Update()
@@ -205,6 +211,10 @@ public class DialogManager : NetworkBehaviour
     public void OnSceneUnload()
     {
         StopAllCoroutines();
+        if (SoundManager.Instance != null && useTypingSound)
+        {
+            SoundManager.Instance.StopSFX(typeSoundName);
+        }
         // ... 其他清理代码
     }
 
@@ -234,10 +244,31 @@ public class DialogManager : NetworkBehaviour
         }
     }
 
+    private void OnTypewriterStart()
+    {
+        if (SoundManager.Instance != null && useTypingSound)
+        {
+            SoundManager.Instance.PlaySFX(typeSoundName);
+        }
+    }
+
     private void OnTypingComplete()
     {
         isTyping = false;
+        
+        if (SoundManager.Instance != null && useTypingSound)
+        {
+            SoundManager.Instance.StopSFX(typeSoundName);
+            StartCoroutine(PlayTypeConfirmWithDelay(0.3f));
+        }
+        
         StartAutoAdvance();
+    }
+
+    private IEnumerator PlayTypeConfirmWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SoundManager.Instance.PlaySFX(typeConfirmSoundName);
     }
 
     private void StartAutoAdvance()
@@ -271,6 +302,12 @@ public class DialogManager : NetworkBehaviour
     {
         if (!isTyping) return;
 
+        if (SoundManager.Instance != null && useTypingSound)
+        {
+            SoundManager.Instance.StopSFX(typeSoundName);
+            SoundManager.Instance.PlaySFX(typeConfirmSoundName);
+        }
+
         if (animatorPlayer != null)
         {
             animatorPlayer.SkipTypewriter();
@@ -288,13 +325,26 @@ public class DialogManager : NetworkBehaviour
             StopCoroutine(autoAdvanceCoroutine);
         autoAdvanceCoroutine = null;
 
+        if (SoundManager.Instance != null && useTypingSound)
+        {
+            SoundManager.Instance.StopSFX(typeSoundName);
+        }
+
         dialogPanel.SetActive(false);
     }
 
     private void OnDestroy()
     {
         if (animatorPlayer != null)
+        {
             animatorPlayer.onTextShowed.RemoveListener(OnTypingComplete);
+            animatorPlayer.onTypewriterStart.RemoveListener(OnTypewriterStart);
+        }
+        
+        if (SoundManager.Instance != null && useTypingSound)
+        {
+            SoundManager.Instance.StopSFX(typeSoundName);
+        }
     }
     #endregion
 }

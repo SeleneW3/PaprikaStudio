@@ -11,6 +11,12 @@ public class Coin : NetworkBehaviour
     public GameObject coinPrefab;
     [Tooltip("每次生成硬币之间的间隔（秒）")]
     public float spawnDelay = 0.2f;
+    
+    [Header("Sound Effects")]
+    [SerializeField] private string coinSpawnSound = "Coin"; // 金币生成音效名称
+    [SerializeField] private string balanceSound = "Balance"; // 天平平衡音效名称
+    
+    private bool isPlayingBalanceSound = false; // 是否正在播放Balance音效
 
     private void Awake()
     {
@@ -53,6 +59,13 @@ public class Coin : NetworkBehaviour
     private IEnumerator SpawnCoinsCoroutine(Vector3 position, int amount)
     {
         yield return new WaitForSeconds(0.1f);  // 可以调整这个时间
+        
+        // 只有在真正有金币生成时才播放Balance音效
+        if (amount > 0)
+        {
+            // 播放Balance音效
+            PlayBalanceSoundClientRpc();
+        }
 
         for (int i = 0; i < amount; i++)
         {
@@ -65,9 +78,50 @@ public class Coin : NetworkBehaviour
             if (netObj != null)
             {
                 netObj.Spawn(destroyWithScene: true);
+                
+                // 播放金币生成音效 - 在所有客户端上播放
+                PlayCoinSoundClientRpc();
+            }
+            
+            // 如果是最后一个金币，停止Balance音效
+            if (i == amount - 1)
+            {
+                StopBalanceSoundClientRpc();
             }
 
             yield return new WaitForSeconds(spawnDelay);
+        }
+    }
+    
+    [ClientRpc]
+    private void PlayCoinSoundClientRpc()
+    {
+        // 在所有客户端上播放金币音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(coinSpawnSound);
+        }
+    }
+    
+    [ClientRpc]
+    private void PlayBalanceSoundClientRpc()
+    {
+        // 在所有客户端上播放Balance音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(balanceSound);
+            isPlayingBalanceSound = true;
+        }
+    }
+    
+    [ClientRpc]
+    private void StopBalanceSoundClientRpc()
+    {
+        // 在所有客户端上停止Balance音效
+        if (SoundManager.Instance != null && isPlayingBalanceSound)
+        {
+            SoundManager.Instance.StopSFX(balanceSound);
+            isPlayingBalanceSound = false;
         }
     }
 }
