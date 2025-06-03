@@ -208,14 +208,14 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 81d4d63b05738f64ab1021b0500a618d, type: 3}
     volume: 0.85
   - name: ButtonClick
-    clip: {fileID: 8300000, guid: b6c98d8ee33cd3c4c97e028e099d26b4, type: 3}
-    volume: 1
+    clip: {fileID: 8300000, guid: cd8e6c0cb20bd0a4d980be9b0bb3d2cc, type: 3}
+    volume: 0.85
   - name: Coin
     clip: {fileID: 8300000, guid: 841cb820c139c6145ba532e2ec67b156, type: 3}
-    volume: 1
+    volume: 0.8
   - name: Balance
     clip: {fileID: 8300000, guid: 93d62ed39c76303468ae44df2de68dc9, type: 3}
-    volume: 1
+    volume: 0.35
   musicVolume: 1
   sfxVolume: 1
 --- !u!4 &580606961
