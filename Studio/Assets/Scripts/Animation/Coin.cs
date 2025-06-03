@@ -11,6 +11,12 @@ public class Coin : NetworkBehaviour
     public GameObject coinPrefab;
     [Tooltip("每次生成硬币之间的间隔（秒）")]
     public float spawnDelay = 0.2f;
+    
+    [Header("Sound Effects")]
+    [SerializeField] private string balanceSound = "Balance"; // 天平平衡音效名称
+    [SerializeField] private string coinSpawnSound = "Coin"; // 金币生成音效名称
+    [SerializeField] private float minVolume = 0.6f; // 最小音量
+    [SerializeField] private float maxVolume = 1.0f; // 最大音量
 
     private void Awake()
     {
@@ -28,22 +34,32 @@ public class Coin : NetworkBehaviour
     /// </summary>
     public void RequestSpawnCoins(Vector3 position, int amount)
     {
+        Debug.Log("[Coin] 请求生成 " + amount + " 个金币");
+        
+        // 播放天平音效
+        if (amount > 0 && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(balanceSound);
+        }
+        
         if (NetworkManager.Singleton.IsServer)
         {
             // 如果已经是服务器，直接启动协程
+            Debug.Log("[Coin] 服务器端直接启动生成协程");
             StartCoroutine(SpawnCoinsCoroutine(position, amount));
         }
         else
         {
             // 否则发起 ServerRpc 让服务器来做
+            Debug.Log("[Coin] 客户端发起ServerRpc请求");
             SpawnCoinsServerRpc(position, amount);
-            Debug.Log("send request");
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void SpawnCoinsServerRpc(Vector3 position, int amount)
     {
+        Debug.Log("[Coin] 服务器收到RPC请求，开始生成 " + amount + " 个金币");
         StartCoroutine(SpawnCoinsCoroutine(position, amount));
     }
 
@@ -52,6 +68,9 @@ public class Coin : NetworkBehaviour
     /// </summary>
     private IEnumerator SpawnCoinsCoroutine(Vector3 position, int amount)
     {
+        Debug.Log("[Coin] 开始生成金币协程，数量: " + amount);
+        yield return new WaitForSeconds(0.1f);  // 可以调整这个时间
+
         for (int i = 0; i < amount; i++)
         {
             // 可以加一点随机偏移，让硬币不完全重叠
@@ -63,147 +82,26 @@ public class Coin : NetworkBehaviour
             if (netObj != null)
             {
                 netObj.Spawn(destroyWithScene: true);
+                
+                // 直接尝试在服务器上播放音效，使用随机音量
+                if (SoundManager.Instance != null)
+                {
+                    float randomVolume = Random.Range(minVolume, maxVolume);
+                    Debug.Log("[Coin] 服务器直接播放金币音效: " + coinSpawnSound + "，音量: " + randomVolume);
+                    
+                    // 先设置该音效的音量，然后播放
+                    SoundManager.Instance.SetSFXVolumeForClip(coinSpawnSound, randomVolume);
+                    SoundManager.Instance.PlaySFX(coinSpawnSound);
+                }
+            }
+            else
+            {
+                Debug.LogError("[Coin] 金币预制体没有NetworkObject组件!");
             }
 
             yield return new WaitForSeconds(spawnDelay);
         }
+        
+        Debug.Log("[Coin] 金币生成协程完成");
     }
 }
-
-
-/*void CalculatePointWithoutCardAndGun()
-    {
-        if (gameEnded)
-        {
-            return;
-        }
-
-        string player1Debug = "+0";
-        string player2Debug = "+0";
-        UIManager uiManager = FindObjectOfType<UIManager>();
-
-        if (NetworkManager.LocalClientId == 0)
-        {
-            ApplyEffect();
-
-            if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cooperate)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += player1.coopPoint.Value;
-                player2.point.Value += player2.coopPoint.Value;
-
-                player1Debug = $"+{player1.coopPoint.Value}";
-                player2Debug = $"+{player2.coopPoint.Value}";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1CoinRespawnPos.position, p1PointsAdded);
-                Debug.Log($"Player 1 spawned {p1PointsAdded} coins at {player1ScoreAnchor.position}");
-                coin.RequestSpawnCoins(player2CoinRespawnPos.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cooperate && player2.choice == PlayerLogic.playerChoice.Cheat)
-            {
-                
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cooperate)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += player1.cheatPoint.Value;
-                player2.point.Value += player2.coopPoint.Value;
-
-                player1Debug = $"+{player1.cheatPoint.Value}";
-                player2Debug = $"+{player2.coopPoint.Value}";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-            else if (player1.choice == PlayerLogic.playerChoice.Cheat && player2.choice == PlayerLogic.playerChoice.Cheat)
-            {
-                float p1PointsBefore = player1.point.Value;
-                float p2PointsBefore = player2.point.Value;
-
-                player1.point.Value += 0f;
-                player2.point.Value += 0f;
-
-                player1Debug = "+0";
-                player2Debug = "+0";
-
-                // 计算增加了多少分
-                int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-                int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-                Coin coin = FindObjectOfType<Coin>();
-
-                // 生成硬币
-                coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-                coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-                UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
-            }
-
-            // 调用 UIManager 来更新调试信息
-            if (uiManager != null)
-            {
-                uiManager.UpdateDebugInfo(player1Debug, player2Debug);
-            }
-
-            // 关键部分：在服务器端更新网络变量，让所有客户端同步显示
-            if (NetworkManager.Singleton.IsServer)
-            {
-                GameManager.Instance.playerComponents[0].debugInfo.Value = player1Debug;
-                GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
-            }
-        }
-        ResetPlayersChoice();
-        GameManager.Instance.ResetAllBlocksServerRpc();
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
-        GameManager.Instance.chessComponents[0].backToOriginal = true;
-        GameManager.Instance.chessComponents[1].backToOriginal = true;
-        if(showCard == true)
-        {
-            GameManager.Instance.deck.ResetPlayerCardServerRpc();
-            GameManager.Instance.deck.SetPlayerCardBoolServerRpc(1, false);
-            GameManager.Instance.deck.SetPlayerCardBoolServerRpc(2, false);
-            showCard = false;
-        }
-        
-        chessIsMoved = false;
-
-
-        // 添加回合结束检查
-        if (!gameEnded && currentRound.Value >= totalRounds)
-        {
-            EndGame(uiManager);
-        }
-        else if (!gameEnded)
-        {
-            currentRound.Value++;
-            if (uiManager != null)
-            {
-                uiManager.UpdateRoundText(currentRound.Value, totalRounds);
-            }
-            Debug.Log($"Round {currentRound.Value}");
-        }
-    }*/

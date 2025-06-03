@@ -20,6 +20,9 @@ public class UIManager : NetworkBehaviour
 
     private NetworkVariable<State> currentState = new NetworkVariable<State>(State.Idle);
     private Coroutine stateCoroutine;
+    private GunController gun1;
+    private GunController gun2;
+    private RoundManager roundManager;
 
     public static UIManager Instance { get; private set; }  // 单例模式
 
@@ -57,10 +60,6 @@ public class UIManager : NetworkBehaviour
     public float snapThreshold = 2.0f; 
     private Canvas parentCanvas;
 
-    private GunController gun1;
-    private GunController gun2;
-    private RoundManager roundManager;
-
     [Header("Choice Status UI")]
     public TextMeshProUGUI player1ChoiceStatusText; // 玩家1选择状态
     public TextMeshProUGUI player2ChoiceStatusText; // 玩家2选择状态
@@ -91,10 +90,6 @@ public class UIManager : NetworkBehaviour
     public TextMeshProUGUI roundText2;  // 玩家2的回合显示
     public TextMeshProUGUI player1TargetText;
     public TextMeshProUGUI player2TargetText;
-
-    // Text Animator Player组件引用
-    // private TextAnimatorPlayer levelText1Animator;
-    // private TextAnimatorPlayer levelText2Animator;
     private TextAnimatorPlayer roundText1Animator;
     private TextAnimatorPlayer roundText2Animator;
     private TextAnimatorPlayer player1TargetTextAnimator;
@@ -108,11 +103,11 @@ public class UIManager : NetworkBehaviour
     public Button continueButton;
     public Button exitButton;
     public TextMeshProUGUI settlementScoreText;
-
     private NetworkManager networkManager;
-
     private float lastPlayer1Score = 0f;
     private float lastPlayer2Score = 0f;
+
+    private bool isSettlementFromDeath = false;  // 添加标记
 
     private void Awake()
     {
@@ -139,6 +134,7 @@ public class UIManager : NetworkBehaviour
             player1TargetTextAnimator = player1TargetText.GetComponent<TextAnimatorPlayer>();
         if (player2TargetText != null)
             player2TargetTextAnimator = player2TargetText.GetComponent<TextAnimatorPlayer>();
+
     }
 
     public override void OnNetworkSpawn()
@@ -156,6 +152,20 @@ public class UIManager : NetworkBehaviour
         {
             // 请求服务器初始化UI
             RequestUIInitializationServerRpc();
+
+            // 订阅事件
+            ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        if (IsClient)
+        {
+            // 取消订阅事件
+            ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
         }
     }
 
@@ -196,13 +206,24 @@ public class UIManager : NetworkBehaviour
             }
         }
 
+        // 获取RoundManager引用 - 移到方法开始处
+        roundManager = FindObjectOfType<RoundManager>();
+        if (roundManager == null)
+        {
+            Debug.LogWarning("[UIManager] RoundManager not found in InitializeUI!");
+        }
+        else
+        {
+            Debug.Log($"[UIManager] RoundManager found, totalRounds: {roundManager.totalRounds.Value}");
+        }
+
         // 初始化时隐藏World Space回合文本
         if (roundText1 != null || roundText2 != null)
         {
             roundText1.gameObject.SetActive(false);
             roundText2.gameObject.SetActive(false);
         }
-
+        
         // 获取GunController引用
         GameObject gun1Obj = GameObject.Find("Gun1");
         GameObject gun2Obj = GameObject.Find("Gun2");
@@ -242,26 +263,35 @@ public class UIManager : NetworkBehaviour
         SetDefaultCursor();
 
         // 初始化World Space回合文本
-        if (roundText1 != null)
+        if (roundText1 != null && roundText2 != null)
         {
-            roundText1.text = "ROUND 1/5";
+            // 从RoundManager获取总回合数，如果可用
+            int initialTotalRounds = 5; // 默认值
+            
+            if (roundManager != null)
+            {
+                // 直接使用RoundManager中的值，确保客户端和服务器一致
+                initialTotalRounds = roundManager.totalRounds.Value;
+                Debug.Log($"[UIManager] InitializeUI: 从RoundManager获取总回合数: {initialTotalRounds}");
+            }
+            else
+            {
+                // 如果RoundManager不可用，尝试从LevelManager获取
+                if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+                {
+                    initialTotalRounds = 4;
+                }
+                Debug.Log($"[UIManager] InitializeUI: 从LevelManager获取总回合数: {initialTotalRounds}");
+            }
+            
+            string roundInfo = $"ROUND 1/{initialTotalRounds}";
+            roundText1.text = roundInfo;
+            roundText2.text = roundInfo;
             roundText1.gameObject.SetActive(true);
-        }
-        if (roundText2 != null)
-        {
-            roundText2.text = "ROUND 1/5";
             roundText2.gameObject.SetActive(true);
+            
+            Debug.Log($"[UIManager] 初始化回合显示为: {roundInfo}");
         }
-
-        // 获取RoundManager引用
-        roundManager = FindObjectOfType<RoundManager>();
-        if (roundManager == null)
-        {
-            Debug.LogWarning("RoundManager not found!");
-        }
-
-        // 订阅棋子动画完成事件
-        ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
 
         // 强制UI可见性
         ForceUIVisibility();
@@ -276,7 +306,11 @@ public class UIManager : NetworkBehaviour
                 ForceUIVisibility();
             };
         }
-        ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+        
+        if (IsClient)
+        {
+            ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+        }
         
         base.OnDestroy();
 
@@ -291,9 +325,10 @@ public class UIManager : NetworkBehaviour
     {
         if (!IsClient) return;
         
-        // 启动状态机
+        // 只在服务器端启动状态机
         if (IsServer)
         {
+            Debug.Log("[UIManager] Starting state machine after chess animation");
             StartStateMachine();
         }
     }
@@ -448,18 +483,8 @@ public class UIManager : NetworkBehaviour
     {
         if (parentCanvas == null) return;
 
+        // 只在Update中更新UI位置
         UpdateUIPositions();
-
-        if (roundManager != null)
-        {
-            UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
-        }
-        
-        if (GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
-        {
-            UpdateScoreText();
-            UpdateBulletsText();
-        }
     }
 
     void UpdateScoreText()
@@ -468,54 +493,93 @@ public class UIManager : NetworkBehaviour
 
         try
         {
-            if (GameManager.Instance == null || GameManager.Instance.playerComponents == null || 
-                GameManager.Instance.playerComponents.Count < 2)
+            // 详细的错误检查
+            if (GameManager.Instance == null)
             {
-                Debug.LogWarning("GameManager or player components not ready");
+                Debug.LogWarning("[UIManager] UpdateScoreText: GameManager.Instance is null");
                 return;
             }
 
-            float player1Score = GameManager.Instance.playerComponents[0].point.Value;
-            float player2Score = GameManager.Instance.playerComponents[1].point.Value;
+            if (GameManager.Instance.playerComponents == null)
+            {
+                Debug.LogWarning("[UIManager] UpdateScoreText: GameManager.Instance.playerComponents is null");
+                return;
+            }
+
+            if (GameManager.Instance.playerComponents.Count < 2)
+            {
+                Debug.LogWarning($"[UIManager] UpdateScoreText: Not enough players. Current count: {GameManager.Instance.playerComponents.Count}");
+                return;
+            }
+
+            // 检查玩家组件
+            var player1Component = GameManager.Instance.playerComponents[0];
+            var player2Component = GameManager.Instance.playerComponents[1];
+
+            if (player1Component == null || player2Component == null)
+            {
+                Debug.LogWarning("[UIManager] UpdateScoreText: One or both player components are null");
+                return;
+            }
+
+            if (player1Component.point == null || player2Component.point == null)
+            {
+                Debug.LogWarning("[UIManager] UpdateScoreText: One or both player point variables are null");
+                return;
+            }
+
+            float player1Score = player1Component.point.Value;
+            float player2Score = player2Component.point.Value;
             
             // 更新分数显示
             if (player1ScoreText != null)
             {
                 player1ScoreText.text = $"Player 1: {player1Score}";
             }
+            else
+            {
+                Debug.LogWarning("[UIManager] UpdateScoreText: player1ScoreText is null");
+            }
+
             if (player2ScoreText != null)
             {
                 player2ScoreText.text = $"Player 2: {player2Score}";
             }
-
-            // 更新天平
-            BalanceScale balanceScale = FindObjectOfType<BalanceScale>();
-            if (balanceScale != null)
+            else
             {
-                balanceScale.UpdateScore(player1Score, player2Score);
+                Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreText is null");
             }
 
-            // 如果分数发生变化，生成金币
-            if (Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
-                Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
+            // 如果是服务器，更新天平
+            if (IsServer)
             {
-                Coin coin = FindObjectOfType<Coin>();
-                if (coin != null && player1ScoreAnchor != null && player2ScoreAnchor != null)
+                BalanceScale balanceScale = FindObjectOfType<BalanceScale>();
+                if (balanceScale != null)
                 {
-                    int p1Added = Mathf.FloorToInt(player1Score - lastPlayer1Score);
-                    int p2Added = Mathf.FloorToInt(player2Score - lastPlayer2Score);
-                    
-                    if (p1Added > 0)
-                        coin.RequestSpawnCoins(player1ScoreAnchor.position, p1Added);
-                    if (p2Added > 0)
-                        coin.RequestSpawnCoins(player2ScoreAnchor.position, p2Added);
+                    // 直接设置分数差值
+                    balanceScale.SetScoreDiffServerRpc(player1Score - player2Score);
+                }
 
-                    // 修改结算面板显示条件
-                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && 
-                        roundManager != null && 
-                        roundManager.currentRound.Value > roundManager.totalRounds)
+                // 如果分数发生变化，生成金币
+                if (Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
+                    Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
+                {
+                    Coin coin = FindObjectOfType<Coin>();
+                    if (coin != null && player1ScoreAnchor != null && player2ScoreAnchor != null)
                     {
-                        StartCoroutine(DelayShowSettlement());
+                        int p1Added = Mathf.FloorToInt(player1Score - lastPlayer1Score);
+                        int p2Added = Mathf.FloorToInt(player2Score - lastPlayer2Score);
+                        
+                        if (p1Added > 0)
+                            coin.RequestSpawnCoins(player1ScoreAnchor.position, p1Added);
+                        if (p2Added > 0)
+                            coin.RequestSpawnCoins(player2ScoreAnchor.position, p2Added);
+                    }
+                    else
+                    {
+                        if (coin == null) Debug.LogWarning("[UIManager] UpdateScoreText: Coin component not found");
+                        if (player1ScoreAnchor == null) Debug.LogWarning("[UIManager] UpdateScoreText: player1ScoreAnchor is null");
+                        if (player2ScoreAnchor == null) Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreAnchor is null");
                     }
                 }
             }
@@ -526,22 +590,10 @@ public class UIManager : NetworkBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Error updating score text: {e.Message}");
+            Debug.LogError($"[UIManager] Error in UpdateScoreText: {e.Message}\nStack trace: {e.StackTrace}");
         }
     }
 
-    private IEnumerator DelayShowSettlement()
-    {
-        // 等待一帧确保所有分数更新完成
-        yield return null;
-        
-        // 修改判断条件：只有在完成最后一轮后才显示结算面板
-        if (roundManager != null && roundManager.currentRound.Value > roundManager.totalRounds)
-        {
-            ShowSettlementPanel();
-        }
-    }
-    
     void UpdateBulletsText()
     {
         // 确保我们有所有需要的组件
@@ -569,15 +621,8 @@ public class UIManager : NetworkBehaviour
                 player2BulletsText.text = $"{gun2UsedChances}/6";
             }
         }
-        else
-        {
-            // 单机测试模式
-            player1BulletsText.text = $"{gun1UsedChances}/6";
-            player2BulletsText.text = $"{gun2UsedChances}/6";
-        }
     }
 
-    // 使用统一的位置更新方法，无论Canvas模式如何
     void UpdateUIPositions()
     {
         if (player1ScoreAnchor == null || player2ScoreAnchor == null || Camera.main == null ||
@@ -732,31 +777,51 @@ public class UIManager : NetworkBehaviour
         }
         
         // 初始化World Space回合显示文本
-        if (roundText1 != null)
+        if (roundText1 != null && roundText2 != null)
         {
+            // 从RoundManager获取总回合数，如果可用
+            int initialTotalRounds = 5; // 默认值
+            
+            if (roundManager != null)
+            {
+                // 直接使用RoundManager中的值，确保客户端和服务器一致
+                initialTotalRounds = roundManager.totalRounds.Value;
+                Debug.Log($"[UIManager] ForceUIVisibility: 从RoundManager获取总回合数: {initialTotalRounds}");
+            }
+            else
+            {
+                // 如果RoundManager不可用，尝试从LevelManager获取
+                if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+                {
+                    initialTotalRounds = 4;
+                }
+                Debug.Log($"[UIManager] ForceUIVisibility: 从LevelManager获取总回合数: {initialTotalRounds}");
+            }
+            
+            string roundInfo = $"ROUND 1/{initialTotalRounds}";
+            roundText1.text = roundInfo;
+            roundText2.text = roundInfo;
             roundText1.gameObject.SetActive(true);
-            roundText1.text = "ROUND 1/5";
-            roundText1.color = Color.white;
-        }
-        if (roundText2 != null)
-        {
             roundText2.gameObject.SetActive(true);
-            roundText2.text = "ROUND 1/5";
-            roundText2.color = Color.white;
+            
+            Debug.Log($"[UIManager] 初始化回合显示为: {roundInfo}");
         }
     }
 
     // 修改更新回合文本的方法
     public void UpdateRoundText(int currentRound, int totalRounds = 5)
     {
+        // 确保显示的回合数不超过总回合数
+        int displayRound = Mathf.Min(currentRound, totalRounds);
+        
         // 只在回合数真正改变时才更新文本
         if ((roundText1 != null || roundText2 != null) && 
-            (currentRound != lastDisplayedRound || totalRounds != lastDisplayedTotalRounds))
+            (displayRound != lastDisplayedRound || totalRounds != lastDisplayedTotalRounds))
         {
-            lastDisplayedRound = currentRound;
+            lastDisplayedRound = displayRound;
             lastDisplayedTotalRounds = totalRounds;
 
-            string roundInfo = $"ROUND {currentRound}/{totalRounds}";
+            string roundInfo = $"ROUND {displayRound}/{totalRounds}";
             
             // 更新玩家1的回合显示
             if (roundText1 != null)
@@ -806,9 +871,8 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
+
     /// 设置默认鼠标图案
-    /// </summary>
     public void SetDefaultCursor()
     {
         if (defaultCursor != null)
@@ -817,9 +881,7 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
     /// 设置手牌上的鼠标图案
-    /// </summary>
     public void SetHandCardCursor()
     {
         if (handCardCursor != null)
@@ -828,9 +890,7 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
     /// 设置已选中卡牌上的鼠标图案
-    /// </summary>
     public void SetSelectedCardCursor()
     {
         if (selectedCardCursor != null)
@@ -839,9 +899,7 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
     /// 重置为系统默认鼠标图案
-    /// </summary>
     public void ResetToSystemCursor()
     {
         Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
@@ -866,13 +924,6 @@ public class UIManager : NetworkBehaviour
         return false;
     }
 
-    // 显示结算面板
-    public void ShowSettlementPanel()
-    {
-        if (!IsServer) return;
-        ShowSettlementPanelClientRpc();
-    }
-
     // 修改隐藏结算面板的方法
     public void HideSettlementPanelAndReset()
     {
@@ -883,52 +934,102 @@ public class UIManager : NetworkBehaviour
     [ClientRpc]
     private void ShowSettlementPanelClientRpc()
     {
+        Debug.Log($"[UIManager] 收到显示结算面板的 RPC 调用，客户端ID: {NetworkManager.Singleton.LocalClientId}");
         try
         {
-            if (settlementPanel == null || GameManager.Instance == null || 
-                GameManager.Instance.playerComponents == null || 
-                GameManager.Instance.playerComponents.Count < 2)
+            // 确保面板对象存在
+            if (settlementPanel == null)
             {
-                Debug.LogError("Required components missing for settlement panel");
+                Debug.LogError("[UIManager] Settlement panel is null!");
                 return;
             }
 
-            // 等待一帧确保分数已更新
+            Debug.Log($"[UIManager] 结算面板引用存在，当前激活状态: {settlementPanel.activeSelf}");
+            
+            // 直接启动协程更新面板
             StartCoroutine(UpdateSettlementPanelWithDelay());
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Error showing settlement panel: {e.Message}");
+            Debug.LogError($"Error showing settlement panel: {e.Message}\nStack trace: {e.StackTrace}");
         }
     }
 
     private IEnumerator UpdateSettlementPanelWithDelay()
     {
-        // 等待一帧确保所有分数更新完成
-        yield return new WaitForEndOfFrame();
+        Debug.Log("[UIManager] 开始执行UpdateSettlementPanelWithDelay协程");
+        
+        // 等待足够长的时间确保所有状态都执行完毕
+        yield return new WaitForSeconds(0.5f);
 
+        if (settlementPanel == null)
+        {
+            Debug.LogError("[UIManager] Settlement panel is null!");
+            yield break;
+        }
+
+        Debug.Log("[UIManager] 准备激活结算面板，当前激活状态: " + settlementPanel.activeSelf);
         settlementPanel.SetActive(true);
+        Debug.Log("[UIManager] 结算面板激活后状态: " + settlementPanel.activeSelf);
 
         // 启用按钮
         if (continueButton != null)
             continueButton.interactable = true;
+            
         if (exitButton != null)
             exitButton.interactable = true;
 
         // 更新结算面板显示
-        if (settlementScoreText != null)
+        if (settlementScoreText != null && GameManager.Instance != null)
         {
-            int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
-            int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
-            
-            string winner = player1Score > player2Score ? "Player 1" :
-                          player2Score > player1Score ? "Player 2" : "No one";
-            
-            settlementScoreText.text = $"Phase Complete!\n\n" +
-                                     $"Player 1: {player1Score}\n" +
-                                     $"Player 2: {player2Score}\n\n" +
-                                     $"{winner} wins this Phase!\n\n" +
-                                     "Continue to Next Phase?";
+            try 
+            {
+                int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
+                int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
+                
+                string winner;
+                
+                // 检查是否是因为真子弹结束游戏
+                GunController gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
+                GunController gun2 = GameObject.Find("Gun2")?.GetComponent<GunController>();
+                
+                if (gun1 != null && gun1.gameEnded.Value)
+                {
+                    winner = "Player 2"; // 玩家1被击中，玩家2获胜
+                    isSettlementFromDeath = true;  // 设置标记
+                    Debug.Log("[UIManager] Game ended due to Player 1 being shot");
+                }
+                else if (gun2 != null && gun2.gameEnded.Value)
+                {
+                    winner = "Player 1"; // 玩家2被击中，玩家1获胜
+                    isSettlementFromDeath = true;  // 设置标记
+                    Debug.Log("[UIManager] Game ended due to Player 2 being shot");
+                }
+                else
+                {
+                    // 正常回合结束，比较分数
+                    winner = player1Score > player2Score ? "Player 1" :
+                            player2Score > player1Score ? "Player 2" : "No one";
+                    isSettlementFromDeath = false;  // 重置标记
+                    Debug.Log("[UIManager] Game ended normally, winner: " + winner);
+                }
+                
+                settlementScoreText.text = $"Phase Complete!\n\n" +
+                                         $"Player 1: {player1Score}\n" +
+                                         $"Player 2: {player2Score}\n\n" +
+                                         $"{winner} wins this Phase!\n\n" +
+                                         "Continue to Next Phase?";
+
+                Debug.Log($"[UIManager] 结算面板文本已更新 - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[UIManager] Error updating settlement panel text: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogError($"[UIManager] Settlement score text or GameManager is null! ScoreText存在: {(settlementScoreText != null)}, GameManager存在: {(GameManager.Instance != null)}");
         }
     }
 
@@ -936,6 +1037,16 @@ public class UIManager : NetworkBehaviour
     public void OnContinueButtonClick()
     {
         if (!IsClient) return;
+
+        // 如果是因为死亡导致的结算，调用 CancelEffect
+        if (isSettlementFromDeath)
+        {
+            HitScreen hitScreen = FindObjectOfType<HitScreen>();
+            if (hitScreen != null)
+            {
+                hitScreen.CancelEffect();
+            }
+        }
 
         if (IsServer)
         {
@@ -989,12 +1100,27 @@ public class UIManager : NetworkBehaviour
         // 更新回合
         if (roundManager != null)
         {
-            UpdateRoundText(roundManager.currentRound.Value);
-            Debug.Log($"[UIManager] Round updated to: {roundManager.currentRound.Value}");
+            // 确保使用正确的总回合数
+            int totalRounds = roundManager.totalRounds.Value;
+            int currentRound = roundManager.currentRound.Value;
+            UpdateRoundText(currentRound, totalRounds);
+            Debug.Log($"[UIManager] PullInitialValues: 回合更新为 {currentRound}/{totalRounds}, 客户端ID: {NetworkManager.Singleton.LocalClientId}");
         }
         else
         {
-            Debug.LogError("[UIManager] RoundManager is null in PullInitialValues!");
+            Debug.LogError("[UIManager] RoundManager is null in PullInitialValues! 尝试重新获取");
+            roundManager = FindObjectOfType<RoundManager>();
+            if (roundManager != null)
+            {
+                int totalRounds = roundManager.totalRounds.Value;
+                int currentRound = roundManager.currentRound.Value;
+                UpdateRoundText(currentRound, totalRounds);
+                Debug.Log($"[UIManager] PullInitialValues: 重新获取后回合更新为 {currentRound}/{totalRounds}");
+            }
+            else
+            {
+                Debug.LogError("[UIManager] 重新获取RoundManager仍然失败!");
+            }
         }
 
         // 隐藏结算面板
@@ -1009,12 +1135,6 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void TriggerSettlementServerRpc()
-    {
-        ShowSettlementPanelClientRpc();
-    }
-
     // 添加回合文本更新方法
     public void RequestRoundTextUpdate(int currentRound, int totalRounds)
     {
@@ -1025,16 +1145,22 @@ public class UIManager : NetworkBehaviour
     [ClientRpc]
     private void UpdateRoundTextClientRpc(int currentRound, int totalRounds)
     {
+        // 确保显示的回合数不超过总回合数
+        int displayRound = Mathf.Min(currentRound, totalRounds);
+        string roundInfo = $"ROUND {displayRound}/{totalRounds}";
+        
+        Debug.Log($"[UIManager] UpdateRoundTextClientRpc: 更新回合显示为 {roundInfo}, 客户端ID: {NetworkManager.Singleton.LocalClientId}");
+        
         if (roundText1 != null)
         {
             if (roundText1Animator != null)
             {
                 roundText1.gameObject.SetActive(true);
-                roundText1Animator.ShowText($"ROUND {currentRound}/{totalRounds}");
+                roundText1Animator.ShowText(roundInfo);
             }
             else
             {
-                roundText1.text = $"ROUND {currentRound}/{totalRounds}";
+                roundText1.text = roundInfo;
                 roundText1.gameObject.SetActive(true);
             }
         }
@@ -1044,11 +1170,11 @@ public class UIManager : NetworkBehaviour
             if (roundText2Animator != null)
             {
                 roundText2.gameObject.SetActive(true);
-                roundText2Animator.ShowText($"ROUND {currentRound}/{totalRounds}");
+                roundText2Animator.ShowText(roundInfo);
             }
             else
             {
-                roundText2.text = $"ROUND {currentRound}/{totalRounds}";
+                roundText2.text = roundInfo;
                 roundText2.gameObject.SetActive(true);
             }
         }
@@ -1130,102 +1256,132 @@ public class UIManager : NetworkBehaviour
 
     private IEnumerator ExecuteStateLogic()
     {
+        float waitTime = currentState.Value switch
+        {
+            State.DebugText => 1.5f,
+            State.ScoreAndCoin => 2f,
+            State.FireAnimation => 2.5f,
+            State.BulletUI => 0.5f,
+            State.RoundText => 0.5f,
+            State.Settlement => 0.5f,
+            _ => 0f
+        };
+
+        Debug.Log($"[UIManager State Machine] Entering state: {currentState.Value}, Wait time: {waitTime}s");
+        
+        // 在状态机开始时获取引用
+        if (gun1 == null) gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
+        if (gun2 == null) gun2 = GameObject.Find("Gun2")?.GetComponent<GunController>();
+        if (roundManager == null) roundManager = FindObjectOfType<RoundManager>();
+        
         switch (currentState.Value)
         {
             case State.DebugText:
-                yield return StartCoroutine(HandleDebugTextState());
+                Debug.Log("[UIManager State Machine] DebugText: Starting debug text animation");
                 break;
             case State.ScoreAndCoin:
-                yield return StartCoroutine(HandleScoreAndCoinState());
+                Debug.Log("[UIManager State Machine] ScoreAndCoin: Updating score display");
+                UpdateScoreText();
                 break;
             case State.FireAnimation:
-                yield return StartCoroutine(HandleFireAnimationState());
+                Debug.Log("[UIManager State Machine] FireAnimation: Checking and executing gun firing");
+                if (roundManager != null)
+                {
+                    // 检查并执行开枪
+                    if (roundManager.player1CanFire.Value && gun1 != null)
+                    {
+                        gun1.FireGun();
+                        roundManager.player1CanFire.Value = false;
+                    }
+                    if (roundManager.player2CanFire.Value && gun2 != null)
+                    {
+                        gun2.FireGun();
+                        roundManager.player2CanFire.Value = false;
+                    }
+                }
                 break;
             case State.BulletUI:
-                yield return StartCoroutine(HandleBulletUIState());
+                Debug.Log("[UIManager State Machine] BulletUI: Updating bullet count display");
+                UpdateBulletsText();
                 break;
             case State.RoundText:
-                yield return StartCoroutine(HandleRoundTextState());
+                Debug.Log("[UIManager State Machine] RoundText: Updating round information");
+                if (roundManager != null)
+                {
+                    // 确保这里正确地更新回合显示，因为RoundManager不再直接更新UI
+                    UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds.Value);
+                    Debug.Log($"[UIManager State Machine] Round updated to: {roundManager.currentRound.Value}/{roundManager.totalRounds.Value}");
+                }
                 break;
             case State.Settlement:
-                yield return StartCoroutine(HandleSettlementState());
+                Debug.Log("[UIManager State Machine] Settlement: Checking settlement conditions");
+                bool shouldShowSettlement = false;
+                
+                // 检查是否有玩家被枪打死
+                if ((gun1 != null && gun1.gameEnded.Value) || (gun2 != null && gun2.gameEnded.Value))
+                {
+                    Debug.Log("[UIManager State Machine] Settlement: Game ended due to gunshot");
+                    shouldShowSettlement = true;
+                    isSettlementFromDeath = true;
+                }
+                // 再检查是否达到总回合数
+                else if (roundManager != null && roundManager.currentRound.Value > roundManager.totalRounds.Value)
+                {
+                    Debug.Log($"[UIManager State Machine] Settlement: Game ended due to round limit. Current round: {roundManager.currentRound.Value}, Total rounds: {roundManager.totalRounds.Value}");
+                    shouldShowSettlement = true;
+                    isSettlementFromDeath = false;
+                }
+                else
+                {
+                    Debug.Log($"[UIManager State Machine] Settlement: No end condition met. Current round: {roundManager?.currentRound.Value}, Total rounds: {roundManager?.totalRounds.Value}");
+                }
+
+                if (shouldShowSettlement && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+                {
+                    Debug.Log("[UIManager State Machine] Settlement: Starting DelayShowSettlement coroutine");
+                    StartCoroutine(DelayShowSettlement());
+                }
                 break;
         }
 
+        yield return new WaitForSeconds(waitTime);
+        Debug.Log($"[UIManager State Machine] Completed state: {currentState.Value}");
+
         if (IsServer)
         {
-            // 如果不是Settlement状态，继续转换到下一个状态
             if (currentState.Value != State.Settlement)
             {
+                Debug.Log($"[UIManager State Machine] Transitioning from {currentState.Value} to next state");
                 TransitionToNextState();
             }
-            // 如果是Settlement状态，且不是游戏最后一轮，重置状态机
-            else if (roundManager != null && roundManager.currentRound.Value < roundManager.totalRounds)
+            else if (roundManager != null && roundManager.currentRound.Value < roundManager.totalRounds.Value)
             {
+                Debug.Log("[UIManager State Machine] Resetting state machine for next round");
                 ResetStateMachine();
             }
         }
     }
 
-    private IEnumerator HandleDebugTextState()
+    // 添加延迟显示结算面板的协程
+    private IEnumerator DelayShowSettlement()
     {
-        if (player1DebugText != null && player2DebugText != null)
-        {
-            player1DebugText.gameObject.SetActive(true);
-            player2DebugText.gameObject.SetActive(true);
-            StartCoroutine(PlayDebugTextAnimation());
-        }
-        yield return new WaitForSeconds(2f);
-    }
-
-    private IEnumerator HandleScoreAndCoinState()
-    {
-        if (GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
-        {
-            UpdateScoreText();
-        }
-        yield return new WaitForSeconds(2f);
-    }
-
-    private IEnumerator HandleFireAnimationState()
-    {
-        
-        // 等待动画完成的时间
-        yield return new WaitForSeconds(3f);
-    }
-
-    private IEnumerator HandleBulletUIState()
-    {
-        // 更新子弹UI
-        UpdateBulletsText();
+        Debug.Log("[UIManager] DelayShowSettlement: 等待1秒后显示结算面板");
         yield return new WaitForSeconds(1f);
+        ShowSettlementPanel();
     }
-
-    private IEnumerator HandleRoundTextState()
+    
+    // 显示结算面板的方法
+    public void ShowSettlementPanel()
     {
-        // 更新回合文本
-        if (roundManager != null)
+        Debug.Log("[UIManager] ShowSettlementPanel: 准备显示结算面板");
+        if (!IsServer) 
         {
-            UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds);
+            Debug.LogWarning("[UIManager] ShowSettlementPanel: 非服务器端调用，已忽略");
+            return;
         }
-        yield return new WaitForSeconds(1f);
+        ShowSettlementPanelClientRpc();
     }
 
-    private IEnumerator HandleSettlementState()
-    {
-        // 只在服务器端判断是否显示结算面板
-        if (IsServer && roundManager != null)
-        {
-            // 修改判断条件：只有在完成最后一轮后才显示结算面板
-            if (roundManager.currentRound.Value > roundManager.totalRounds)
-            {
-                ShowSettlementPanelClientRpc();
-            }
-        }
-        yield return new WaitForSeconds(0.5f);
-    }
-
-    // 开始状态机
     public void StartStateMachine()
     {
         if (IsServer)
@@ -1235,7 +1391,6 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    // 重置状态机
     public void ResetStateMachine()
     {
         if (IsServer)
@@ -1244,25 +1399,6 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    public void OnExitButtonClick()
-    {
-        if (IsClient)
-        {
-            Application.Quit();
-        }
-    }
-
-    // 添加公共方法用于在回合结算时启动状态机
-    public void StartRoundSettlementUI()
-    {
-        if (IsServer)
-        {
-            currentState.Value = State.Idle;
-            TransitionToNextState();
-        }
-    }
-
-    // 添加方法检查状态机是否正在运行
     public bool IsStateMachineRunning()
     {
         return currentState.Value != State.Idle;
@@ -1297,6 +1433,22 @@ public class UIManager : NetworkBehaviour
 
             // 重置状态机
             ResetStateMachine();
+        }
+    }
+    public void StartRoundSettlementUI()
+    {
+        if (IsServer)
+        {
+            currentState.Value = State.Idle;
+            TransitionToNextState();
+        }
+    }
+
+    public void OnExitButtonClick()
+    {
+        if (IsClient)
+        {
+            Application.Quit();
         }
     }
 } 

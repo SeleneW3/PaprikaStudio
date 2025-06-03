@@ -11,7 +11,11 @@ public class GunController : NetworkBehaviour
 
     public NetworkVariable<int> remainingChances = new NetworkVariable<int>(6);  // 剩余的机会次数
     public NetworkVariable<int> realBulletPosition = new NetworkVariable<int>(0); // 真子弹的位置，初始为 0（无效值）
-    public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(false);   // 游戏是否结束
+    public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
     
     private Vector3 originalPosition;  // 记录原始位置
     private Quaternion originalRotation; // 记录原始旋转
@@ -172,27 +176,20 @@ public class GunController : NetworkBehaviour
         remainingChances.Value--;  // 使用 .Value 访问 NetworkVariable 的值
         Debug.Log($"Current position: {currentPosition}, Remaining chances: {remainingChances.Value}, Real Bullet is at position {realBulletPosition.Value}");
 
-        // 使用ClientRpc来同步动画
-        PlayFireAnimationClientRpc();
-        
-        // 延迟播放开枪音效
-        Invoke("PlayGunFireSound", 2f);
+        // 使用ClientRpc来同步动画和音效
+        PlayFireAnimationAndSoundClientRpc();
 
-        if (currentPosition == realBulletPosition.Value) // 检查当前位置是否是真子弹位置
+        if (currentPosition == realBulletPosition.Value)
         {
             Debug.Log("Bang! A real bullet! The enemy is dead.");
-            gameEnded.Value = true;  // 设置 gameEnded 的值
-            
-            // 触发真子弹震动效果（在所有客户端）
-            TriggerRealBulletShakeClientRpc();
-            
-            // 延迟播放击中音效
-            Invoke("PlayBulletHitSound", 2f);
+            gameEnded.Value = true;
+            // 触发真子弹震动效果和音效
+            TriggerRealBulletEffectsClientRpc();
         }
         else
         {
-            // 延迟播放未击中音效
-            Invoke("PlayEmptyShotSound", 2f);
+            // 播放空枪音效
+            PlayEmptyShotSoundClientRpc();
             
             if (remainingChances.Value == 0)
             {
@@ -201,53 +198,74 @@ public class GunController : NetworkBehaviour
             }
         }
     }
-    
-    // 播放开枪音效
-    private void PlayGunFireSound()
-    {
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySFX("GunFire");
-        }
-    }
-    
-    // 播放击中音效
-    private void PlayBulletHitSound()
-    {
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySFX("BulletHit");
-        }
-    }
-    
-    // 播放未击中音效
-    private void PlayEmptyShotSound()
-    {
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySFX("EmptyShot");
-        }
-    }
 
     [ClientRpc]
-    void PlayFireAnimationClientRpc()
+    private void PlayFireAnimationAndSoundClientRpc()
     {
-        Debug.Log("PlayFireAnimationClientRpc called on " + (IsServer ? "Server" : "Client"));
+        // 播放动画
         if (gunAnimator != null)
         {
             isAnimating = true;
             gunAnimator.SetTrigger("Grab");
         }
-        else
+
+        // 使用协程来延迟播放音效
+        StartCoroutine(PlaySoundWithDelay("GunFire", 2f));
+    }
+
+    [ClientRpc]
+    private void TriggerRealBulletEffectsClientRpc()
+    {
+        // 触发震动效果
+        GunShake gunShake = GetComponent<GunShake>();
+        if (gunShake != null)
         {
-            Debug.LogError("gunAnimator is null on " + (IsServer ? "Server" : "Client"));
+            gunShake.OnSuccessfulShot();
+        }
+        
+        // 相机震动
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakeCamera(0.3f, 0.4f);
+        }
+
+        // 延迟触发血迹特效
+        StartCoroutine(PlayHitScreenEffectWithDelay(2.5f));
+        
+        // 延迟播放击中音效
+        StartCoroutine(PlaySoundWithDelay("BulletHit", 2f));
+    }
+
+    private IEnumerator PlayHitScreenEffectWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        HitScreen hitScreen = FindObjectOfType<HitScreen>();
+        if (hitScreen != null)
+        {
+            hitScreen.TriggerHitEffect();
         }
     }
-    
+
+    [ClientRpc]
+    private void PlayEmptyShotSoundClientRpc()
+    {
+        // 延迟播放空枪音效
+        StartCoroutine(PlaySoundWithDelay("EmptyShot", 2f));
+    }
+
+    private IEnumerator PlaySoundWithDelay(string soundName, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(soundName);
+        }
+    }
+
     public void ResetGun()
     {
         Debug.Log("ResetGun method called");
-        if (NetworkManager.Singleton.IsServer)  // 修改这里也使用 NetworkManager.Singleton.IsServer
+        if (NetworkManager.Singleton.IsServer)
         {
             remainingChances.Value = 6;
             gameEnded.Value = false;
@@ -263,23 +281,8 @@ public class GunController : NetworkBehaviour
     void PlayResetGunSoundClientRpc()
     {
         Debug.Log("PlayResetGunSoundClientRpc called");
-        // 延迟播放重置枪音效
-        Invoke("PlayGunResetSound", 2f);
-    }
-
-    // 播放重置枪音效
-    private void PlayGunResetSound()
-    {
-        Debug.Log("PlayGunResetSound called");
-        if (SoundManager.Instance != null)
-        {
-            Debug.Log("Attempting to play GunReset sound");
-            SoundManager.Instance.PlaySFX("GunReset");
-        }
-        else
-        {
-            Debug.LogError("SoundManager.Instance is null");
-        }
+        // 使用协程来延迟播放音效
+        StartCoroutine(PlaySoundWithDelay("GunReset", 2f));
     }
 
     // 添加一个方法来手动生成对象（如果需要的话）
@@ -493,6 +496,15 @@ public class GunController : NetworkBehaviour
         // 确保枪回到正确位置和旋转
         transform.position = originalPosition;
         transform.rotation = originalRotation;
+    }
+
+    public void CancelHitScreenEffect()
+    {
+        HitScreen hitScreen = FindObjectOfType<HitScreen>();
+        if (hitScreen != null)
+        {
+            hitScreen.CancelEffect();
+        }
     }
 
 }

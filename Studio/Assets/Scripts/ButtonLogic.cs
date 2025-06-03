@@ -21,6 +21,9 @@ public class ButtonLogic : MonoBehaviour
 
     public ButtonType buttonType;
     public JoinIpLogic joinIpLogic;  // 新增：JoinIpLogic引用
+    
+    [Header("Sound Effects")]
+    [SerializeField] private string buttonClickSound = "CardClick"; // 按钮点击音效
 
     private void Start()
     {
@@ -36,6 +39,12 @@ public class ButtonLogic : MonoBehaviour
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
             return;
+        }
+
+        // 播放点击音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(buttonClickSound);
         }
 
         Debug.Log($"Button clicked: {buttonType}");

@@ -11,6 +11,9 @@ public class JoinIpLogic : MonoBehaviour
     public Button confirmButton;
     public Button exitButton;
     private ButtonLogic buttonLogic;
+    
+    [Header("Sound Effects")]
+    [SerializeField] private string uiClickSound = "ButtonClick"; // UI点击音效
 
     void Start()
     {
@@ -24,6 +27,9 @@ public class JoinIpLogic : MonoBehaviour
         if (confirmButton != null)
         {
             confirmButton.onClick.AddListener(() => {
+                // 播放UI点击音效
+                PlayUIClickSound();
+                
                 if (buttonLogic != null)
                 {
                     buttonLogic.ExecuteJoin();
@@ -35,8 +41,20 @@ public class JoinIpLogic : MonoBehaviour
         if (exitButton != null)
         {
             exitButton.onClick.AddListener(() => {
+                // 播放UI点击音效
+                PlayUIClickSound();
+                
                 joinPanel.SetActive(false);
             });
+        }
+    }
+    
+    // 播放UI点击音效
+    private void PlayUIClickSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(uiClickSound);
         }
     }
 
@@ -58,6 +76,9 @@ public class JoinIpLogic : MonoBehaviour
     {
         if (joinPanel != null)
         {
+            // 播放UI点击音效
+            PlayUIClickSound();
+            
             joinPanel.SetActive(true);
             
             if (joinIP != null)

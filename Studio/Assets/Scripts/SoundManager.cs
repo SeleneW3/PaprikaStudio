@@ -19,6 +19,7 @@ public class SoundManager : MonoBehaviour
     [Header("Audio Sources")]
     [SerializeField] private AudioSource musicSource;  // 用于播放背景音乐
     [SerializeField] private AudioSource sfxSource;    // 用于播放音效
+    private Dictionary<string, AudioSource> activeSfxSources = new Dictionary<string, AudioSource>(); // 用于跟踪正在播放的音效
 
     [Header("Audio Clips")]
     [SerializeField] private Sound[] musicClips;  // 背景音乐列表
@@ -101,11 +102,51 @@ public class SoundManager : MonoBehaviour
             // 使用全局音效音量乘以特定音效的单独音量
             float individualVolume = sfxVolumeDict.ContainsKey(name) ? sfxVolumeDict[name] : 1f;
             //Debug.Log($"Playing SFX: {name} with volume: {sfxVolume * individualVolume}");
-            sfxSource.PlayOneShot(sfxDict[name], sfxVolume * individualVolume);
+            
+            // 对于需要循环播放或可能需要停止的音效，创建专用AudioSource
+            if (name == "Type" || name.Contains("Loop"))
+            {
+                // 如果该音效已有专用AudioSource并且正在播放，则不重新创建
+                if (activeSfxSources.ContainsKey(name) && activeSfxSources[name] != null)
+                {
+                    if (!activeSfxSources[name].isPlaying)
+                    {
+                        activeSfxSources[name].clip = sfxDict[name];
+                        activeSfxSources[name].volume = sfxVolume * individualVolume;
+                        activeSfxSources[name].loop = true;
+                        activeSfxSources[name].Play();
+                    }
+                    return;
+                }
+                
+                // 创建新的AudioSource
+                AudioSource newSource = gameObject.AddComponent<AudioSource>();
+                newSource.clip = sfxDict[name];
+                newSource.volume = sfxVolume * individualVolume;
+                newSource.loop = true;
+                newSource.Play();
+                
+                // 保存到字典中
+                activeSfxSources[name] = newSource;
+            }
+            else
+            {
+                // 一次性音效使用共享的sfxSource
+                sfxSource.PlayOneShot(sfxDict[name], sfxVolume * individualVolume);
+            }
         }
         else
         {
             //Debug.LogWarning($"SFX clip {name} not found! Available clips: {string.Join(", ", sfxDict.Keys)}");
+        }
+    }
+
+    // 停止特定音效
+    public void StopSFX(string name)
+    {
+        if (activeSfxSources.ContainsKey(name) && activeSfxSources[name] != null)
+        {
+            activeSfxSources[name].Stop();
         }
     }
 
@@ -138,6 +179,17 @@ public class SoundManager : MonoBehaviour
     public void SetSFXVolume(float volume)
     {
         sfxVolume = Mathf.Clamp01(volume);
+        
+        // 更新所有活跃的音效源的音量
+        foreach (var kvp in activeSfxSources)
+        {
+            if (kvp.Value != null)
+            {
+                string sfxName = kvp.Key;
+                float individualVolume = sfxVolumeDict.ContainsKey(sfxName) ? sfxVolumeDict[sfxName] : 1f;
+                kvp.Value.volume = sfxVolume * individualVolume;
+            }
+        }
     }
 
     // 淡入音乐
@@ -194,6 +246,12 @@ public class SoundManager : MonoBehaviour
         {
             sfxVolumeDict[name] = volume;
             
+            // 更新正在播放的该音效的音量
+            if (activeSfxSources.ContainsKey(name) && activeSfxSources[name] != null)
+            {
+                activeSfxSources[name].volume = sfxVolume * volume;
+            }
+            
             // 可选：保存到PlayerPrefs以便在游戏重启后保持设置
             PlayerPrefs.SetFloat($"SFXVolume_{name}", volume);
             PlayerPrefs.Save();
@@ -212,6 +270,20 @@ public class SoundManager : MonoBehaviour
             return sfxVolumeDict[name];
         }
         return 1f; // 默认音量
+    }
+
+    // 清理函数，处理场景切换或应用退出时的资源释放
+    private void OnDestroy()
+    {
+        // 停止所有活跃的音效
+        foreach (var kvp in activeSfxSources)
+        {
+            if (kvp.Value != null)
+            {
+                Destroy(kvp.Value);
+            }
+        }
+        activeSfxSources.Clear();
     }
 
     // Start is called before the first frame update

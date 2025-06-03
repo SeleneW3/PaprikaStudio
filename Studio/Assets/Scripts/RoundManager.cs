@@ -6,9 +6,6 @@ using Unity.Netcode;
 
 public class RoundManager : NetworkBehaviour
 {
-    private static RoundManager _instance;
-    public static RoundManager Instance => _instance;
-
     public DeckLogic deckLogic;
     public DialogManager dialogManager;
     public float baseBet = 1f;
@@ -29,7 +26,7 @@ public class RoundManager : NetworkBehaviour
     public NetworkVariable<int> player2TotalCheatCount = new NetworkVariable<int>(0);
 
     [Header("Game Settings")]
-    public int totalRounds = 5; // 游戏总回合数
+    public NetworkVariable<int> totalRounds = new NetworkVariable<int>(5); // 游戏总回合数
 
     public PlayerLogic player1;
     public PlayerLogic player2;
@@ -53,7 +50,7 @@ public class RoundManager : NetworkBehaviour
     public Transform player2CoinRespawnPos;
 
     public NetworkVariable<int> currentRound = new NetworkVariable<int>(0);
-    public bool gameEnded = false;
+    private bool gameEnded = false;
 
     public int tutorState = 0;
     public int dialogIndex = 0;
@@ -63,30 +60,17 @@ public class RoundManager : NetworkBehaviour
     [Header("Bool")]
     public bool chessIsMoved = false;
     public bool playerGotCard = false;
-    public NetworkVariable<bool> showCard1 = new NetworkVariable<bool>(false);
     public bool showCard = false;
 
     [Header("Gun Control")]
     public NetworkVariable<bool> player1CanFire = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> player2CanFire = new NetworkVariable<bool>(false);
-
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
-
-    }
+    //public bool isGunRound = false;
 
     void Start()
     {
         // 初始化回合
         currentRound.Value = 1;
-        Debug.LogError("RoundManager Start");
 
         if (dialogManager == null)
         {
@@ -100,25 +84,13 @@ public class RoundManager : NetworkBehaviour
             Debug.LogError("UIManager未找到!");
         }
 
-        dialogManager = FindObjectOfType<DialogManager>();
-        if (dialogManager == null)
-        {
-            Debug.LogError("DialogManager未找到!");
-        }
-
-        levelManager = FindObjectOfType<LevelManager>();
-        if (levelManager == null)
-        {
-            Debug.LogError("LevelManager未找到!");
-        }
-
         if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
         {
-            totalRounds = 4;
+            totalRounds.Value = 4;
         }
         else
         {
-            totalRounds = 5;
+            totalRounds.Value = 5;
         }
     }
 
@@ -150,8 +122,16 @@ public class RoundManager : NetworkBehaviour
                 tutorState++;
                 DialogManager.Instance.PlayRange(4, 5);
 
-
-                CardManager.Instance.StartDealCards(2);
+                CardManager cardManager = FindObjectOfType<CardManager>();
+                if (cardManager != null)
+                {
+                    cardManager.StartDealCards(2);
+                    playerGotCard = true;
+                }
+                else
+                {
+                    Debug.LogError("CardManager not found!");
+                }
                 DialogManager.Instance.PlayRange(6, 9);
             }
             else if(tutorState == 3)
@@ -162,13 +142,8 @@ public class RoundManager : NetworkBehaviour
             {
                 tutorState++;
                 DialogManager.Instance.PlayRange(10, 12);
-
-                UIManager uiManager = FindObjectOfType<UIManager>();
-                if (uiManager != null)
-                {
-                    uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds);
-                }
-                
+            
+                Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
         }
@@ -224,11 +199,8 @@ public class RoundManager : NetworkBehaviour
             {
                 if (cardManager != null)
                 {
-                    if(!playerGotCard)
-                    {
-                        cardManager.StartDealCards(totalRounds);
-                        playerGotCard = true;
-                    }
+                    cardManager.StartDealCards(5);
+                    playerGotCard = true;
                 }
                 else
                 {
@@ -271,7 +243,6 @@ public class RoundManager : NetworkBehaviour
         {
             if (showCard == false)
             {
-                Debug.LogError("Showing cards for both players.");
                 showCard = true;
                 deckLogic.ShowSentCards();
             }
@@ -282,23 +253,26 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
+            Debug.Log($"[RoundManager] Current Mode: {levelManager.currentMode}");
             if (levelManager != null && 
                 (levelManager.currentMode == LevelManager.Mode.OnlyGun|| 
                 levelManager.currentMode == LevelManager.Mode.CardAndGun))
             {
+                Debug.Log("[RoundManager] Using gun calculation mode");
                 CalculatePointWithGun();
             }
             else
             {
+                Debug.Log("[RoundManager] Using non-gun calculation mode");
                 CalculatePointWithoutGun();
             }
             
-            /*ChessMoveBack();
+            ChessMoveBack();
             ResetChess();
             ResetPlayersChoice();
             ResetPlayers();
-            showCard.Value = false;
-            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;*/
+            showCard = false;
+            GameManager.Instance.currentGameState = GameManager.GameState.PlayerTurn;
         }
     }
 
@@ -315,16 +289,7 @@ public class RoundManager : NetworkBehaviour
     {
         if (balanceScale != null)
         {
-            UpdateBalanceScaleClientRpc(player1Score, player2Score);
-        }
-    }
-
-    [ClientRpc]
-    private void UpdateBalanceScaleClientRpc(float player1Score, float player2Score)
-    {
-        if (balanceScale != null)
-        {
-            balanceScale.UpdateScore(player1Score, player2Score);
+            balanceScale.SetScoreDiffServerRpc(player1Score - player2Score);
         }
     }
 
@@ -341,15 +306,12 @@ public class RoundManager : NetworkBehaviour
     [ClientRpc]
     private void UpdateRoundClientRpc()
     {
-        UIManager uiManager = FindObjectOfType<UIManager>();
-        if (uiManager != null)
-        {
-            uiManager.RequestRoundTextUpdate(currentRound.Value, totalRounds);
-        }
+        Debug.Log($"[RoundManager] 回合已更新: 当前回合 {currentRound.Value}/{totalRounds.Value}");
     }
 
     void CalculatePointWithoutGun()
     {
+        Debug.Log("[RoundManager] Using CalculatePointWithoutGun");
         if (gameEnded)
         {
             return;
@@ -372,28 +334,22 @@ public class RoundManager : NetworkBehaviour
                 GameManager.Instance.deck.ResetPlayerCardServerRpc();
             }
             showCard = false;
-
         }
         
         chessIsMoved = false;
-
-        if(GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
-        {
-            GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
-        }
-        else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
-        {
-            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-        }
+        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
     }
 
     void CalculatePointWithGun()
     {
+        Debug.Log("[RoundManager] Using CalculatePointWithGun");
         if (gameEnded)
         {
             return;
         }
         UIManager uiManager = FindObjectOfType<UIManager>();
+
+        //isGunRound = true;
 
         if (NetworkManager.LocalClientId == 0)
         {
@@ -405,10 +361,6 @@ public class RoundManager : NetworkBehaviour
             {
                 Debug.Log("Game ended due to gunshot!");
                 gameEnded = true;
-                if (uiManager != null)
-                {
-                    uiManager.ShowSettlementPanel();
-                }
             }
         }
 
@@ -426,14 +378,9 @@ public class RoundManager : NetworkBehaviour
         }
 
         chessIsMoved = false;
-        if (GameManager.Instance.currentGameState == GameManager.GameState.TutorCalculateTurn)
-        {
-            GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
-        }
-        else if (GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
-        {
-            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
-        }
+        GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+
+        //isGunRound = false;
     }
 
     void CalculatePoint(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)
@@ -443,17 +390,18 @@ public class RoundManager : NetworkBehaviour
         float player1CurrentRoundPoint;
         float player2CurrentRoundPoint;
 
-        // 判断开枪条件：被欺骗就可以开枪
-        if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
-        {
-            // 玩家1被欺骗，玩家1开枪
-            Gun1.GetComponent<GunController>().FireGun();
-        }
-        if (player1Choice == PlayerLogic.playerChoice.Cheat && Gun2 != null)
-        {
-            // 玩家2被欺骗，玩家2开枪
-            Gun2.GetComponent<GunController>().FireGun();
-        }
+        // 只有 isGunRound==true 才判断开枪标记
+        //if (isGunRound)
+        //{
+            if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
+            {
+                player1CanFire.Value = true;
+            }
+            if (player1Choice == PlayerLogic.playerChoice.Cheat && Gun2 != null)
+            {
+                player2CanFire.Value = true;
+            }
+        //}
 
         // 计算得分
         if(player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cooperate)
@@ -477,24 +425,11 @@ public class RoundManager : NetworkBehaviour
             player2CurrentRoundPoint = 0f;
         }
 
-        float p1PointsBefore = player1.point.Value;
-        float p2PointsBefore = player2.point.Value;
-
         player1.point.Value += player1CurrentRoundPoint;
         player2.point.Value += player2CurrentRoundPoint;
 
         string player1Debug = "+" + player1CurrentRoundPoint.ToString();
         string player2Debug = "+" + player2CurrentRoundPoint.ToString();
-
-        int p1PointsAdded = Mathf.FloorToInt(player1.point.Value - p1PointsBefore);
-        int p2PointsAdded = Mathf.FloorToInt(player2.point.Value - p2PointsBefore);
-
-        Coin coin = FindObjectOfType<Coin>();
-
-        coin.RequestSpawnCoins(player1ScoreAnchor.position, p1PointsAdded);
-        coin.RequestSpawnCoins(player2ScoreAnchor.position, p2PointsAdded);
-
-        UpdateBalanceScaleServerRpc(player1.point.Value, player2.point.Value);
 
         if (uiManager != null)
         {
@@ -514,15 +449,16 @@ public class RoundManager : NetworkBehaviour
             GameManager.Instance.playerComponents[1].debugInfo.Value = player2Debug;
         }
 
-        if (!gameEnded && currentRound.Value >= totalRounds)
+        // 修改这里：始终更新回合数，然后再检查是否结束游戏
+        if (!gameEnded && NetworkManager.Singleton.IsServer)
         {
-            EndGame(uiManager);
-        }
-        else if (!gameEnded && NetworkManager.LocalClientId==0)
-        {
-            Debug.LogError("Round update");
-            currentRound.Value = currentRound.Value + 1;
             UpdateRoundServerRpc();
+            
+            // 在更新回合数后检查是否达到游戏结束条件
+            if (currentRound.Value > totalRounds.Value)
+            {
+                EndGame(uiManager);
+            }
         }
     }
 
@@ -550,7 +486,6 @@ public class RoundManager : NetworkBehaviour
     private void EndGame(UIManager uiManager)
     {
         gameEnded = true;
-        uiManager.ShowSettlementPanel();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -664,6 +599,19 @@ public class RoundManager : NetworkBehaviour
 
         gameEnded = false;
         currentRound.Value = 1;
+        
+        // 根据游戏模式重置总回合数
+        if(LevelManager.Instance != null)
+        {
+            if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+            {
+                totalRounds.Value = 4;
+            }
+            else
+            {
+                totalRounds.Value = 5;
+            }
+        }
         
         ResetAllStatistics();
         

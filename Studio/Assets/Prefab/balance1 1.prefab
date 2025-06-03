@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 7224512726704514}
-  transitionSpeed: 1
+  transitionSpeed: 0.7
   maxScoreDifference: 10
   minScoreDifference: 1
   rotateStateName: Rotate

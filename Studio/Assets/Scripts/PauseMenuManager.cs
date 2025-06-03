@@ -16,6 +16,9 @@ public class PauseMenuManager : MonoBehaviour
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private Button backFromSettingsButton;
     
+    [Header("Sound Effects")]
+    [SerializeField] private string buttonClickSound = "ButtonClick"; // 按钮点击音效
+    
     private bool isPaused = false;
     private bool isInSettings = false;
     
@@ -29,16 +32,45 @@ public class PauseMenuManager : MonoBehaviour
             
         // Add listeners to buttons
         if (returnToMainMenuButton != null)
-            returnToMainMenuButton.onClick.AddListener(ReturnToMainMenu);
+        {
+            returnToMainMenuButton.onClick.AddListener(() => {
+                PlayButtonClickSound();
+                ReturnToMainMenu();
+            });
+        }
             
         if (exitRoomButton != null)
-            exitRoomButton.onClick.AddListener(ExitRoom);
+        {
+            exitRoomButton.onClick.AddListener(() => {
+                PlayButtonClickSound();
+                ExitRoom();
+            });
+        }
             
         if (settingsButton != null)
-            settingsButton.onClick.AddListener(OpenSettings);
+        {
+            settingsButton.onClick.AddListener(() => {
+                PlayButtonClickSound();
+                OpenSettings();
+            });
+        }
             
         if (backFromSettingsButton != null)
-            backFromSettingsButton.onClick.AddListener(CloseSettings);
+        {
+            backFromSettingsButton.onClick.AddListener(() => {
+                PlayButtonClickSound();
+                CloseSettings();
+            });
+        }
+    }
+    
+    // 播放按钮点击音效
+    private void PlayButtonClickSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(buttonClickSound);
+        }
     }
     
     private void Update()
@@ -49,11 +81,13 @@ public class PauseMenuManager : MonoBehaviour
             if (isInSettings)
             {
                 // If in settings panel, close it and return to pause menu
+                PlayButtonClickSound();
                 CloseSettings();
             }
             else
             {
                 // Toggle pause state
+                PlayButtonClickSound();
                 TogglePause();
             }
         }

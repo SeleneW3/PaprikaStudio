@@ -22,6 +22,9 @@ public class LobbyControl : NetworkBehaviour
 {
     [SerializeField]
     Transform canvas;
+    
+    [Header("Sound Effects")]
+    [SerializeField] private string uiClickSound = "ButtonClick"; // UI点击音效
 
     Transform content;
     GameObject cell;
@@ -154,6 +157,9 @@ public class LobbyControl : NetworkBehaviour
 
     private void OnReadyToggle(bool arg0)
     {
+        // 播放UI点击音效
+        PlayUIClickSound();
+        
         cellDictionary[NetworkManager.LocalClientId].SetReady(arg0);
         UpdatePlayerInfo(NetworkManager.LocalClientId, arg0);
 
@@ -184,12 +190,27 @@ public class LobbyControl : NetworkBehaviour
 
     private void OnStartClick()
     {
+        // 播放UI点击音效
+        PlayUIClickSound();
+        
         GameManager.Instance.LoadScene("Game");
     }
 
     private void OnExitClick()
     {
+        // 播放UI点击音效
+        PlayUIClickSound();
+        
         ExitGame();
+    }
+    
+    // 播放UI点击音效
+    private void PlayUIClickSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(uiClickSound);
+        }
     }
 
     private void ExitGame()

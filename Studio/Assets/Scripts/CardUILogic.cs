@@ -9,12 +9,14 @@ public class CardUILogic : MonoBehaviour
     public Quaternion targetRot;
 
     public float transitionDuration = 0.5f;
+    
+    [Header("Sound Effects")]
+    [SerializeField] private string cardMoveSound = "CardMove"; // 卡牌悬停音效名称
 
     private float t = 0f;
     private bool transitioningToTarget = false;
     private bool transitioningToOriginal = false;
-
-
+    private bool hasSoundPlayed = false; // 跟踪是否已播放音效
 
     void Start()
     {
@@ -26,6 +28,16 @@ public class CardUILogic : MonoBehaviour
     {
         if (transitioningToTarget)
         {
+            // 只在转场开始时播放一次音效
+            if (!hasSoundPlayed)
+            {
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX(cardMoveSound);
+                }
+                hasSoundPlayed = true;
+            }
+            
             t += Time.deltaTime / transitionDuration;
             t = Mathf.Clamp01(t);
             transform.position = Vector3.Lerp(originalPos, targetPos, t);
@@ -38,6 +50,16 @@ public class CardUILogic : MonoBehaviour
         }
         else if (transitioningToOriginal)
         {
+            // 只在转场回原位开始时播放一次音效
+            if (hasSoundPlayed)
+            {
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX(cardMoveSound);
+                }
+                hasSoundPlayed = false;
+            }
+            
             t -= Time.deltaTime / transitionDuration;
             t = Mathf.Clamp01(t);
             transform.position = Vector3.Lerp(originalPos, targetPos, t);
