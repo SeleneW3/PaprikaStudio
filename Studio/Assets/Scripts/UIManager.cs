@@ -277,7 +277,7 @@ public class UIManager : NetworkBehaviour
             else
             {
                 // 如果RoundManager不可用，尝试从LevelManager获取
-                if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+                if (LevelManager.Instance != null && LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
                 {
                     initialTotalRounds = 4;
                 }
@@ -791,7 +791,7 @@ public class UIManager : NetworkBehaviour
             else
             {
                 // 如果RoundManager不可用，尝试从LevelManager获取
-                if (LevelManager.Instance != null && LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+                if (LevelManager.Instance != null && LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
                 {
                     initialTotalRounds = 4;
                 }
@@ -822,6 +822,8 @@ public class UIManager : NetworkBehaviour
             lastDisplayedTotalRounds = totalRounds;
 
             string roundInfo = $"ROUND {displayRound}/{totalRounds}";
+
+            UpdatePlayerTargetText();
             
             // 更新玩家1的回合显示
             if (roundText1 != null)
@@ -1148,6 +1150,7 @@ public class UIManager : NetworkBehaviour
         // 确保显示的回合数不超过总回合数
         int displayRound = Mathf.Min(currentRound, totalRounds);
         string roundInfo = $"ROUND {displayRound}/{totalRounds}";
+        UpdatePlayerTargetTextClientRpc();
         
         Debug.Log($"[UIManager] UpdateRoundTextClientRpc: 更新回合显示为 {roundInfo}, 客户端ID: {NetworkManager.Singleton.LocalClientId}");
         
@@ -1449,6 +1452,47 @@ public class UIManager : NetworkBehaviour
         if (IsClient)
         {
             Application.Quit();
+        }
+    }
+
+    public void UpdatePlayerTargetText()
+    {
+        if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
+        {
+            if (player1TargetText != null && player2TargetText != null)
+            {
+                player1TargetText.text = "Target: 10";
+                player2TargetText.text = "Target: 10";
+            }
+        }
+        else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
+        {
+            if (player1TargetText != null && player2TargetText != null)
+            {
+                player1TargetText.text = "OK";
+                player2TargetText.text = "Test OK";
+            }
+        }
+    }
+
+    [ClientRpc]
+    public void UpdatePlayerTargetTextClientRpc()
+    {
+        if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
+        {
+            if (player1TargetText != null && player2TargetText != null)
+            {
+                player1TargetText.text = "Target: 10";
+                player2TargetText.text = "Target: 10";
+            }
+        }
+        else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
+        {
+            if (player1TargetText != null && player2TargetText != null)
+            {
+                player1TargetText.text = "OK";
+                player2TargetText.text = "Test OK";
+            }
         }
     }
 } 

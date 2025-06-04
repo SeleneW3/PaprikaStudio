@@ -52,12 +52,7 @@ public class CardManager : NetworkBehaviour
     }
     #endregion
 
-    private void Awake()
-    {
 
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
 
     #region Core Logic
     private IEnumerator WaitAndStartDeal(int cardsPerPlayer)

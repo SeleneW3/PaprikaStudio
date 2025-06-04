@@ -7,10 +7,8 @@ using Unity.Netcode;
 public class RoundManager : NetworkBehaviour
 {
     public DeckLogic deckLogic;
-    public DialogManager dialogManager;
     public float baseBet = 1f;
     public float betMultiplier = 2f;
-    public LevelManager levelManager;  // 添加LevelManager引用
 
     [Header("Choice Statistics")]
     // 当前回合的选择统计
@@ -59,7 +57,7 @@ public class RoundManager : NetworkBehaviour
 
     [Header("Bool")]
     public bool chessIsMoved = false;
-    public bool playerGotCard = false;
+    public NetworkVariable<bool> playerGotCard = new NetworkVariable<bool>(false);
     public bool showCard = false;
 
     [Header("Gun Control")]
@@ -69,13 +67,9 @@ public class RoundManager : NetworkBehaviour
 
     void Start()
     {
+
         // 初始化回合
         currentRound.Value = 1;
-
-        if (dialogManager == null)
-        {
-            Debug.LogError("Dialog Manager is not assigned in the inspector!");
-        }
 
         // 给UIManager设置枪支引用
         UIManager uiManager = FindObjectOfType<UIManager>();
@@ -84,7 +78,7 @@ public class RoundManager : NetworkBehaviour
             Debug.LogError("UIManager未找到!");
         }
 
-        if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+        if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
         {
             totalRounds.Value = 4;
         }
@@ -126,7 +120,10 @@ public class RoundManager : NetworkBehaviour
                 if (cardManager != null)
                 {
                     cardManager.StartDealCards(2);
-                    playerGotCard = true;
+                    if(NetworkManager.LocalClientId == 0)
+                    {
+                        playerGotCard.Value = true;
+                    }
                 }
                 else
                 {
@@ -163,7 +160,7 @@ public class RoundManager : NetworkBehaviour
         {
             if (player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
             {
-                if (playerGotCard)
+                if (playerGotCard.Value == true)
                 {
                     if (player1.usedCard.Value == true && player2.usedCard.Value == true)
                     {
@@ -194,13 +191,16 @@ public class RoundManager : NetworkBehaviour
         else if(GameManager.Instance.currentGameState == GameManager.GameState.Ready)
         {
             CardManager cardManager = FindObjectOfType<CardManager>();
-            if(LevelManager.Instance.currentMode == LevelManager.Mode.OnlyCard || 
-                              LevelManager.Instance.currentMode == LevelManager.Mode.CardAndGun)
+            if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard || 
+                              LevelManager.Instance.currentMode.Value == LevelManager.Mode.CardAndGun)
             {
                 if (cardManager != null)
                 {
                     cardManager.StartDealCards(5);
-                    playerGotCard = true;
+                    if (NetworkManager.LocalClientId == 0)
+                    {
+                        playerGotCard.Value = true;
+                    }
                 }
                 else
                 {
@@ -215,7 +215,7 @@ public class RoundManager : NetworkBehaviour
         {
             if(player1.choice != PlayerLogic.playerChoice.None && player2.choice != PlayerLogic.playerChoice.None)
             {
-                if (playerGotCard)
+                if (playerGotCard.Value == true)
                 {
                     if (player1.usedCard.Value == true && player2.usedCard.Value == true)
                     {
@@ -244,6 +244,7 @@ public class RoundManager : NetworkBehaviour
             if (showCard == false)
             {
                 showCard = true;
+                Debug.LogError("I've got here");
                 deckLogic.ShowSentCards();
             }
             else
@@ -253,10 +254,9 @@ public class RoundManager : NetworkBehaviour
         }
         else if(GameManager.Instance.currentGameState == GameManager.GameState.CalculateTurn)
         {
-            Debug.Log($"[RoundManager] Current Mode: {levelManager.currentMode}");
-            if (levelManager != null && 
-                (levelManager.currentMode == LevelManager.Mode.OnlyGun|| 
-                levelManager.currentMode == LevelManager.Mode.CardAndGun))
+            Debug.Log($"[RoundManager] Current Mode: {LevelManager.Instance.currentMode}");
+            if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyGun||
+                LevelManager.Instance.currentMode.Value == LevelManager.Mode.CardAndGun)
             {
                 Debug.Log("[RoundManager] Using gun calculation mode");
                 CalculatePointWithGun();
@@ -603,7 +603,7 @@ public class RoundManager : NetworkBehaviour
         // 根据游戏模式重置总回合数
         if(LevelManager.Instance != null)
         {
-            if(LevelManager.Instance.currentMode == LevelManager.Mode.Tutor)
+            if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
             {
                 totalRounds.Value = 4;
             }

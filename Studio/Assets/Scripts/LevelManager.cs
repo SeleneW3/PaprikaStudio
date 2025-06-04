@@ -19,7 +19,9 @@ public class LevelManager : NetworkBehaviour
     
 
     [Header("当前模式")]
-    public Mode currentMode = Mode.Tutor;
+    public NetworkVariable<Mode> currentMode = new NetworkVariable<Mode>(Mode.Tutor
+        , NetworkVariableReadPermission.Everyone,       // 所有客户端都能读取
+        NetworkVariableWritePermission.Server);
 
     private void Awake()
     {
