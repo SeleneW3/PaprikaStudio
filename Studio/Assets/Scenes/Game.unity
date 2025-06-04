@@ -501,7 +501,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6478534912037161065, guid: cca42c7bf231a5d47abc7d5614bb8ac6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 10.19
+      value: 10.34
       objectReference: {fileID: 0}
     - target: {fileID: 6478534912037161065, guid: cca42c7bf231a5d47abc7d5614bb8ac6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7777,6 +7777,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   coinPrefab: {fileID: 4274701198760140147, guid: 258b544794366544a8aa69ee8b1432fe, type: 3}
   spawnDelay: 0.25
+  balanceSound: Balance
+  coinSpawnSound: Coin
+  minVolume: 0.6
+  maxVolume: 1
+  minPitch: 0.9
+  maxPitch: 1.1
 --- !u!4 &432970276
 Transform:
   m_ObjectHideFlags: 0
@@ -70566,6 +70572,7 @@ MonoBehaviour:
   settingsButton: {fileID: 727381361}
   settingsPanel: {fileID: 23234483}
   backFromSettingsButton: {fileID: 0}
+  buttonClickSound: ButtonClick
 --- !u!4 &1452330170
 Transform:
   m_ObjectHideFlags: 0

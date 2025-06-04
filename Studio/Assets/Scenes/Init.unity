@@ -178,7 +178,7 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: f7cabd4ec8356344d88d85106d090ca8, type: 3}
     volume: 1
   - name: ResumeGame
-    clip: {fileID: 8300000, guid: 4aea490cbcd13834a880eaa6d228b28a, type: 3}
+    clip: {fileID: 8300000, guid: 44aea91f959e9a347b25d24818adfd27, type: 3}
     volume: 1
   - name: UIClick
     clip: {fileID: 8300000, guid: f7cabd4ec8356344d88d85106d090ca8, type: 3}
@@ -216,6 +216,12 @@ MonoBehaviour:
   - name: Balance
     clip: {fileID: 8300000, guid: 93d62ed39c76303468ae44df2de68dc9, type: 3}
     volume: 0.35
+  - name: AddScore
+    clip: {fileID: 8300000, guid: 8ff31fa1440685e4cb6bdb9aa1d90ea9, type: 3}
+    volume: 0.7
+  - name: TotalScore
+    clip: {fileID: 8300000, guid: 4aea490cbcd13834a880eaa6d228b28a, type: 3}
+    volume: 1
   musicVolume: 1
   sfxVolume: 1
 --- !u!4 &580606961

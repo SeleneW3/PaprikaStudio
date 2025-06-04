@@ -425,6 +425,12 @@ public class UIManager : NetworkBehaviour
     {
         try
         {
+            // 播放AddScore音效
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("AddScore");
+            }
+            
             // 更新debug text内容
             if (player1DebugText != null)
             {
@@ -531,6 +537,10 @@ public class UIManager : NetworkBehaviour
             float player1Score = player1Component.point.Value;
             float player2Score = player2Component.point.Value;
             
+            // 检查分数是否发生变化
+            bool scoreChanged = Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
+                               Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f;
+            
             // 更新分数显示
             if (player1ScoreText != null)
             {
@@ -550,6 +560,12 @@ public class UIManager : NetworkBehaviour
                 Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreText is null");
             }
 
+            // 如果分数发生变化，播放TotalScore音效
+            if (scoreChanged && SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("TotalScore");
+            }
+
             // 如果是服务器，更新天平
             if (IsServer)
             {
@@ -561,8 +577,7 @@ public class UIManager : NetworkBehaviour
                 }
 
                 // 如果分数发生变化，生成金币
-                if (Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
-                    Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f)
+                if (scoreChanged)
                 {
                     Coin coin = FindObjectOfType<Coin>();
                     if (coin != null && player1ScoreAnchor != null && player2ScoreAnchor != null)
@@ -1040,6 +1055,12 @@ public class UIManager : NetworkBehaviour
     {
         if (!IsClient) return;
 
+        // 播放按钮点击音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("ButtonClick");
+        }
+
         // 如果是因为死亡导致的结算，调用 CancelEffect
         if (isSettlementFromDeath)
         {
@@ -1144,6 +1165,23 @@ public class UIManager : NetworkBehaviour
         UpdateRoundTextClientRpc(currentRound, totalRounds);
     }
 
+    // 添加事件处理方法
+    private void OnRoundText1TypewriterStart()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("Type");
+        }
+    }
+    
+    private void OnRoundText1TextShowed()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopSFX("Type");
+        }
+    }
+    
     [ClientRpc]
     private void UpdateRoundTextClientRpc(int currentRound, int totalRounds)
     {
@@ -1158,7 +1196,19 @@ public class UIManager : NetworkBehaviour
         {
             if (roundText1Animator != null)
             {
+                // 移除之前可能添加的监听器，避免重复
+                roundText1Animator.onTypewriterStart.RemoveListener(OnRoundText1TypewriterStart);
+                roundText1Animator.onTextShowed.RemoveListener(OnRoundText1TextShowed);
+                
+                // 添加新的监听器
+                roundText1Animator.onTypewriterStart.AddListener(OnRoundText1TypewriterStart);
+                roundText1Animator.onTextShowed.AddListener(OnRoundText1TextShowed);
+                
                 roundText1.gameObject.SetActive(true);
+                
+                // 不需要在这里直接播放音效，因为onTypewriterStart事件会触发播放
+                // 音效将在打字效果开始时通过事件监听器播放
+                
                 roundText1Animator.ShowText(roundInfo);
             }
             else
@@ -1172,6 +1222,7 @@ public class UIManager : NetworkBehaviour
         {
             if (roundText2Animator != null)
             {
+                // 第二个文本不需要播放音效，因为它们是同步的
                 roundText2.gameObject.SetActive(true);
                 roundText2Animator.ShowText(roundInfo);
             }
@@ -1451,6 +1502,12 @@ public class UIManager : NetworkBehaviour
     {
         if (IsClient)
         {
+            // 播放按钮点击音效
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("ButtonClick");
+            }
+            
             Application.Quit();
         }
     }
