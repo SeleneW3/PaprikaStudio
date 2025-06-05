@@ -428,6 +428,9 @@ public class RoundManager : NetworkBehaviour
         player1.point.Value += player1CurrentRoundPoint;
         player2.point.Value += player2CurrentRoundPoint;
 
+        LevelManager.Instance.AddPlayer1TotalPoint(player1CurrentRoundPoint);
+        LevelManager.Instance.AddPlayer2TotalPointServerRpc(player2CurrentRoundPoint);
+
         string player1Debug = "+" + player1CurrentRoundPoint.ToString();
         string player2Debug = "+" + player2CurrentRoundPoint.ToString();
 
