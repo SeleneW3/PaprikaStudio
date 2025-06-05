@@ -121,6 +121,12 @@ public class UIManager : NetworkBehaviour
 
     private bool isSettlementFromDeath = false;  // 添加标记
 
+    [Header("Bonus Text UI")]
+    public TextMeshProUGUI player1BonusText; // 玩家1奖励文本
+    public TextMeshProUGUI player2BonusText; // 玩家2奖励文本
+    private TextAnimatorPlayer player1BonusTextAnimator; // 添加TextAnimator引用
+    private TextAnimatorPlayer player2BonusTextAnimator; // 添加TextAnimator引用
+
     private void Awake()
     {
         if (Instance == null)
@@ -154,6 +160,11 @@ public class UIManager : NetworkBehaviour
             player1TotalScoreTextAnimator = player1TotalScoreText.GetComponent<TextAnimatorPlayer>();
         if (player2TotalScoreText != null)
             player2TotalScoreTextAnimator = player2TotalScoreText.GetComponent<TextAnimatorPlayer>();
+        // 获取奖励文本的TextAnimator组件
+        if (player1BonusText != null)
+            player1BonusTextAnimator = player1BonusText.GetComponent<TextAnimatorPlayer>();
+        if (player2BonusText != null)
+            player2BonusTextAnimator = player2BonusText.GetComponent<TextAnimatorPlayer>();
     }
 
     public override void OnNetworkSpawn()
@@ -271,6 +282,18 @@ public class UIManager : NetworkBehaviour
             player1BulletsTextAnimator = player1BulletsText.GetComponent<TextAnimatorPlayer>();
         if (player2BulletsText != null)
             player2BulletsTextAnimator = player2BulletsText.GetComponent<TextAnimatorPlayer>();
+            
+        // 获取BonusText的TextAnimator组件
+        if (player1BonusText != null)
+            player1BonusTextAnimator = player1BonusText.GetComponent<TextAnimatorPlayer>();
+        if (player2BonusText != null)
+            player2BonusTextAnimator = player2BonusText.GetComponent<TextAnimatorPlayer>();
+
+        // 初始化时隐藏奖励文本
+        if (player1BonusText != null)
+            player1BonusText.gameObject.SetActive(false);
+        if (player2BonusText != null)
+            player2BonusText.gameObject.SetActive(false);
 
         // 初始化时隐藏World Space回合文本
         if (roundText1 != null || roundText2 != null)
@@ -870,6 +893,7 @@ public class UIManager : NetworkBehaviour
             UpdateTextPosition(player1DebugText, debug1ScreenPos, debugTextOffset, debug1ScreenPos.z < 0);
             UpdateTextPosition(player2DebugText, debug2ScreenPos, debugTextOffset, debug2ScreenPos.z < 0);
         }
+    
         
         // 更新子弹数文本位置（使用新的锚点）- 仅在非Tutor和非OnlyCard模式下更新
         if (player1BulletsText != null && player2BulletsText != null && 
@@ -1655,7 +1679,7 @@ public class UIManager : NetworkBehaviour
         float waitTime = currentState.Value switch
         {
             State.Idle => 1.2f,
-            State.DebugText => 1.5f,
+            State.DebugText => 0.5f,
             State.ScoreAndCoin => 1.7f,
             State.FireAnimation => 2.5f,
             State.BulletUI => 0.5f,
@@ -1888,34 +1912,34 @@ public class UIManager : NetworkBehaviour
         switch (level)
         {
             case LevelManager.Level.Tutorial:
-                levelNumber = "教程";
+                levelNumber = "零";
                 break;
             case LevelManager.Level.Level1:
-                levelNumber = "1";
+                levelNumber = "一";
                 break;
             case LevelManager.Level.Level2:
-                levelNumber = "2";
+                levelNumber = "二";
                 break;
             case LevelManager.Level.Level3A:
             case LevelManager.Level.Level3B:
-                levelNumber = "3";
+                levelNumber = "三";
                 break;
             case LevelManager.Level.Level4A:
             case LevelManager.Level.Level4B:
             case LevelManager.Level.Level4C:
-                levelNumber = "4";
+                levelNumber = "四";
                 break;
             case LevelManager.Level.Level5A:
             case LevelManager.Level.Level5B:
-                levelNumber = "5";
+                levelNumber = "五";
                 break;
             case LevelManager.Level.Level6A:
             case LevelManager.Level.Level6B:
-                levelNumber = "6";
+                levelNumber = "六";
                 break;
         }
 
-        string levelInfo = $"关卡：<wave a=0.2 f=0.8>{levelNumber}</wave>";
+        string levelInfo = $"关卡<wave a=0.2 f=0.8>{levelNumber}</wave>";
 
         // 更新玩家1的关卡显示
         if (levelText1Animator != null)
@@ -1950,8 +1974,8 @@ public class UIManager : NetworkBehaviour
         float player1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
         float player2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
 
-        string player1ScoreInfo = $"总分：<shake a=0.1 f=0.1>{player1TotalScore}</shake>";
-        string player2ScoreInfo = $"总分：<shake a=0.1 f=0.1>{player2TotalScore}</shake>";
+        string player1ScoreInfo = $"金币数：<shake a=0.1 f=0.1>{player1TotalScore}</shake>";
+        string player2ScoreInfo = $"金币数：<shake a=0.1 f=0.1>{player2TotalScore}</shake>";
 
         // 更新玩家1的总分显示
         if (player1TotalScoreTextAnimator != null)
@@ -1989,20 +2013,19 @@ public class UIManager : NetworkBehaviour
         int p2CoopCount = LevelManager.Instance.player2CoopTimes.Value;
         int p2CheatCount = LevelManager.Instance.player2CheatTimes.Value;
 
+        // 获取玩家身份
+        LevelManager.PlayerIdentity p1Identity = LevelManager.Instance.player1Identity.Value;
+        LevelManager.PlayerIdentity p2Identity = LevelManager.Instance.player2Identity.Value;
+
         // 准备显示文本
         string player1StatsInfo = $"合作：{p1CoopCount} | 欺骗：{p1CheatCount}";
         string player2StatsInfo = $"合作：{p2CoopCount} | 欺骗：{p2CheatCount}";
 
         // 根据游戏模式决定是否显示统计数据
         if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
-            {
+        {
             player1StatsInfo = "...";
             player2StatsInfo = "...";
-        }
-        else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
-        {
-            player1StatsInfo = $"合作：{p1CoopCount} | 欺骗：{p1CheatCount} | 禁止使用枪";
-            player2StatsInfo = $"合作：{p2CoopCount} | 欺骗：{p2CheatCount} | 禁止使用枪";
         }
 
         // 更新玩家1的统计显示
@@ -2019,7 +2042,7 @@ public class UIManager : NetworkBehaviour
         
         // 更新玩家2的统计显示
         if (player2TargetTextAnimator != null)
-            {
+        {
             player2TargetText.gameObject.SetActive(true);
             player2TargetTextAnimator.ShowText(player2StatsInfo);
         }
@@ -2027,8 +2050,8 @@ public class UIManager : NetworkBehaviour
         {
             player2TargetText.text = player2StatsInfo;
             player2TargetText.gameObject.SetActive(true);
-            }
         }
+    }
 
     // 添加更新关卡文本的RPC方法
     [ClientRpc]
@@ -2042,5 +2065,111 @@ public class UIManager : NetworkBehaviour
     public void UpdatePlayerTotalScoreTextClientRpc()
     {
         UpdatePlayerTotalScoreText();
+    }
+
+    // 显示奖励文本
+    public void ShowBonusText(string player1Text, string player2Text)
+    {
+        if (!IsClient) return;
+        
+        Debug.Log($"[UIManager] 显示奖励文本：玩家1='{player1Text}', 玩家2='{player2Text}'");
+        
+        // 更新玩家1的奖励文本
+        if (player1BonusText != null && !string.IsNullOrEmpty(player1Text))
+        {
+            player1BonusText.gameObject.SetActive(true);
+            SetTextAlpha(player1BonusText, 1f);
+            
+            // 使用TextAnimator显示文本
+            if (player1BonusTextAnimator != null)
+            {
+                player1BonusTextAnimator.ShowText(player1Text);
+            }
+            else
+            {
+                player1BonusText.text = player1Text;
+            }
+        }
+        
+        // 更新玩家2的奖励文本
+        if (player2BonusText != null && !string.IsNullOrEmpty(player2Text))
+        {
+            player2BonusText.gameObject.SetActive(true);
+            SetTextAlpha(player2BonusText, 1f);
+            
+            // 使用TextAnimator显示文本
+            if (player2BonusTextAnimator != null)
+            {
+                player2BonusTextAnimator.ShowText(player2Text);
+            }
+            else
+            {
+                player2BonusText.text = player2Text;
+            }
+        }
+        
+        // 播放动画
+        StartCoroutine(PlayBonusTextAnimation());
+    }
+    
+    // 播放奖励文本动画
+    private IEnumerator PlayBonusTextAnimation()
+    {
+        // 保存原始缩放值
+        Vector3 originalScale1 = player1BonusText != null ? player1BonusText.transform.localScale : Vector3.one;
+        Vector3 originalScale2 = player2BonusText != null ? player2BonusText.transform.localScale : Vector3.one;
+        
+        // 缩放动画
+        float elapsed = 0f;
+        while (elapsed < debugTextAnimDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / debugTextAnimDuration;
+            
+            float scale = 1f + Mathf.Sin(progress * Mathf.PI) * (scaleAmount - 1f);
+            
+            if (player1BonusText != null && player1BonusText.gameObject.activeSelf)
+                player1BonusText.transform.localScale = originalScale1 * scale;
+            if (player2BonusText != null && player2BonusText.gameObject.activeSelf)
+                player2BonusText.transform.localScale = originalScale2 * scale;
+                
+            yield return null;
+        }
+        
+        // 确保回到原始大小
+        if (player1BonusText != null && player1BonusText.gameObject.activeSelf)
+            player1BonusText.transform.localScale = originalScale1;
+        if (player2BonusText != null && player2BonusText.gameObject.activeSelf)
+            player2BonusText.transform.localScale = originalScale2;
+            
+        // 等待显示时间
+        yield return new WaitForSeconds(showDuration);
+        
+        // 淡出动画
+        elapsed = 0f;
+        while (elapsed < fadeOutDuration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = 1f - (elapsed / fadeOutDuration);  // 从1渐变到0
+            
+            if (player1BonusText != null && player1BonusText.gameObject.activeSelf)
+                SetTextAlpha(player1BonusText, alpha);
+            if (player2BonusText != null && player2BonusText.gameObject.activeSelf)
+                SetTextAlpha(player2BonusText, alpha);
+                
+            yield return null;
+        }
+        
+        // 完全隐藏
+        if (player1BonusText != null)
+        {
+            SetTextAlpha(player1BonusText, 0f);
+            player1BonusText.gameObject.SetActive(false);
+        }
+        if (player2BonusText != null)
+        {
+            SetTextAlpha(player2BonusText, 0f);
+            player2BonusText.gameObject.SetActive(false);
+        }
     }
 } 

@@ -257,12 +257,28 @@ public class LevelManager : NetworkBehaviour
                     
                     Debug.Log($"[LevelManager] 播放Level3A自定义对话 - 玩家1(合作:{p1CoopCount},欺骗:{p1CheatCount}) 玩家2(合作:{p2CoopCount},欺骗:{p2CheatCount})");
                     
-                    // 创建自定义对话内容
-                    string p1Dialog = $"玩家1，\n你现在合作{p1CoopCount}次，\n欺骗{p1CheatCount}次";
-                    string p2Dialog = $"玩家2，\n你现在合作{p2CoopCount}次，\n欺骗{p2CheatCount}次";
+                    // 创建分段对话内容
+                    string[] p1Segments = new string[] {
+                        "<shake a=0.2 f=0.8>玩家1</shake>", 
+                        $"<shake a=0.2 f=0.8>你现在合作{p1CoopCount}次</shake>", 
+                        $"<shake a=0.2 f=0.8>欺骗{p1CheatCount}次</shake>"
+                    };
                     
-                    // 使用DialogManager播放对话
-                    DialogManager.Instance.PlayCustomDialog(p1Dialog, p2Dialog, OnDialogComplete);
+                    string[] p2Segments = new string[] {
+                        "<shake a=0.2 f=0.8>玩家2</shake>", 
+                        $"<shake a=0.2 f=0.8>你现在合作{p2CoopCount}次</shake>", 
+                        $"<shake a=0.2 f=0.8>欺骗{p2CheatCount}次</shake>"
+                    };
+                    
+                    // 根据客户端ID选择显示的分段对话
+                    if (NetworkManager.Singleton.LocalClientId == 0)
+                    {
+                        DialogManager.Instance.PlaySegmentedDialog(p1Segments, OnDialogComplete);
+                    }
+                    else
+                    {
+                        DialogManager.Instance.PlaySegmentedDialog(p2Segments, OnDialogComplete);
+                    }
                     
                     // 设置完成路径为路径A（仅服务器执行）
                     if (IsServer)
@@ -279,12 +295,29 @@ public class LevelManager : NetworkBehaviour
                     
                     Debug.Log($"[LevelManager] 播放Level3B自定义对话 - 玩家1(合作:{p1CoopCount},欺骗:{p1CheatCount}) 玩家2(合作:{p2CoopCount},欺骗:{p2CheatCount})");
                     
-                    // 创建自定义对话内容
-                    string p1Dialog = $"玩家1，\n你现在合作{p1CoopCount}次，\n欺骗{p1CheatCount}次";
-                    string p2Dialog = $"玩家2，\n你现在合作{p2CoopCount}次，\n欺骗{p2CheatCount}次";
+                    // 创建分段对话内容
+                    string[] p1Segments = new string[] {
+                        "<shake a=0.2 f=0.8>玩家1</shake>", 
+                        $"<shake a=0.2 f=0.8>你现在合作{p1CoopCount}次</shake>", 
+                        $"<shake a=0.2 f=0.8>欺骗{p1CheatCount}次</shake>"
+                    };
                     
-                    // 使用DialogManager播放对话
-                    DialogManager.Instance.PlayCustomDialog(p1Dialog, p2Dialog, OnDialogComplete);
+                    string[] p2Segments = new string[] {
+                        "<shake a=0.2 f=0.8>玩家2</shake>", 
+                        $"<shake a=0.2 f=0.8>你现在合作{p2CoopCount}次</shake>", 
+                        $"<shake a=0.2 f=0.8>欺骗{p2CheatCount}次</shake>"
+                    };
+                    
+                    // 根据客户端ID选择显示的分段对话
+                    if (NetworkManager.Singleton.LocalClientId == 0)
+                    {
+                        DialogManager.Instance.PlaySegmentedDialog(p1Segments, OnDialogComplete);
+                    }
+                    else
+                    {
+                        DialogManager.Instance.PlaySegmentedDialog(p2Segments, OnDialogComplete);
+                    }
+                    
                     // 设置完成路径为路径B（仅服务器执行）
                     if (IsServer)
                         completedPath.Value = 2;
@@ -445,26 +478,65 @@ public class LevelManager : NetworkBehaviour
     {
         if (!IsServer) return;
         
-        // 欺骗派：六局欺骗总数达到12次则获得额外加分+15
-        if (player1Identity.Value == PlayerIdentity.Cheater && player1CheatTimes.Value >= 12)
+        bool player1Rewarded = false;
+        bool player2Rewarded = false;
+        
+        // 欺骗派：欺骗总数达到14次则获得额外加分+15
+        if (player1Identity.Value == PlayerIdentity.Cheater && player1CheatTimes.Value >= 13)
         {
             player1TotalPoint.Value += 15;
+            player1Rewarded = true;
+            Debug.Log($"[LevelManager] 玩家1(欺骗派)达成任务，奖励15分！当前欺骗次数：{player1CheatTimes.Value}");
         }
         
-        if (player2Identity.Value == PlayerIdentity.Cheater && player2CheatTimes.Value >= 12)
+        if (player2Identity.Value == PlayerIdentity.Cheater && player2CheatTimes.Value >= 13)
         {
             player2TotalPoint.Value += 15;
+            player2Rewarded = true;
+            Debug.Log($"[LevelManager] 玩家2(欺骗派)达成任务，奖励15分！当前欺骗次数：{player2CheatTimes.Value}");
         }
         
-        // 合作派：六局合作总数达到8次则获得额外加分+15
+        // 合作派：合作总数达到9次则获得额外加分+15
         if (player1Identity.Value == PlayerIdentity.Cooperator && player1CoopTimes.Value >= 8)
         {
             player1TotalPoint.Value += 15;
+            player1Rewarded = true;
+            Debug.Log($"[LevelManager] 玩家1(合作派)达成任务，奖励15分！当前合作次数：{player1CoopTimes.Value}");
         }
         
         if (player2Identity.Value == PlayerIdentity.Cooperator && player2CoopTimes.Value >= 8)
         {
             player2TotalPoint.Value += 15;
+            player2Rewarded = true;
+            Debug.Log($"[LevelManager] 玩家2(合作派)达成任务，奖励15分！当前合作次数：{player2CoopTimes.Value}");
+        }
+        
+        // 显示奖励提示
+        if (player1Rewarded || player2Rewarded)
+        {
+            ShowBonusTextClientRpc(player1Rewarded, player2Rewarded);
+            
+            // 更新UI显示
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
+            }
+        }
+    }
+    
+    [ClientRpc]
+    private void ShowBonusTextClientRpc(bool player1Rewarded, bool player2Rewarded)
+    {
+        Debug.Log($"[LevelManager] 显示奖励提示：玩家1={player1Rewarded}, 玩家2={player2Rewarded}");
+        
+        if (UIManager.Instance != null)
+        {
+            // 构建奖励文本
+            string player1BonusText = player1Rewarded ? "<color=yellow><shake a=0.3 f=0.8>+15!</shake></color>" : "";
+            string player2BonusText = player2Rewarded ? "<color=yellow><shake a=0.3 f=0.8>+15!</shake></color>" : "";
+            
+            // 调用UIManager显示奖励文本
+            UIManager.Instance.ShowBonusText(player1BonusText, player2BonusText);
         }
     }
 
@@ -664,12 +736,23 @@ public class LevelManager : NetworkBehaviour
     [ClientRpc]
     private void PlayDialogForLevelClientRpc(Level level)
     {
-        Debug.Log($"[LevelManager] 客户端收到播放对话请求，关卡={level}, IsServer={IsServer}, IsOwner={IsOwner}");
+        Debug.Log($"[LevelManager] 客户端收到播放对话请求，关卡={level}, IsServer={IsServer}, IsClient={IsClient}");
         
         // 如果是服务器，跳过（因为服务器已经在OnLevelValueChanged中调用了PlayDialogForLevel）
         if (IsServer) return;
         
-        PlayDialogForLevel(level);
+        // 对于Level3A和Level3B，不要在这里处理，因为它们需要特殊的分段显示处理
+        // 这些关卡的处理已经在PlayDialogForLevel方法中通过PlaySegmentedDialog处理
+        if (level != Level.Level3A && level != Level.Level3B)
+        {
+            PlayDialogForLevel(level);
+        }
+        else
+        {
+            // 对于Level3A和Level3B，设置pendingDialogLevel并触发延迟播放
+            pendingDialogLevel = level;
+            StartCoroutine(PlayDialogAfterDelay());
+        }
     }
 
     // 新增：场景加载完成的事件处理

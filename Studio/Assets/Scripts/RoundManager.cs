@@ -342,6 +342,18 @@ public class RoundManager : NetworkBehaviour
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
+            // 在应用卡牌效果后记录玩家的最终选择
+            if (NetworkManager.Singleton.IsServer)
+            {
+                RecordPlayerChoices(player1.choice, player2.choice);
+                
+                // 检查任务完成情况
+                if (LevelManager.Instance != null)
+                {
+                    // 检查身份任务是否完成
+                    LevelManager.Instance.CheckAndApplyIdentityBonus();
+                }
+            }
             CalculatePoint(player1.choice, player2.choice);
         }
         ResetPlayersChoice();
@@ -376,8 +388,20 @@ public class RoundManager : NetworkBehaviour
         if (NetworkManager.LocalClientId == 0)
         {
             ApplyEffect();
+            // 在应用卡牌效果后记录玩家的最终选择
+            if (NetworkManager.Singleton.IsServer)
+            {
+                RecordPlayerChoices(player1.choice, player2.choice);
+                
+                // 检查任务完成情况
+                if (LevelManager.Instance != null)
+                {
+                    // 检查身份任务是否完成
+                    LevelManager.Instance.CheckAndApplyIdentityBonus();
+                }
+            }
             CalculatePoint(player1.choice, player2.choice);
-
+            
             if (Gun1.GetComponent<GunController>().gameEnded.Value || 
                 Gun2.GetComponent<GunController>().gameEnded.Value)
             {
@@ -403,6 +427,32 @@ public class RoundManager : NetworkBehaviour
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
 
         //isGunRound = false;
+    }
+
+    // 新增方法：记录玩家的最终选择（经过卡牌效果处理后）
+    private void RecordPlayerChoices(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+        
+        // 记录玩家1的选择
+        if (player1Choice == PlayerLogic.playerChoice.Cooperate)
+        {
+            LevelManager.Instance.AddPlayerCoopTime(0); // 0是玩家1的clientId
+        }
+        else if (player1Choice == PlayerLogic.playerChoice.Cheat)
+        {
+            LevelManager.Instance.AddPlayerCheatTime(0);
+        }
+
+        // 记录玩家2的选择
+        if (player2Choice == PlayerLogic.playerChoice.Cooperate)
+        {
+            LevelManager.Instance.AddPlayerCoopTime(1); // 1是玩家2的clientId
+        }
+        else if (player2Choice == PlayerLogic.playerChoice.Cheat)
+        {
+            LevelManager.Instance.AddPlayerCheatTime(1);
+        }
     }
 
     void CalculatePoint(PlayerLogic.playerChoice player1Choice, PlayerLogic.playerChoice player2Choice)

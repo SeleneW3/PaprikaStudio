@@ -290,15 +290,36 @@ public class DialogManager : NetworkBehaviour
         PlayCustomDialogLocal(player1Text, player2Text, onComplete);
     }
 
+    // 同步自定义对话内容到所有客户端
+    [ClientRpc]
+    private void PlayCustomDialogClientRpc(string player1Text, string player2Text)
+    {
+        Debug.Log($"[DialogManager] PlayCustomDialogClientRpc被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 如果是服务器，跳过（因为服务器已经在PlayCustomDialog中调用了PlayCustomDialogLocal）
+        if (IsServer) return;
+        
+        // 根据客户端ID选择显示的文本
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        string textToShow = clientId == 0 ? player1Text : player2Text;
+        
+        // 客户端播放自定义对话
+        PlayCustomDialogLocal(new string[] { textToShow }, null); // 客户端不需要回调
+    }
+    
     // 本地播放自定义对话的方法
     private void PlayCustomDialogLocal(string player1Text, string player2Text, Action onComplete = null)
     {
         Debug.Log($"[DialogManager] PlayCustomDialogLocal被调用");
         
+        // 根据客户端ID选择显示的文本
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        string textToShow = clientId == 0 ? player1Text : player2Text;
+        
         // 创建临时对话数组
-        currentDialog = new string[] { player1Text, player2Text };
+        currentDialog = new string[] { textToShow };
         currentLineIndex = 0;
-        endLineIndex = 1;
+        endLineIndex = 0;
         
         // 存储回调
         dialogCompleteCallback = onComplete;
@@ -314,22 +335,73 @@ public class DialogManager : NetworkBehaviour
         }
         
         // 显示对话面板
-        Debug.Log($"[DialogManager] 显示自定义对话面板，内容: \"{player1Text}\", \"{player2Text}\"");
+        Debug.Log($"[DialogManager] 显示自定义对话面板，内容: \"{textToShow}\"");
         dialogPanel.SetActive(true);
         DisplayCurrentLine();
     }
-
-    // 同步自定义对话内容到所有客户端
-    [ClientRpc]
-    private void PlayCustomDialogClientRpc(string player1Text, string player2Text)
+    
+    // 重载方法，接受字符串数组
+    private void PlayCustomDialogLocal(string[] dialogLines, Action onComplete = null)
     {
-        Debug.Log($"[DialogManager] PlayCustomDialogClientRpc被调用，IsServer={IsServer}, IsClient={IsClient}");
+        Debug.Log($"[DialogManager] PlayCustomDialogLocal(string[])被调用");
         
-        // 如果是服务器，跳过（因为服务器已经在PlayCustomDialog中调用了PlayCustomDialogLocal）
+        // 创建临时对话数组
+        currentDialog = dialogLines;
+        currentLineIndex = 0;
+        endLineIndex = currentDialog.Length - 1;
+        
+        // 存储回调
+        dialogCompleteCallback = onComplete;
+        
+        // 确保找到UI元素
+        FindDialogUIElements();
+        
+        // 检查dialogPanel是否可用
+        if (dialogPanel == null)
+        {
+            Debug.LogError("[DialogManager] PlayCustomDialogLocal: dialogPanel为空！");
+            return;
+        }
+        
+        // 显示对话面板
+        Debug.Log($"[DialogManager] 显示自定义对话面板，内容: {string.Join(", ", currentDialog)}");
+        dialogPanel.SetActive(true);
+        DisplayCurrentLine();
+    }
+    
+    // 新增：播放分段对话的方法
+    public void PlaySegmentedDialog(string[] segments, Action onComplete = null)
+    {
+        Debug.Log($"[DialogManager] PlaySegmentedDialog被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 将字符串数组转换为单个字符串，用特殊分隔符"|^|"分隔
+        string combinedText = string.Join("|^|", segments);
+        
+        // 如果是服务器，同步到所有客户端
+        if (IsServer)
+        {
+            PlaySegmentedDialogClientRpc(combinedText);
+        }
+        
+        // 本地播放分段对话
+        string[] localSegments = combinedText.Split(new string[] { "|^|" }, StringSplitOptions.None);
+        PlayCustomDialogLocal(localSegments, onComplete);
+    }
+    
+    // 同步分段对话内容到所有客户端
+    [ClientRpc]
+    private void PlaySegmentedDialogClientRpc(string combinedText)
+    {
+        Debug.Log($"[DialogManager] PlaySegmentedDialogClientRpc被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 如果是服务器，跳过（因为服务器已经在PlaySegmentedDialog中调用了PlayCustomDialogLocal）
         if (IsServer) return;
         
-        // 客户端播放自定义对话
-        PlayCustomDialogLocal(player1Text, player2Text, null); // 客户端不需要回调
+        // 将组合字符串分割回字符串数组
+        string[] segments = combinedText.Split(new string[] { "|^|" }, StringSplitOptions.None);
+        
+        // 客户端播放分段对话
+        PlayCustomDialogLocal(segments, null); // 客户端不需要回调
     }
 
     public void OnSceneUnload()

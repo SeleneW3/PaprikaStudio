@@ -169,8 +169,8 @@ public class ChessLogic : NetworkBehaviour
                 state = 4;
                 timer = 0f;
                 
-                // 通知一个棋子动画完成
-                NotifyAnimationComplete();
+                // 删除这里的通知调用，因为已经移到了ResetBack()方法中
+                // NotifyAnimationComplete();
             }
         }
         else if(state == 4 && backToOriginal)
@@ -180,6 +180,8 @@ public class ChessLogic : NetworkBehaviour
         else if(state == 5)
         {
             ResetBack();
+            // 通知一个棋子动画完成
+            NotifyAnimationComplete();
         }
     }
 
@@ -272,6 +274,8 @@ public class ChessLogic : NetworkBehaviour
             timer = 0f;
             backToOriginal = false;
             
+            // 通知一个棋子动画完成
+            NotifyAnimationComplete();
         }
     }
 
