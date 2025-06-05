@@ -98,7 +98,7 @@ public class RoundManager : NetworkBehaviour
         // 订阅LevelManager的模式更改事件
         if (LevelManager.Instance != null)
         {
-            LevelManager.Instance.OnModeChanged += OnGameModeChanged;
+            LevelManager.Instance.currentMode.OnValueChanged += OnGameModeChanged;
         }
     }
 
@@ -109,12 +109,12 @@ public class RoundManager : NetworkBehaviour
         // 取消订阅LevelManager的模式更改事件
         if (LevelManager.Instance != null)
         {
-            LevelManager.Instance.OnModeChanged -= OnGameModeChanged;
+            LevelManager.Instance.currentMode.OnValueChanged -= OnGameModeChanged;
         }
     }
     
     // 当游戏模式改变时调用
-    private void OnGameModeChanged(LevelManager.Mode newMode)
+    private void OnGameModeChanged(LevelManager.Mode previousMode, LevelManager.Mode newMode)
     {
         // 更新枪的可见性
         UpdateGunsVisibility();
