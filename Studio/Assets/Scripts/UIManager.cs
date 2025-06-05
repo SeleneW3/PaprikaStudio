@@ -1931,7 +1931,7 @@ public class UIManager : NetworkBehaviour
         
         // 更新玩家2的关卡显示
         if (levelText2Animator != null)
-        {
+            {
             levelText2.gameObject.SetActive(true);
             levelText2Animator.ShowText(levelInfo);
         }
@@ -1967,7 +1967,7 @@ public class UIManager : NetworkBehaviour
         
         // 更新玩家2的总分显示
         if (player2TotalScoreTextAnimator != null)
-        {
+            {
             player2TotalScoreText.gameObject.SetActive(true);
             player2TotalScoreTextAnimator.ShowText(player2ScoreInfo);
         }
@@ -1995,7 +1995,7 @@ public class UIManager : NetworkBehaviour
 
         // 根据游戏模式决定是否显示统计数据
         if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
-        {
+            {
             player1StatsInfo = "...";
             player2StatsInfo = "...";
         }
@@ -2019,7 +2019,7 @@ public class UIManager : NetworkBehaviour
         
         // 更新玩家2的统计显示
         if (player2TargetTextAnimator != null)
-        {
+            {
             player2TargetText.gameObject.SetActive(true);
             player2TargetTextAnimator.ShowText(player2StatsInfo);
         }
@@ -2027,8 +2027,8 @@ public class UIManager : NetworkBehaviour
         {
             player2TargetText.text = player2StatsInfo;
             player2TargetText.gameObject.SetActive(true);
+            }
         }
-    }
 
     // 添加更新关卡文本的RPC方法
     [ClientRpc]

@@ -9,7 +9,17 @@ public class DialogManager : NetworkBehaviour
 {
     #region Singleton
     private static DialogManager _instance;
-    public static DialogManager Instance => _instance;
+    public static DialogManager Instance 
+    { 
+        get 
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<DialogManager>();
+            }
+            return _instance;
+        }
+    }
     #endregion
 
     [Header("UI References")]
@@ -53,15 +63,110 @@ public class DialogManager : NetworkBehaviour
             return;
         }
         _instance = this;
+        
+        // 保持DontDestroyOnLoad，确保在所有场景中可用
         DontDestroyOnLoad(gameObject);
+    }
 
-        // 自动挂载到GameManager（如果你有需要）
-        //GameManager.Instance.dialogManager = this;
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        Debug.Log($"[DialogManager] OnNetworkSpawn被调用，IsServer={IsServer}, IsClient={IsClient}, OwnerClientId={OwnerClientId}");
+        
+        // 添加场景加载事件监听
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    // 场景加载完成事件处理
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        Debug.Log($"[DialogManager] 场景 {scene.name} 加载完成");
+        
+        // 在新场景中查找UI元素
+        FindDialogUIElements();
+    }
+
+    // 查找对话UI元素
+    private void FindDialogUIElements()
+    {
+        Debug.Log($"[DialogManager] 尝试查找对话UI元素，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 查找DialogCanvas
+        GameObject dialogCanvas = GameObject.Find("DialogCanvas");
+        if (dialogCanvas != null)
+        {
+            Debug.Log("[DialogManager] 找到DialogCanvas");
+            
+            // 查找Panel
+            Transform panelTransform = dialogCanvas.transform.Find("Panel");
+            if (panelTransform != null)
+            {
+                dialogPanel = panelTransform.gameObject;
+                Debug.Log("[DialogManager] 找到Panel");
+                
+                // 查找DialogText
+                Transform textTransform = panelTransform.Find("DialogText");
+                if (textTransform != null)
+                {
+                    dialogText = textTransform.GetComponent<TextMeshProUGUI>();
+                    Debug.Log("[DialogManager] 找到DialogText");
+                    
+                    // 设置文本组件属性
+                    if (dialogText != null)
+                    {
+                        dialogText.alignment = TextAlignmentOptions.Center;
+                        dialogText.enableWordWrapping = true;
+                        
+                        // 获取TextAnimatorPlayer组件
+                        animatorPlayer = dialogText.GetComponent<TextAnimatorPlayer>();
+                        if (animatorPlayer != null)
+                        {
+                            Debug.Log("[DialogManager] 找到TextAnimatorPlayer组件");
+                            // 确保只添加一次监听器
+                            animatorPlayer.onTextShowed.RemoveListener(OnTypingComplete);
+                            animatorPlayer.onTypewriterStart.RemoveListener(OnTypewriterStart);
+                            
+                            animatorPlayer.onTextShowed.AddListener(OnTypingComplete);
+                            animatorPlayer.onTypewriterStart.AddListener(OnTypewriterStart);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("[DialogManager] DialogText上没有TextAnimatorPlayer组件");
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[DialogManager] 未找到DialogText");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[DialogManager] 未找到Panel");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[DialogManager] 未找到DialogCanvas");
+        }
+        
+        // 如果找到了面板，默认设置为不可见
+        if (dialogPanel != null)
+        {
+            dialogPanel.SetActive(false);
+        }
     }
 
     private void Start()
     {
-        if (dialogPanel != null) dialogPanel.SetActive(false);
+        // 初始化对话UI
+        FindDialogUIElements();
+        
+        if (dialogPanel != null) 
+        {
+            dialogPanel.SetActive(false);
+        }
+        
         if (dialogText != null)
         {
             dialogText.alignment = TextAlignmentOptions.Center;
@@ -82,6 +187,16 @@ public class DialogManager : NetworkBehaviour
             CompleteLine();
         }
     }
+
+    public override void OnNetworkDespawn()
+    {
+        Debug.Log("[DialogManager] OnNetworkDespawn被调用");
+        
+        // 移除场景加载事件监听
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        
+        base.OnNetworkDespawn();
+    }
     #endregion
 
     #region Public API
@@ -91,6 +206,8 @@ public class DialogManager : NetworkBehaviour
     /// </summary>
     public void PlayRange(int startIndex, int endIndex)
     {
+        Debug.Log($"[DialogManager] PlayRange({startIndex}, {endIndex})被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
         if (dialogLines == null || dialogLines.Length == 0)
         {
             Debug.LogError("DialogManager: dialogLines 为空！");
@@ -104,13 +221,115 @@ public class DialogManager : NetworkBehaviour
             return;
         }
 
+        // 如果是服务器，同步到所有客户端
+        if (IsServer)
+        {
+            PlayRangeClientRpc(startIndex, endIndex);
+        }
+
+        // 本地播放对话
+        PlayRangeLocal(startIndex, endIndex);
+    }
+
+    // 本地播放对话的方法
+    private void PlayRangeLocal(int startIndex, int endIndex)
+    {
+        Debug.Log($"[DialogManager] PlayRangeLocal({startIndex}, {endIndex})被调用");
+        
         currentDialog = dialogLines;  // 使用教程对话内容
         currentLineIndex = startIndex;
         endLineIndex = endIndex;
         dialogCompleteCallback = null; // 清除之前的回调
 
+        // 确保找到UI元素
+        FindDialogUIElements();
+        
+        // 检查dialogPanel是否可用
+        if (dialogPanel == null)
+        {
+            Debug.LogError("[DialogManager] PlayRangeLocal: dialogPanel为空！");
+            return;
+        }
+        
+        // 检查dialogText是否可用
+        if (dialogText == null)
+        {
+            Debug.LogError("[DialogManager] PlayRangeLocal: dialogText为空！");
+            return;
+        }
+        
+        Debug.Log($"[DialogManager] 显示对话面板，当前行内容: \"{currentDialog[currentLineIndex]}\"");
         dialogPanel.SetActive(true);
         DisplayCurrentLine();
+    }
+
+    // 同步对话内容到所有客户端
+    [ClientRpc]
+    private void PlayRangeClientRpc(int startIndex, int endIndex)
+    {
+        Debug.Log($"[DialogManager] PlayRangeClientRpc({startIndex}, {endIndex})被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 如果是服务器，跳过（因为服务器已经在PlayRange中调用了PlayRangeLocal）
+        if (IsServer) return;
+        
+        // 客户端播放对话
+        PlayRangeLocal(startIndex, endIndex);
+    }
+
+    public void PlayCustomDialog(string player1Text, string player2Text, Action onComplete = null)
+    {
+        Debug.Log($"[DialogManager] PlayCustomDialog被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 如果是服务器，同步到所有客户端
+        if (IsServer)
+        {
+            PlayCustomDialogClientRpc(player1Text, player2Text);
+        }
+        
+        // 本地播放自定义对话
+        PlayCustomDialogLocal(player1Text, player2Text, onComplete);
+    }
+
+    // 本地播放自定义对话的方法
+    private void PlayCustomDialogLocal(string player1Text, string player2Text, Action onComplete = null)
+    {
+        Debug.Log($"[DialogManager] PlayCustomDialogLocal被调用");
+        
+        // 创建临时对话数组
+        currentDialog = new string[] { player1Text, player2Text };
+        currentLineIndex = 0;
+        endLineIndex = 1;
+        
+        // 存储回调
+        dialogCompleteCallback = onComplete;
+        
+        // 确保找到UI元素
+        FindDialogUIElements();
+        
+        // 检查dialogPanel是否可用
+        if (dialogPanel == null)
+        {
+            Debug.LogError("[DialogManager] PlayCustomDialogLocal: dialogPanel为空！");
+            return;
+        }
+        
+        // 显示对话面板
+        Debug.Log($"[DialogManager] 显示自定义对话面板，内容: \"{player1Text}\", \"{player2Text}\"");
+        dialogPanel.SetActive(true);
+        DisplayCurrentLine();
+    }
+
+    // 同步自定义对话内容到所有客户端
+    [ClientRpc]
+    private void PlayCustomDialogClientRpc(string player1Text, string player2Text)
+    {
+        Debug.Log($"[DialogManager] PlayCustomDialogClientRpc被调用，IsServer={IsServer}, IsClient={IsClient}");
+        
+        // 如果是服务器，跳过（因为服务器已经在PlayCustomDialog中调用了PlayCustomDialogLocal）
+        if (IsServer) return;
+        
+        // 客户端播放自定义对话
+        PlayCustomDialogLocal(player1Text, player2Text, null); // 客户端不需要回调
     }
 
     public void OnSceneUnload()
@@ -123,33 +342,33 @@ public class DialogManager : NetworkBehaviour
         // ... 其他清理代码
     }
 
-    public void PlayCustomDialog(string player1Text, string player2Text, Action onComplete = null)
-    {
-        // 创建临时对话数组
-        currentDialog = new string[] { player1Text, player2Text };
-        currentLineIndex = 0;
-        endLineIndex = 1;
-        
-        // 存储回调
-        dialogCompleteCallback = onComplete;
-        
-        // 显示对话面板
-        dialogPanel.SetActive(true);
-        DisplayCurrentLine();
-    }
-
     #endregion
 
     #region Core Logic
     private void DisplayCurrentLine()
     {
+        Debug.Log($"[DialogManager] DisplayCurrentLine被调用，当前行索引: {currentLineIndex}");
+        
         if (autoAdvanceCoroutine != null)
         {
             StopCoroutine(autoAdvanceCoroutine);
             autoAdvanceCoroutine = null;
         }
+        
+        if (currentDialog == null)
+        {
+            Debug.LogError("[DialogManager] DisplayCurrentLine: currentDialog为空！");
+            return;
+        }
+        
+        if (currentLineIndex < 0 || currentLineIndex >= currentDialog.Length)
+        {
+            Debug.LogError($"[DialogManager] DisplayCurrentLine: 无效的行索引: {currentLineIndex}，范围: 0-{currentDialog.Length - 1}");
+            return;
+        }
 
         string line = currentDialog[currentLineIndex];
+        Debug.Log($"[DialogManager] 显示对话内容: \"{line}\"");
         isTyping = true;
 
         if (animatorPlayer != null)

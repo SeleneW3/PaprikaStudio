@@ -71,7 +71,7 @@ public class CardLogic : NetworkBehaviour
         uiManager = FindObjectOfType<UIManager>();
         if (uiManager == null)
         {
-            Debug.LogWarning("UIManager not found!");
+            //Debug.LogWarning("UIManager not found!");
         }
 
         effectNetwork.OnValueChanged += (oldEffect, newEffect) =>
@@ -587,7 +587,7 @@ public static int GetEffectPriority(Effect effect)
     [ServerRpc(RequireOwnership = false)]
     public void SetBelongServerRpc(Belong newBelong, ServerRpcParams rpcParams = default)
     {
-        Debug.Log($"SetBelongServerRpc called with newBelong: {newBelong}");
+        //Debug.Log($"SetBelongServerRpc called with newBelong: {newBelong}");
         belong.Value = newBelong;
     }
 

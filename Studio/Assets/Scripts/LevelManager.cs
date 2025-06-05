@@ -125,6 +125,10 @@ public class LevelManager : NetworkBehaviour
     // 事件 - 当关卡改变时
     public event Action<Level, Level> OnLevelChanged;
 
+    // 新增：待播放对话的关卡
+    private Level pendingDialogLevel = Level.Tutorial;
+    private bool shouldPlayDialogAfterSceneLoad = false;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -134,6 +138,9 @@ public class LevelManager : NetworkBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        
+        // 添加场景加载完成的事件监听
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     public override void OnNetworkSpawn()
@@ -147,6 +154,10 @@ public class LevelManager : NetworkBehaviour
     {
         currentMode.OnValueChanged -= OnModeChanged;
         currentLevel.OnValueChanged -= OnLevelValueChanged;
+        
+        // 移除场景加载事件监听
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        
         base.OnNetworkDespawn();
     }
 
@@ -164,8 +175,8 @@ public class LevelManager : NetworkBehaviour
         // 根据关卡设置相应的模式
         SetModeBasedOnLevel(current);
         
-        // 播放关卡相应的对话
-        PlayDialogForLevel(current);
+        // 记录待播放对话的关卡，但不立即播放
+        pendingDialogLevel = current;
         
         // 触发关卡改变事件
         OnLevelChanged?.Invoke(previous, current);
@@ -220,8 +231,6 @@ public class LevelManager : NetworkBehaviour
     // 播放关卡相应的对话
     private void PlayDialogForLevel(Level level)
     {
-        if (!IsServer) return;
-        
         if (DialogManager.Instance == null)
         {
             Debug.LogError("[LevelManager] DialogManager.Instance is null!");
@@ -231,9 +240,11 @@ public class LevelManager : NetworkBehaviour
         switch (level)
         {
             case Level.Level1:
+                Debug.Log("[LevelManager] 播放Level1对话 (13-15)");
                 DialogManager.Instance.PlayRange(13, 15);
                 break;
             case Level.Level2:
+                Debug.Log("[LevelManager] 播放Level2对话 (16-19)");
                 DialogManager.Instance.PlayRange(16, 19);
                 break;
             case Level.Level3A:
@@ -244,6 +255,8 @@ public class LevelManager : NetworkBehaviour
                     int p2CoopCount = player2CoopTimes.Value;
                     int p2CheatCount = player2CheatTimes.Value;
                     
+                    Debug.Log($"[LevelManager] 播放Level3A自定义对话 - 玩家1(合作:{p1CoopCount},欺骗:{p1CheatCount}) 玩家2(合作:{p2CoopCount},欺骗:{p2CheatCount})");
+                    
                     // 创建自定义对话内容
                     string p1Dialog = $"玩家1，\n你现在合作{p1CoopCount}次，\n欺骗{p1CheatCount}次";
                     string p2Dialog = $"玩家2，\n你现在合作{p2CoopCount}次，\n欺骗{p2CheatCount}次";
@@ -251,8 +264,9 @@ public class LevelManager : NetworkBehaviour
                     // 使用DialogManager播放对话
                     DialogManager.Instance.PlayCustomDialog(p1Dialog, p2Dialog, OnDialogComplete);
                     
-                    // 设置完成路径为路径A
-                    completedPath.Value = 1;
+                    // 设置完成路径为路径A（仅服务器执行）
+                    if (IsServer)
+                        completedPath.Value = 1;
                 }
                 break;
             case Level.Level3B:
@@ -263,32 +277,39 @@ public class LevelManager : NetworkBehaviour
                     int p2CoopCount = player2CoopTimes.Value;
                     int p2CheatCount = player2CheatTimes.Value;
                     
+                    Debug.Log($"[LevelManager] 播放Level3B自定义对话 - 玩家1(合作:{p1CoopCount},欺骗:{p1CheatCount}) 玩家2(合作:{p2CoopCount},欺骗:{p2CheatCount})");
+                    
                     // 创建自定义对话内容
                     string p1Dialog = $"玩家1，\n你现在合作{p1CoopCount}次，\n欺骗{p1CheatCount}次";
                     string p2Dialog = $"玩家2，\n你现在合作{p2CoopCount}次，\n欺骗{p2CheatCount}次";
                     
                     // 使用DialogManager播放对话
                     DialogManager.Instance.PlayCustomDialog(p1Dialog, p2Dialog, OnDialogComplete);
-                    
-                    // 设置完成路径为路径B
-                    completedPath.Value = 2;
+                    // 设置完成路径为路径B（仅服务器执行）
+                    if (IsServer)
+                        completedPath.Value = 2;
                 }
                 break;
             case Level.Level4A:
             case Level.Level4B:
             case Level.Level4C:
+                Debug.Log("[LevelManager] 播放Level4对话 (20-21)");
                 DialogManager.Instance.PlayRange(20, 21);
                 break;
             case Level.Level5A:
+                Debug.Log("[LevelManager] 播放Level5A对话 (22-24)");
                 DialogManager.Instance.PlayRange(22, 24);
                 break;
             case Level.Level5B:
+                Debug.Log("[LevelManager] 播放Level5B对话 (25-26)");
                 DialogManager.Instance.PlayRange(25, 26);
                 break;
             case Level.Level6A:
+                Debug.Log("[LevelManager] 播放Level6A对话 (27-31)");
                 DialogManager.Instance.PlayRange(27, 31);
                 break;
             case Level.Level6B:
+                Debug.Log("[LevelManager] 播放Level6B对话 (32-34)");
                 DialogManager.Instance.PlayRange(32, 34);
                 break;
         }
@@ -326,10 +347,20 @@ public class LevelManager : NetworkBehaviour
             return;
         }
         
+        Debug.Log($"[LevelManager] 关卡 {newLevel} 已解锁，准备切换");
         currentLevel.Value = newLevel;
+        Debug.Log($"[LevelManager] 已设置 currentLevel.Value = {currentLevel.Value}");
+        
+        // 设置标志，表示场景加载后需要播放对话
+        shouldPlayDialogAfterSceneLoad = true;
+        pendingDialogLevel = newLevel;
+        
+        // 检查DialogManager是否存在
+        Debug.Log($"[LevelManager] 检查DialogManager实例: {(DialogManager.Instance != null ? "存在" : "不存在")}");
         
         // 关卡切换时自动设置对应的模式并加载场景
         GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        Debug.Log($"[LevelManager] 准备加载Game场景");
         GameManager.Instance.LoadScene("Game");
     }
 
@@ -526,19 +557,26 @@ public class LevelManager : NetworkBehaviour
         player2TotalPoint.Value += points;
     }
 
+    private void OnDialogComplete()
+    {
+        Debug.Log("[LevelManager] 对话完成回调被触发，准备显示身份选择面板");
+        // 通知所有客户端显示身份选择面板
+        ShowIdentityPanelClientRpc();
+    }
+    
     [ClientRpc]
     private void ShowIdentityPanelClientRpc()
     {
+        Debug.Log("[LevelManager] ShowIdentityPanelClientRpc被调用，检查IdentityPanelManager实例");
         if (IdentityPanelManager.Instance != null)
         {
+            Debug.Log("[LevelManager] IdentityPanelManager实例存在，调用ShowPanel方法");
             IdentityPanelManager.Instance.ShowPanel();
         }
-    }
-
-    private void OnDialogComplete()
-    {
-        // 通知所有客户端显示身份选择面板
-        ShowIdentityPanelClientRpc();
+        else
+        {
+            Debug.LogError("[LevelManager] IdentityPanelManager.Instance为空，无法显示身份选择面板");
+        }
     }
     
     /// <summary>
@@ -621,5 +659,55 @@ public class LevelManager : NetworkBehaviour
         }
         
         Debug.Log($"[LevelManager] 已解锁新关卡: {unlockedLevel.Value}");
+    }
+
+    [ClientRpc]
+    private void PlayDialogForLevelClientRpc(Level level)
+    {
+        Debug.Log($"[LevelManager] 客户端收到播放对话请求，关卡={level}, IsServer={IsServer}, IsOwner={IsOwner}");
+        
+        // 如果是服务器，跳过（因为服务器已经在OnLevelValueChanged中调用了PlayDialogForLevel）
+        if (IsServer) return;
+        
+        PlayDialogForLevel(level);
+    }
+
+    // 新增：场景加载完成的事件处理
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        Debug.Log($"[LevelManager] 场景 {scene.name} 加载完成");
+        
+        // 如果是Game场景并且有待播放的对话，则播放对话
+        if (scene.name == "Game" && shouldPlayDialogAfterSceneLoad)
+        {
+            Debug.Log($"[LevelManager] 场景加载后播放对话，关卡={pendingDialogLevel}");
+            shouldPlayDialogAfterSceneLoad = false;
+            
+            // 延迟一帧再播放对话，确保所有对象都已初始化
+            StartCoroutine(PlayDialogAfterDelay());
+        }
+    }
+
+    // 新增：延迟播放对话的协程
+    private IEnumerator PlayDialogAfterDelay()
+    {
+        // 等待一帧
+        yield return null;
+        
+        // 再等待0.5秒确保UI已完全加载
+        yield return new WaitForSeconds(0.5f);
+        
+        // 播放对话 - 移除IsServer检查，让客户端也能执行
+        if (IsServer)
+        {
+            // 服务器需要同时播放对话并通知客户端
+            PlayDialogForLevel(pendingDialogLevel);
+            PlayDialogForLevelClientRpc(pendingDialogLevel);
+        }
+        else
+        {
+            // 客户端只需要播放自己的对话
+            PlayDialogForLevel(pendingDialogLevel);
+        }
     }
 }

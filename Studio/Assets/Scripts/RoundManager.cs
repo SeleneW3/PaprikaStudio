@@ -160,8 +160,7 @@ public class RoundManager : NetworkBehaviour
             else if(tutorState == 4)
             {
                 tutorState++;
-                DialogManager.Instance.PlayRange(10, 12);
-                //StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
+                StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
             
                 Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
             }

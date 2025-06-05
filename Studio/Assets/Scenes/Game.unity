@@ -25748,8 +25748,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>New
-    Text</>
+  m_text: <shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>
+    </>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
@@ -25776,8 +25776,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 52
-  m_fontSizeBase: 52
+  m_fontSize: 56
+  m_fontSizeBase: 56
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -25812,7 +25812,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -739.8104, y: 0, z: -787.1737, w: 0}
+  m_margin: {x: -782.91266, y: 0, z: -805.16034, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -88934,7 +88934,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6794183017050068813, guid: 5e862dc9d888f0b418c8a9f6ae0e5bc0, type: 3}
       propertyPath: transitionSpeed
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

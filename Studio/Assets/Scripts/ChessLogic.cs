@@ -23,7 +23,7 @@ public class ChessLogic : NetworkBehaviour
 
     public float originToBeingClickedDuration = 0.5f;
 
-    public float beingClickedToClickPointDuration = 1.15f;  //移动速度减慢
+    public float beingClickedToClickPointDuration = 1.5f;  //移动速度减慢
 
     public float heightOffset = 1f;
 
@@ -31,7 +31,7 @@ public class ChessLogic : NetworkBehaviour
 
     public float timer = 0f;
 
-    public float moveSpeed = 2f;
+    public float moveSpeed = 1.5f;
 
     private Vector3 originalPos;
     private Quaternion originalRot;
@@ -147,7 +147,8 @@ public class ChessLogic : NetworkBehaviour
             transform.rotation = Quaternion.Slerp(stateBeingClicked.rotation, clickPointRot, t);
             if(t >= 1f)
             {
-                state = 4;
+                // 到达目标点位，进入停留状态
+                state = 6; // 新增状态6表示在目标点位停留
                 timer = 0f;
                 isOnGround = true;
                 
@@ -156,7 +157,18 @@ public class ChessLogic : NetworkBehaviour
                 {
                     SoundManager.Instance.PlaySFX("ChessDown");
                 }
-
+            }
+        }
+        else if(state == 6) // 新增：在目标点位停留
+        {
+            // 停留1秒
+            timer += Time.deltaTime;
+            if(timer >= 1f)
+            {
+                // 停留时间结束，进入状态4
+                state = 4;
+                timer = 0f;
+                
                 // 通知一个棋子动画完成
                 NotifyAnimationComplete();
             }

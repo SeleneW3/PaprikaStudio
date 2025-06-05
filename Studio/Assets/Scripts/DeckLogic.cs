@@ -15,8 +15,8 @@ public class DeckLogic : NetworkBehaviour
     public Transform player1CardShowPos;
     public Transform player2CardShowPos;
 
-    [Header("�Զ���������")]
-    [Tooltip("չʾ�󣬶೤ʱ�䣨�룩�Զ��ջ��ƣ�<=0 ���Զ�����")]
+    [Header("自动收牌设置")]
+    [Tooltip("展示后，多长时间（秒）自动收回牌，<=0 不自动收回")]
     public float autoCollectDelay = 5f;
 
     // ���ڼ�¼ԭʼλ�ú���ת
