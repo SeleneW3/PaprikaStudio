@@ -29,28 +29,28 @@ public class DialogManager : NetworkBehaviour
     private static readonly string[] Level3A_Dialog_Player1 = new string[]
     {
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，你现在已经欺骗了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到15次欺骗...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次欺骗...</wave></shake>",
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level3A_Dialog_Player2 = new string[]
     {
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，你现在已经合作了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次合作...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到10次合作...</wave></shake>",
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level3B_Dialog_Player1 = new string[]
     {
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，你现在已经合作了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次合作...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到10次合作...</wave></shake>",
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 
     private static readonly string[] Level3B_Dialog_Player2 = new string[]
     {
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，你现在已经欺骗了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到15次欺骗...</wave></shake>",
+        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次欺骗...</wave></shake>",
         "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
     };
 

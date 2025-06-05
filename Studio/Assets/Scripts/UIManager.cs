@@ -31,6 +31,8 @@ public class UIManager : NetworkBehaviour
     [Header("Score UI")]
     public TextMeshProUGUI player1ScoreText;
     public TextMeshProUGUI player2ScoreText;
+    private TextAnimatorPlayer player1ScoreTextAnimator; // 添加TextAnimator引用
+    private TextAnimatorPlayer player2ScoreTextAnimator; // 添加TextAnimator引用
     
     [Header("Score Position References")]
     public Transform player1ScoreAnchor; // 天平上的第一个空子物体
@@ -42,12 +44,16 @@ public class UIManager : NetworkBehaviour
     public Transform player1DebugAnchor; // 玩家1 debug text 显示锚点
     public Transform player2DebugAnchor; // 玩家2 debug text 显示锚点
     public Vector2 debugTextOffset = new Vector2(0, 30); // debug text 的位置偏移
+    private TextAnimatorPlayer player1DebugTextAnimator; // 添加TextAnimator引用
+    private TextAnimatorPlayer player2DebugTextAnimator; // 添加TextAnimator引用
 
     [Header("Bullets UI")]
     public TextMeshProUGUI player1BulletsText; // 显示玩家1剩余子弹的文本
     public TextMeshProUGUI player2BulletsText; // 显示玩家2剩余子弹的文本
     public Transform player1BulletsAnchor; // 玩家1子弹数显示锚点
     public Transform player2BulletsAnchor; // 玩家2子弹数显示锚点
+    private TextAnimatorPlayer player1BulletsTextAnimator; // 添加TextAnimator引用
+    private TextAnimatorPlayer player2BulletsTextAnimator; // 添加TextAnimator引用
 
     [Header("Movement Settings")]
     [Range(1f, 50f)]
@@ -217,6 +223,34 @@ public class UIManager : NetworkBehaviour
             Debug.Log($"[UIManager] RoundManager found, totalRounds: {roundManager.totalRounds.Value}");
         }
 
+        // 获取Text Animator组件
+        if (roundText1 != null)
+            roundText1Animator = roundText1.GetComponent<TextAnimatorPlayer>();
+        if (roundText2 != null)
+            roundText2Animator = roundText2.GetComponent<TextAnimatorPlayer>();
+        if (player1TargetText != null)
+            player1TargetTextAnimator = player1TargetText.GetComponent<TextAnimatorPlayer>();
+        if (player2TargetText != null)
+            player2TargetTextAnimator = player2TargetText.GetComponent<TextAnimatorPlayer>();
+            
+        // 获取DebugText的TextAnimator组件
+        if (player1DebugText != null)
+            player1DebugTextAnimator = player1DebugText.GetComponent<TextAnimatorPlayer>();
+        if (player2DebugText != null)
+            player2DebugTextAnimator = player2DebugText.GetComponent<TextAnimatorPlayer>();
+            
+        // 获取ScoreText的TextAnimator组件
+        if (player1ScoreText != null)
+            player1ScoreTextAnimator = player1ScoreText.GetComponent<TextAnimatorPlayer>();
+        if (player2ScoreText != null)
+            player2ScoreTextAnimator = player2ScoreText.GetComponent<TextAnimatorPlayer>();
+            
+        // 获取BulletsText的TextAnimator组件
+        if (player1BulletsText != null)
+            player1BulletsTextAnimator = player1BulletsText.GetComponent<TextAnimatorPlayer>();
+        if (player2BulletsText != null)
+            player2BulletsTextAnimator = player2BulletsText.GetComponent<TextAnimatorPlayer>();
+
         // 初始化时隐藏World Space回合文本
         if (roundText1 != null || roundText2 != null)
         {
@@ -284,7 +318,7 @@ public class UIManager : NetworkBehaviour
                 Debug.Log($"[UIManager] InitializeUI: 从LevelManager获取总回合数: {initialTotalRounds}");
             }
             
-            string roundInfo = $"ROUND 1/{initialTotalRounds}";
+            string roundInfo = $"回合：1/{initialTotalRounds}";
             roundText1.text = roundInfo;
             roundText2.text = roundInfo;
             roundText1.gameObject.SetActive(true);
@@ -341,6 +375,7 @@ public class UIManager : NetworkBehaviour
             player1DebugText.gameObject.SetActive(true);
             SetTextAlpha(player1DebugText, 1f);
         }
+        
         if (player2DebugText != null)
         {
             player2DebugText.gameObject.SetActive(true);
@@ -408,7 +443,7 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    // 修改UpdateDebugInfo方法，添加网络同步
+    // 修改UpdateDebugInfo方法，添加延迟
     public void UpdateDebugInfo(string player1Debug, string player2Debug)
     {
         if (!IsClient) return;
@@ -416,8 +451,23 @@ public class UIManager : NetworkBehaviour
         // 如果是服务器，通知所有客户端更新debug text
         if (IsServer)
         {
-            UpdateDebugInfoClientRpc(player1Debug, player2Debug);
+            // 存储debug信息，稍后使用
+            string p1Debug = player1Debug;
+            string p2Debug = player2Debug;
+            
+            // 启动协程延迟1秒后更新
+            StartCoroutine(DelayedUpdateDebugInfo(p1Debug, p2Debug));
         }
+    }
+    
+    // 添加延迟更新debug信息的协程
+    private IEnumerator DelayedUpdateDebugInfo(string player1Debug, string player2Debug)
+    {
+        // 等待1秒 
+        yield return new WaitForSeconds(1.3f);
+        
+        // 调用ClientRpc更新所有客户端
+            UpdateDebugInfoClientRpc(player1Debug, player2Debug);
     }
 
     [ClientRpc]
@@ -431,18 +481,37 @@ public class UIManager : NetworkBehaviour
                 SoundManager.Instance.PlaySFX("AddScore");
             }
             
-            // 更新debug text内容
+            // 更新debug text内容并使用TextAnimator显示
             if (player1DebugText != null)
             {
-                player1DebugText.text = player1Debug;
-                player1DebugText.gameObject.SetActive(false);
+                player1DebugText.gameObject.SetActive(true);
                 SetTextAlpha(player1DebugText, 1f);
+                
+                // 使用TextAnimator显示文本
+                if (player1DebugTextAnimator != null)
+                {
+                    player1DebugTextAnimator.ShowText(player1Debug);
+                }
+                else
+                {
+                    player1DebugText.text = player1Debug;
+                }
             }
+            
             if (player2DebugText != null)
             {
-                player2DebugText.text = player2Debug;
-                player2DebugText.gameObject.SetActive(false);
+                player2DebugText.gameObject.SetActive(true);
                 SetTextAlpha(player2DebugText, 1f);
+                
+                // 使用TextAnimator显示文本
+                if (player2DebugTextAnimator != null)
+                {
+                    player2DebugTextAnimator.ShowText(player2Debug);
+                }
+                else
+                {
+                    player2DebugText.text = player2Debug;
+                }
             }
 
             // 播放动画
@@ -544,7 +613,17 @@ public class UIManager : NetworkBehaviour
             // 更新分数显示
             if (player1ScoreText != null)
             {
-                player1ScoreText.text = $"Player 1: {player1Score}";
+                string scoreText = $"玩家1: <shake a=0.1 f=0.1>{player1Score}</shake>";
+                
+                // 使用TextAnimator显示文本
+                if (player1ScoreTextAnimator != null && scoreChanged)
+                {
+                    player1ScoreTextAnimator.ShowText(scoreText);
+                }
+                else
+                {
+                    player1ScoreText.text = scoreText;
+                }
             }
             else
             {
@@ -553,7 +632,17 @@ public class UIManager : NetworkBehaviour
 
             if (player2ScoreText != null)
             {
-                player2ScoreText.text = $"Player 2: {player2Score}";
+                string scoreText = $"玩家2: <shake a=0.1 f=0.1>{player2Score}</shake>";
+                
+                // 使用TextAnimator显示文本
+                if (player2ScoreTextAnimator != null && scoreChanged)
+                {
+                    player2ScoreTextAnimator.ShowText(scoreText);
+                }
+                else
+                {
+                    player2ScoreText.text = scoreText;
+                }
             }
             else
             {
@@ -615,6 +704,17 @@ public class UIManager : NetworkBehaviour
         if (player1BulletsText == null || player2BulletsText == null || gun1 == null || gun2 == null)
             return;
             
+        // 检查当前游戏模式
+        if (LevelManager.Instance != null && 
+            (LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor || 
+             LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard))
+        {
+            // 在Tutor或OnlyCard模式下隐藏子弹文本
+            player1BulletsText.gameObject.SetActive(false);
+            player2BulletsText.gameObject.SetActive(false);
+            return;
+        }
+            
         // 计算已消耗的机会数（总共6次机会）
         int gun1UsedChances = 6 - gun1.remainingChances.Value; // 已消耗机会数 = 总机会 - 剩余机会
         int gun2UsedChances = 6 - gun2.remainingChances.Value;
@@ -627,14 +727,85 @@ public class UIManager : NetworkBehaviour
             
             if (localClientId == 0) // 玩家1视角
             {
-                player1BulletsText.text = $"{gun1UsedChances}/6"; // 显示格式：已消耗/总数
-                player2BulletsText.text = $"{gun1UsedChances}/6"; // 玩家1的子弹数显示在玩家2头顶
+                string bulletsText = $"<color=yellow>{gun1UsedChances}</color>/<shake a=0.05 f=0.2>6</shake>";
+                
+                // 使用TextAnimator显示文本
+                if (player1BulletsTextAnimator != null)
+                {
+                    // 添加打字机效果事件监听
+                    player1BulletsTextAnimator.onTypewriterStart.RemoveListener(OnBulletsTextTypewriterStart);
+                    player1BulletsTextAnimator.onTextShowed.RemoveListener(OnBulletsTextTypewriterEnd);
+                    player1BulletsTextAnimator.onTypewriterStart.AddListener(OnBulletsTextTypewriterStart);
+                    player1BulletsTextAnimator.onTextShowed.AddListener(OnBulletsTextTypewriterEnd);
+                    
+                    player1BulletsText.gameObject.SetActive(true);
+                    player1BulletsTextAnimator.ShowText(bulletsText);
+                }
+                else
+                {
+                    player1BulletsText.text = bulletsText;
+                }
+                
+                // 玩家2的文本（显示在玩家1头顶）
+                if (player2BulletsTextAnimator != null)
+                {
+                    player2BulletsText.gameObject.SetActive(true);
+                    player2BulletsTextAnimator.ShowText(bulletsText);
+                }
+                else
+                {
+                    player2BulletsText.text = bulletsText;
+                }
             }
             else // 玩家2视角
             {
-                player1BulletsText.text = $"{gun2UsedChances}/6"; // 玩家2的子弹数显示在玩家1头顶
-                player2BulletsText.text = $"{gun2UsedChances}/6";
+                string bulletsText = $"<color=yellow>{gun2UsedChances}</color>/<shake a=0.05 f=0.2>6</shake>";
+                
+                // 使用TextAnimator显示文本
+                if (player1BulletsTextAnimator != null)
+                {
+                    // 添加打字机效果事件监听
+                    player1BulletsTextAnimator.onTypewriterStart.RemoveListener(OnBulletsTextTypewriterStart);
+                    player1BulletsTextAnimator.onTextShowed.RemoveListener(OnBulletsTextTypewriterEnd);
+                    player1BulletsTextAnimator.onTypewriterStart.AddListener(OnBulletsTextTypewriterStart);
+                    player1BulletsTextAnimator.onTextShowed.AddListener(OnBulletsTextTypewriterEnd);
+                    
+                    player1BulletsText.gameObject.SetActive(true);
+                    player1BulletsTextAnimator.ShowText(bulletsText);
+                }
+                else
+                {
+                    player1BulletsText.text = bulletsText;
+                }
+                
+                // 玩家2的文本
+                if (player2BulletsTextAnimator != null)
+                {
+                    player2BulletsText.gameObject.SetActive(true);
+                    player2BulletsTextAnimator.ShowText(bulletsText);
+                }
+                else
+                {
+                    player2BulletsText.text = bulletsText;
+                }
             }
+        }
+    }
+    
+    // 添加BulletsText的打字机效果事件处理方法
+    private void OnBulletsTextTypewriterStart()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("TypeConfirm");
+            }
+    }
+    
+    private void OnBulletsTextTypewriterEnd()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopSFX("TypeConfirm");
         }
     }
 
@@ -667,8 +838,11 @@ public class UIManager : NetworkBehaviour
             UpdateTextPosition(player2DebugText, debug2ScreenPos, debugTextOffset, debug2ScreenPos.z < 0);
         }
         
-        // 更新子弹数文本位置（使用新的锚点）
-        if (player1BulletsText != null && player2BulletsText != null)
+        // 更新子弹数文本位置（使用新的锚点）- 仅在非Tutor和非OnlyCard模式下更新
+        if (player1BulletsText != null && player2BulletsText != null && 
+            LevelManager.Instance != null && 
+            LevelManager.Instance.currentMode.Value != LevelManager.Mode.Tutor && 
+            LevelManager.Instance.currentMode.Value != LevelManager.Mode.OnlyCard)
         {
             // 使用专门的子弹锚点计算屏幕位置
             Vector3 bullets1ScreenPos = Camera.main.WorldToScreenPoint(player1BulletsAnchor.position);
@@ -750,30 +924,99 @@ public class UIManager : NetworkBehaviour
         if (player1ScoreText != null)
         {
             player1ScoreText.gameObject.SetActive(true);
-            player1ScoreText.text = "Player 1: 0";
+            string scoreText = "玩家1: 0";
+            
+            // 使用TextAnimator显示文本
+            if (player1ScoreTextAnimator != null)
+            {
+                player1ScoreTextAnimator.ShowText(scoreText);
+            }
+            else
+            {
+                player1ScoreText.text = scoreText;
+            }
             player1ScoreText.color = Color.red;
+        }
+        
+        if (player2ScoreText != null)
+        {
+            player2ScoreText.gameObject.SetActive(true);
+            string scoreText = "玩家2: 0";
+            
+            // 使用TextAnimator显示文本
+            if (player2ScoreTextAnimator != null)
+            {
+                player2ScoreTextAnimator.ShowText(scoreText);
+            }
+            else
+            {
+                player2ScoreText.text = scoreText;
+            }
+            player2ScoreText.color = Color.red;
         }
 
         // 初始化 debug text
         if (player1DebugText != null)
         {
             player1DebugText.gameObject.SetActive(true);
-            player1DebugText.text = "+0";
+            string debugText = "+0";
+            
+            // 使用TextAnimator显示文本
+            if (player1DebugTextAnimator != null)
+            {
+                player1DebugTextAnimator.ShowText(debugText);
+            }
+            else
+            {
+                player1DebugText.text = debugText;
+            }
             player1DebugText.color = Color.white;
         }
         
         if (player2DebugText != null)
         {
             player2DebugText.gameObject.SetActive(true);
-            player2DebugText.text = "+0";
+            string debugText = "+0";
+            
+            // 使用TextAnimator显示文本
+            if (player2DebugTextAnimator != null)
+            {
+                player2DebugTextAnimator.ShowText(debugText);
+            }
+            else
+            {
+                player2DebugText.text = debugText;
+            }
             player2DebugText.color = Color.white;
         }
         
-        // 同样初始化子弹数文本
-        if (player1BulletsText != null)
+        // 初始化子弹数文本 - 根据游戏模式决定是否显示
+        if (player1BulletsText != null && player2BulletsText != null)
         {
+            // 检查当前游戏模式
+            if (LevelManager.Instance != null && 
+                (LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor || 
+                 LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard))
+        {
+                // 在Tutor或OnlyCard模式下隐藏子弹文本
+                player1BulletsText.gameObject.SetActive(false);
+                player2BulletsText.gameObject.SetActive(false);
+            }
+            else
+            {
+                // 在有枪的模式下显示子弹文本
             player1BulletsText.gameObject.SetActive(true);
-            player1BulletsText.text = "0/6";
+                string bulletsText = "0/6";
+                
+                // 使用TextAnimator显示文本
+                if (player1BulletsTextAnimator != null)
+                {
+                    player1BulletsTextAnimator.ShowText(bulletsText);
+                }
+                else
+                {
+                    player1BulletsText.text = bulletsText;
+                }
             player1BulletsText.color = Color.yellow;
             
             if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
@@ -788,6 +1031,20 @@ public class UIManager : NetworkBehaviour
                 Vector3 worldPos = ray.origin + ray.direction * distance;
                 
                 player1BulletsText.transform.position = worldPos;
+                }
+                
+                player2BulletsText.gameObject.SetActive(true);
+                
+                // 使用TextAnimator显示文本
+                if (player2BulletsTextAnimator != null)
+                {
+                    player2BulletsTextAnimator.ShowText(bulletsText);
+                }
+                else
+                {
+                    player2BulletsText.text = bulletsText;
+                }
+                player2BulletsText.color = Color.yellow;
             }
         }
         
@@ -813,7 +1070,7 @@ public class UIManager : NetworkBehaviour
                 Debug.Log($"[UIManager] ForceUIVisibility: 从LevelManager获取总回合数: {initialTotalRounds}");
             }
             
-            string roundInfo = $"ROUND 1/{initialTotalRounds}";
+            string roundInfo = $"回合：1/{initialTotalRounds}";
             roundText1.text = roundInfo;
             roundText2.text = roundInfo;
             roundText1.gameObject.SetActive(true);
@@ -836,7 +1093,7 @@ public class UIManager : NetworkBehaviour
             lastDisplayedRound = displayRound;
             lastDisplayedTotalRounds = totalRounds;
 
-            string roundInfo = $"ROUND {displayRound}/{totalRounds}";
+            string roundInfo = $"回合：<wave a=0.2 f=0.8>{displayRound}</wave>/{totalRounds}";
 
             UpdatePlayerTargetText();
             
@@ -1006,36 +1263,59 @@ public class UIManager : NetworkBehaviour
                 
                 string winner;
                 
-                // 检查是否是因为真子弹结束游戏
+                // 获取枪控制器引用
                 GunController gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
                 GunController gun2 = GameObject.Find("Gun2")?.GetComponent<GunController>();
                 
-                if (gun1 != null && gun1.gameEnded.Value)
+                // 改进的获胜者判断逻辑
+                bool player1Shot = gun1 != null && gun1.gameEnded.Value;
+                bool player2Shot = gun2 != null && gun2.gameEnded.Value;
+                
+                if (player1Shot && player2Shot)
                 {
-                    winner = "Player 2"; // 玩家1被击中，玩家2获胜
-                    isSettlementFromDeath = true;  // 设置标记
+                    // 两名玩家都被击中
+                    winner = "无人";
+                    isSettlementFromDeath = true;
+                    Debug.Log("[UIManager] Game ended with both players shot, no winner");
+                }
+                else if (player1Shot)
+                {
+                    // 玩家1被击中，玩家2获胜
+                    winner = "玩家2";
+                    isSettlementFromDeath = true;
                     Debug.Log("[UIManager] Game ended due to Player 1 being shot");
                 }
-                else if (gun2 != null && gun2.gameEnded.Value)
+                else if (player2Shot)
                 {
-                    winner = "Player 1"; // 玩家2被击中，玩家1获胜
-                    isSettlementFromDeath = true;  // 设置标记
+                    // 玩家2被击中，玩家1获胜
+                    winner = "玩家1";
+                    isSettlementFromDeath = true;
                     Debug.Log("[UIManager] Game ended due to Player 2 being shot");
                 }
                 else
                 {
-                    // 正常回合结束，比较分数
-                    winner = player1Score > player2Score ? "Player 1" :
-                            player2Score > player1Score ? "Player 2" : "No one";
-                    isSettlementFromDeath = false;  // 重置标记
+                    // 没有玩家被击中，比较分数
+                    if (player1Score > player2Score)
+                    {
+                        winner = "玩家1";
+                    }
+                    else if (player2Score > player1Score)
+                    {
+                        winner = "玩家2";
+                    }
+                    else
+                    {
+                        winner = "无人"; // 平局
+                    }
+                    isSettlementFromDeath = false;
                     Debug.Log("[UIManager] Game ended normally, winner: " + winner);
                 }
                 
-                settlementScoreText.text = $"Phase Complete!\n\n" +
-                                         $"Player 1: {player1Score}\n" +
-                                         $"Player 2: {player2Score}\n\n" +
-                                         $"{winner} wins this Phase!\n\n" +
-                                         "Continue to Next Phase?";
+                settlementScoreText.text = $"本局游戏结束\n\n" +
+                                         $"玩家1: {player1Score}\n" +
+                                         $"玩家2: {player2Score}\n\n" +
+                                         $"本局{winner}胜利！\n\n" +
+                                         "玩家们，要继续加大赌注吗？";
 
                 Debug.Log($"[UIManager] 结算面板文本已更新 - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
             }
@@ -1117,8 +1397,21 @@ public class UIManager : NetworkBehaviour
         // 更新分数
         UpdateScoreText();
 
-        // 更新子弹
+        // 更新子弹 - 根据游戏模式决定是否显示
+        if (LevelManager.Instance == null || 
+            (LevelManager.Instance.currentMode.Value != LevelManager.Mode.Tutor && 
+             LevelManager.Instance.currentMode.Value != LevelManager.Mode.OnlyCard))
+        {
         UpdateBulletsText();
+        }
+        else
+        {
+            // 在Tutor或OnlyCard模式下隐藏子弹文本
+            if (player1BulletsText != null)
+                player1BulletsText.gameObject.SetActive(false);
+            if (player2BulletsText != null)
+                player2BulletsText.gameObject.SetActive(false);
+        }
 
         // 更新回合
         if (roundManager != null)
@@ -1187,7 +1480,7 @@ public class UIManager : NetworkBehaviour
     {
         // 确保显示的回合数不超过总回合数
         int displayRound = Mathf.Min(currentRound, totalRounds);
-        string roundInfo = $"ROUND {displayRound}/{totalRounds}";
+        string roundInfo = $"回合：<wave a=0.2 f=0.8>{displayRound}</wave>/{totalRounds}";
         UpdatePlayerTargetTextClientRpc();
         
         Debug.Log($"[UIManager] UpdateRoundTextClientRpc: 更新回合显示为 {roundInfo}, 客户端ID: {NetworkManager.Singleton.LocalClientId}");
@@ -1312,8 +1605,9 @@ public class UIManager : NetworkBehaviour
     {
         float waitTime = currentState.Value switch
         {
+            State.Idle => 1.2f,
             State.DebugText => 1.5f,
-            State.ScoreAndCoin => 2f,
+            State.ScoreAndCoin => 1.7f,
             State.FireAnimation => 2.5f,
             State.BulletUI => 0.5f,
             State.RoundText => 0.5f,
@@ -1356,7 +1650,13 @@ public class UIManager : NetworkBehaviour
                 break;
             case State.BulletUI:
                 Debug.Log("[UIManager State Machine] BulletUI: Updating bullet count display");
+                // 只在非Tutor和非OnlyCard模式下更新子弹UI
+                if (LevelManager.Instance == null || 
+                    (LevelManager.Instance.currentMode.Value != LevelManager.Mode.Tutor && 
+                     LevelManager.Instance.currentMode.Value != LevelManager.Mode.OnlyCard))
+                {
                 UpdateBulletsText();
+                }
                 break;
             case State.RoundText:
                 Debug.Log("[UIManager State Machine] RoundText: Updating round information");
@@ -1518,16 +1818,16 @@ public class UIManager : NetworkBehaviour
         {
             if (player1TargetText != null && player2TargetText != null)
             {
-                player1TargetText.text = "Target: 10";
-                player2TargetText.text = "Target: 10";
+                player1TargetText.text = "...";
+                player2TargetText.text = "...";
             }
         }
         else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
         {
             if (player1TargetText != null && player2TargetText != null)
             {
-                player1TargetText.text = "OK";
-                player2TargetText.text = "Test OK";
+                player1TargetText.text = "本轮禁止使用枪";
+                player2TargetText.text = "本轮禁止使用枪";
             }
         }
     }
@@ -1539,16 +1839,16 @@ public class UIManager : NetworkBehaviour
         {
             if (player1TargetText != null && player2TargetText != null)
             {
-                player1TargetText.text = "Target: 10";
-                player2TargetText.text = "Target: 10";
+                player1TargetText.text = "...";
+                player2TargetText.text = "...";
             }
         }
         else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
         {
             if (player1TargetText != null && player2TargetText != null)
             {
-                player1TargetText.text = "OK";
-                player2TargetText.text = "Test OK";
+                player1TargetText.text = "本轮禁止使用枪";
+                player2TargetText.text = "本轮禁止使用枪";
             }
         }
     }

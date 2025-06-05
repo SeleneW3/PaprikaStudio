@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using Cinemachine;
 
 public class GunController : NetworkBehaviour
 {
@@ -25,6 +26,10 @@ public class GunController : NetworkBehaviour
 
     [Header("UI Anchor")]
     public Transform gunUIAnchor;  // 用于放置UI按钮的锚点
+    
+    [Header("Light Effect")]
+    public Light directionalLight; // 场景中的Directional Light引用
+    private float originalLightIntensity; // 记录灯光原始强度
     
     // Gun action events
     public delegate void GunActionHandler(GunController gun);
@@ -223,17 +228,91 @@ public class GunController : NetworkBehaviour
             gunShake.OnSuccessfulShot();
         }
         
-        // 相机震动
-        if (CameraShake.Instance != null)
-        {
-            CameraShake.Instance.ShakeCamera(0.3f, 0.4f);
-        }
+        // 延迟触发相机震动
+        StartCoroutine(PlayCameraShakeWithDelay(2f));
 
         // 延迟触发血迹特效
         StartCoroutine(PlayHitScreenEffectWithDelay(2.5f));
         
         // 延迟播放击中音效
         StartCoroutine(PlaySoundWithDelay("BulletHit", 2f));
+    }
+
+    // 添加延迟相机震动的协程
+    private IEnumerator PlayCameraShakeWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // 使用Cinemachine Impulse系统触发相机震动
+        var impulseSource = GetComponent<CinemachineImpulseSource>();
+        if (impulseSource != null)
+        {
+            // 触发多次震动以增强效果
+            StartCoroutine(MultipleShakes(impulseSource, 5, 0.15f));
+            Debug.Log("Cinemachine Impulse triggered for multiple camera shakes");
+        }
+        else
+        {
+            // 尝试查找场景中的Impulse Source
+            impulseSource = FindObjectOfType<CinemachineImpulseSource>();
+            if (impulseSource != null)
+            {
+                StartCoroutine(MultipleShakes(impulseSource, 5, 0.15f));
+                Debug.Log("Found and triggered Cinemachine Impulse in scene for multiple shakes");
+            }
+            else
+            {
+                // 如果没有找到Impulse Source，尝试使用传统方法
+                if (CameraShake.Instance != null)
+                {
+                    // 使用传统CameraShake实现多次震动
+                    StartCoroutine(MultipleCameraShakes(5, 0.15f));
+                    Debug.Log("Fallback to traditional camera shake with multiple shakes");
+                }
+                else
+                {
+                    Debug.LogWarning("No camera shake system available");
+                }
+            }
+        }
+    }
+    
+    // 添加多次震动的协程
+    private IEnumerator MultipleShakes(CinemachineImpulseSource source, int count, float interval)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            // 随机方向的震动，每次方向略有不同
+            Vector3 shakeDirection = new Vector3(
+                Random.Range(-1f, 1f),
+                Random.Range(-1f, 1f),
+                Random.Range(-1f, 1f)
+            ).normalized;
+            
+            // 震动强度随着时间逐渐减弱
+            float strength = 1.0f - (i / (float)count) * 0.5f;
+            
+            // 生成震动
+            source.GenerateImpulse(shakeDirection * strength);
+            
+            // 等待间隔
+            yield return new WaitForSeconds(interval);
+        }
+    }
+    
+    // 使用传统CameraShake实现多次震动
+    private IEnumerator MultipleCameraShakes(int count, float interval)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            // 震动强度随着时间逐渐减弱
+            float strength = 1.0f - (i / (float)count) * 0.5f;
+            
+            CameraShake.Instance.ShakeCamera(strength, 0.2f);
+            
+            // 等待间隔
+            yield return new WaitForSeconds(interval);
+        }
     }
 
     private IEnumerator PlayHitScreenEffectWithDelay(float delay)
@@ -259,7 +338,56 @@ public class GunController : NetworkBehaviour
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySFX(soundName);
+            
+            // 当播放BulletHit音效时，延迟0.3秒后触发闪光效果
+            if (soundName == "BulletHit")
+            {
+                StartCoroutine(DelayedFlashLight(0.3f));
+            }
         }
+    }
+    
+    // 添加延迟触发闪光效果的方法
+    private IEnumerator DelayedFlashLight(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StartCoroutine(FlashLightEffect());
+    }
+    
+    // 闪光效果方法
+    private IEnumerator FlashLightEffect()
+    {
+        if (directionalLight == null) yield break;
+        
+        // 记录当前强度（仅用于日志）
+        float currentIntensity = directionalLight.intensity;
+        Debug.Log("闪光前灯光强度: " + currentIntensity);
+        
+        // 突变到高强度
+        directionalLight.intensity = 7f;
+        Debug.Log("闪光中灯光强度: " + directionalLight.intensity);
+        
+        // 维持高强度0.2秒
+        yield return new WaitForSeconds(0.2f);
+        
+        // 在0.2秒内渐变回0
+        float elapsedTime = 0f;
+        float duration = 0.15f;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            
+            // 使用平滑插值，从7渐变到0
+            directionalLight.intensity = Mathf.Lerp(7f, 0f, t);
+            
+            yield return null;
+        }
+        
+        // 确保恢复到0
+        directionalLight.intensity = 0f;
+        Debug.Log("闪光后灯光强度已恢复: " + directionalLight.intensity);
     }
 
     public void ResetGun()

@@ -75,7 +75,7 @@ public class RoundManager : NetworkBehaviour
         UIManager uiManager = FindObjectOfType<UIManager>();
         if (uiManager == null)
         {
-            Debug.LogError("UIManager未找到!");
+            Debug.Log("UIManager未找到!");
         }
 
         if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
@@ -86,16 +86,38 @@ public class RoundManager : NetworkBehaviour
         {
             totalRounds.Value = 5;
         }
+
+        // 根据游戏模式设置枪的可见性
+        UpdateGunsVisibility();
     }
 
     private void OnEnable()
     {
         GameManager.OnPlayersReady += AssignPlayers;
+        
+        // 订阅LevelManager的模式更改事件
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.OnModeChanged += OnGameModeChanged;
+        }
     }
 
     private void OnDisable()
     {
         GameManager.OnPlayersReady -= AssignPlayers;
+        
+        // 取消订阅LevelManager的模式更改事件
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.OnModeChanged -= OnGameModeChanged;
+        }
+    }
+    
+    // 当游戏模式改变时调用
+    private void OnGameModeChanged(LevelManager.Mode newMode)
+    {
+        // 更新枪的可见性
+        UpdateGunsVisibility();
     }
 
     void Update()
@@ -127,7 +149,7 @@ public class RoundManager : NetworkBehaviour
                 }
                 else
                 {
-                    Debug.LogError("CardManager not found!");
+                    Debug.Log("CardManager not found!");
                 }
                 DialogManager.Instance.PlayRange(6, 9);
             }
@@ -138,7 +160,7 @@ public class RoundManager : NetworkBehaviour
             else if(tutorState == 4)
             {
                 tutorState++;
-                DialogManager.Instance.PlayRange(10, 12);
+                StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
             
                 Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
             }
@@ -204,7 +226,7 @@ public class RoundManager : NetworkBehaviour
                 }
                 else
                 {
-                    Debug.LogError("CardManager not found!");
+                    Debug.Log("CardManager not found!");
                 }
             }
 
@@ -244,7 +266,7 @@ public class RoundManager : NetworkBehaviour
             if (showCard == false)
             {
                 showCard = true;
-                Debug.LogError("I've got here");
+                Debug.Log("I've got here");
                 deckLogic.ShowSentCards();
             }
             else
@@ -390,9 +412,12 @@ public class RoundManager : NetworkBehaviour
         float player1CurrentRoundPoint;
         float player2CurrentRoundPoint;
 
-        // 只有 isGunRound==true 才判断开枪标记
-        //if (isGunRound)
-        //{
+        // 只有在OnlyGun和CardAndGun模式下才允许开枪
+        bool canUseGun = (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyGun || 
+                         LevelManager.Instance.currentMode.Value == LevelManager.Mode.CardAndGun);
+        
+        if (canUseGun)
+        {
             if (player2Choice == PlayerLogic.playerChoice.Cheat && Gun1 != null)
             {
                 player1CanFire.Value = true;
@@ -401,7 +426,7 @@ public class RoundManager : NetworkBehaviour
             {
                 player2CanFire.Value = true;
             }
-        //}
+        }
 
         // 计算得分
         if(player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cooperate)
@@ -644,5 +669,61 @@ public class RoundManager : NetworkBehaviour
         {
             UpdateBalanceScaleServerRpc(0, 0);
         }
+        
+        // 更新枪的可见性
+        UpdateGunsVisibility();
+    }
+
+    // 添加一个方法来根据游戏模式控制枪的可见性
+    void UpdateGunsVisibility()
+    {
+        if (Gun1 == null || Gun2 == null) return;
+
+        bool shouldShowGuns = (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyGun || 
+                              LevelManager.Instance.currentMode.Value == LevelManager.Mode.CardAndGun);
+
+        // 在服务器端更新枪的可见性
+        if (IsServer)
+        {
+            UpdateGunsVisibilityClientRpc(shouldShowGuns);
+        }
+    }
+
+    [ClientRpc]
+    void UpdateGunsVisibilityClientRpc(bool showGuns)
+    {
+        // 设置枪的可见性
+        if (Gun1 != null)
+        {
+            foreach (Renderer renderer in Gun1.GetComponentsInChildren<Renderer>())
+            {
+                renderer.enabled = showGuns;
+            }
+            // 禁用碰撞器以防止鼠标交互
+            foreach (Collider collider in Gun1.GetComponentsInChildren<Collider>())
+            {
+                collider.enabled = showGuns;
+            }
+        }
+
+        if (Gun2 != null)
+        {
+            foreach (Renderer renderer in Gun2.GetComponentsInChildren<Renderer>())
+            {
+                renderer.enabled = showGuns;
+            }
+            // 禁用碰撞器以防止鼠标交互
+            foreach (Collider collider in Gun2.GetComponentsInChildren<Collider>())
+            {
+                collider.enabled = showGuns;
+            }
+        }
+    }
+
+    // 延迟播放对话的协程
+    private IEnumerator PlayDialogWithDelay(int startIndex, int endIndex, float delaySeconds)
+    {
+        yield return new WaitForSeconds(delaySeconds);
+        DialogManager.Instance.PlayRange(startIndex, endIndex);
     }
 }

@@ -26,12 +26,16 @@ public class CellLogic : MonoBehaviour
     {
         playerName = transform.Find("Name").GetComponent<TMP_Text>();
         stateText = transform.Find("State").GetComponent<TMP_Text>();
-        playerName.text = "Player" + playerInfo.id;
-        stateText.text = playerInfo.isReady ? "Ready" : "Not Ready";
+        
+        // Convert player IDs to player numbers (0->1, 1->2)
+        int playerNumber = (int)playerInfo.id + 1;
+        playerName.text = "玩家" + playerNumber;
+        
+        stateText.text = playerInfo.isReady ? "准备完毕" : "未准备";
     }
 
     internal void SetReady(bool arg0)
     {
-        stateText.text = arg0 ? "Ready" : "Not Ready";
+        stateText.text = arg0 ? "准备完毕" : "未准备";
     }
 }

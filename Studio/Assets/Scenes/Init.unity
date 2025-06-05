@@ -158,19 +158,19 @@ MonoBehaviour:
   sfxClips:
   - name: GunAddBullet
     clip: {fileID: 8300000, guid: 24c19b3ec9732b6489f0e94f0dd8303f, type: 3}
-    volume: 0.31
+    volume: 0.55
   - name: GunFire
     clip: {fileID: 8300000, guid: acd72f1954bcda54286f19626f519c9a, type: 3}
-    volume: 0.443
+    volume: 0.55
   - name: BulletHit
     clip: {fileID: 8300000, guid: 3f3a555eae492bb4a9cebd5254656d36, type: 3}
-    volume: 0.263
+    volume: 0.4
   - name: EmptyShot
     clip: {fileID: 8300000, guid: 86c067f241d50604db4a2c99e8e64b0b, type: 3}
-    volume: 0.766
+    volume: 1
   - name: GunReset
     clip: {fileID: 8300000, guid: 7d5ded592e52f3544bbc622839e43130, type: 3}
-    volume: 0.557
+    volume: 0.6
   - name: PauseMenu
     clip: {fileID: 8300000, guid: f7cabd4ec8356344d88d85106d090ca8, type: 3}
     volume: 1

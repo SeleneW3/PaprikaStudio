@@ -7,19 +7,19 @@ public class DeckLogic : NetworkBehaviour
 {
     public List<CardLogic> cardLogics = new List<CardLogic>();
 
-    [Header("ÅÆÂß¼­")]
+    [Header("ï¿½ï¿½ï¿½ß¼ï¿½")]
     public CardLogic player1SendCard;
     public CardLogic player2SendCard;
 
-    [Header("Õ¹Ê¾Î»ÖÃ")]
+    [Header("Õ¹Ê¾Î»ï¿½ï¿½")]
     public Transform player1CardShowPos;
     public Transform player2CardShowPos;
 
-    [Header("×Ô¶¯ÊÕÅÆÉèÖÃ")]
-    [Tooltip("Õ¹Ê¾ºó£¬¶à³¤Ê±¼ä£¨Ãë£©×Ô¶¯ÊÕ»ØÅÆ£»<=0 Ôò²»×Ô¶¯ÊÕÅÆ")]
+    [Header("ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
+    [Tooltip("Õ¹Ê¾ï¿½ó£¬¶à³¤Ê±ï¿½ä£¨ï¿½ë£©ï¿½Ô¶ï¿½ï¿½Õ»ï¿½ï¿½Æ£ï¿½<=0 ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public float autoCollectDelay = 5f;
 
-    // ÓÃÓÚ¼ÇÂ¼Ô­Ê¼Î»ÖÃºÍĞı×ª
+    // ï¿½ï¿½ï¿½Ú¼ï¿½Â¼Ô­Ê¼Î»ï¿½Ãºï¿½ï¿½ï¿½×ª
     private Vector3 p1OriginalPos;
     private Quaternion p1OriginalRot;
     private Vector3 p2OriginalPos;
@@ -29,7 +29,7 @@ public class DeckLogic : NetworkBehaviour
     public NetworkVariable<bool> player1SendCardBool = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> player2SendCardBool = new NetworkVariable<bool>(false);
 
-    // ¸ú×ÙÆô¶¯µÄĞ­³Ì£¬ÒÔ±ãÈ¡Ïû
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½Ì£ï¿½ï¿½Ô±ï¿½È¡ï¿½ï¿½
     private Coroutine autoCollectCoroutine;
 
     public CameraLogic cameraLogic;
@@ -55,15 +55,15 @@ public class DeckLogic : NetworkBehaviour
     }
 
     /// <summary>
-    /// ½«Á½ÕÅÅÆÒÆ¶¯µ½¸÷×ÔµÄÕ¹Ê¾Î»ÖÃ²¢·­Ãæ£¬Ö»¼ÇÂ¼Ò»´ÎÔ­Ê¼ transform£¬
-    /// ²¢ÔÚ autoCollectDelay Ãëºó×Ô¶¯µ÷ÓÃ CollectSentCards¡£
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôµï¿½Õ¹Ê¾Î»ï¿½Ã²ï¿½ï¿½ï¿½ï¿½æ£¬Ö»ï¿½ï¿½Â¼Ò»ï¿½ï¿½Ô­Ê¼ transformï¿½ï¿½
+    /// ï¿½ï¿½ï¿½ï¿½ autoCollectDelay ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ CollectSentCardsï¿½ï¿½
     /// </summary>
     public void ShowSentCards()
     {
         if (!hasShown)
         {
             hasShown = true;
-            // ¼ÇÂ¼Ô­Ê¼×´Ì¬
+            // ï¿½ï¿½Â¼Ô­Ê¼×´Ì¬
             if (player1SendCard != null)
             {
                 p1OriginalPos = player1SendCard.transform.position;
@@ -80,13 +80,13 @@ public class DeckLogic : NetworkBehaviour
             }
             else if(NetworkManager.LocalClientId == 1)
             {
-                Debug.LogError("Switching to Player 2 Show Camera");
+                Debug.Log("Switching to Player 2 Show Camera");
                 cameraLogic.SwitchToPlayer2ShowCamera();
             }
             
         }
 
-        // ÒÆ¶¯²¢·­Ãæ
+        // ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (player1SendCard != null && player1CardShowPos != null)
         {
             var t = player1SendCard.transform;
@@ -102,7 +102,7 @@ public class DeckLogic : NetworkBehaviour
             t.Rotate(0f, 180f, 0f, Space.Self);
         }
 
-        // Èç¹û¿ªÆôÁË×Ô¶¯ÊÕÅÆ£¬ÖØÆôĞ­³Ì
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½ï¿½
         if (autoCollectDelay > 0f)
         {
             if (autoCollectCoroutine != null)
@@ -114,12 +114,12 @@ public class DeckLogic : NetworkBehaviour
     }
 
     /// <summary>
-    /// ×Ô¶¯ÑÓ³Ùºóµ÷ÓÃÊÕÅÆ
+    /// ï¿½Ô¶ï¿½ï¿½Ó³Ùºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     private IEnumerator AutoCollectAfterDelay()
     {
         yield return new WaitForSeconds(autoCollectDelay);
-        Debug.LogError("×Ô¶¯ÊÕÅÆ´¥·¢");
+        Debug.Log("è‡ªåŠ¨æ”¶ç‰Œè§¦å‘");
         CollectSentCards();
         if(GameManager.Instance.currentGameState == GameManager.GameState.TutorShowState)
         {
@@ -132,7 +132,7 @@ public class DeckLogic : NetworkBehaviour
     }
 
     /// <summary>
-    /// ½«Á½ÕÅÅÆÊÕ»Øµ½ËüÃÇ×î³õµÄÎ»ÖÃºÍĞı×ª£¬²¢Í£Ö¹×Ô¶¯ÊÕÅÆĞ­³Ì
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ»Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãºï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½ï¿½
     /// </summary>
     public void CollectSentCards()
     {
@@ -156,13 +156,13 @@ public class DeckLogic : NetworkBehaviour
         }
         else if(NetworkManager.LocalClientId == 1)
         {
-            Debug.LogError("Switching to Player 2 Camera");
+            Debug.Log("Switching to Player 2 Camera");
             cameraLogic.SwitchToPlayer2Camera();
         }
 
         hasShown = false;
 
-        // Í£Ö¹×Ô¶¯ÊÕÅÆĞ­³Ì£¨ÈçÈÔÔÚÔËĞĞ£©
+        // Í£Ö¹ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½Ì£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ£ï¿½
         if (autoCollectCoroutine != null)
         {
             StopCoroutine(autoCollectCoroutine);
