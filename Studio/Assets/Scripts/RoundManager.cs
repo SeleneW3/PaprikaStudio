@@ -160,7 +160,8 @@ public class RoundManager : NetworkBehaviour
             else if(tutorState == 4)
             {
                 tutorState++;
-                StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
+                DialogManager.Instance.PlayRange(10, 12);
+                //StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
             
                 Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
             }
@@ -725,5 +726,27 @@ public class RoundManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(delaySeconds);
         DialogManager.Instance.PlayRange(startIndex, endIndex);
+    }
+
+    [ServerRpc]
+    private void PlayDelayedDialogServerRpc(int startIndex, int endIndex, float delaySeconds)
+    {
+        // Schedule the dialog to play after the delay on all clients
+        StartCoroutine(DelayedDialogClientRpcCoroutine(startIndex, endIndex, delaySeconds));
+    }
+
+    private IEnumerator DelayedDialogClientRpcCoroutine(int startIndex, int endIndex, float delaySeconds)
+    {
+        yield return new WaitForSeconds(delaySeconds);
+        PlayDialogClientRpc(startIndex, endIndex);
+    }
+
+    [ClientRpc]
+    private void PlayDialogClientRpc(int startIndex, int endIndex)
+    {
+        if (DialogManager.Instance != null)
+        {
+            DialogManager.Instance.PlayRange(startIndex, endIndex);
+        }
     }
 }

@@ -3,6 +3,7 @@ using TMPro;
 using Febucci.UI;
 using System.Collections;
 using Unity.Netcode;
+using System;
 
 public class DialogManager : NetworkBehaviour
 {
@@ -26,104 +27,6 @@ public class DialogManager : NetworkBehaviour
     [SerializeField] private bool useTypingSound = true;         // 是否使用打字音效
 
     // 对话内容定义
-    private static readonly string[] Level3A_Dialog_Player1 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，你现在已经欺骗了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次欺骗...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
-    };
-
-    private static readonly string[] Level3A_Dialog_Player2 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，你现在已经合作了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到10次合作...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
-    };
-
-    private static readonly string[] Level3B_Dialog_Player1 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，你现在已经合作了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到10次合作...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
-    };
-
-    private static readonly string[] Level3B_Dialog_Player2 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，你现在已经欺骗了xx次</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>在整局游戏中，你如果总共能够能达到12次欺骗...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你最后会获得15分的额外加分。</wave></shake>"
-    };
-
-//---------------------------Level4--------------------------------
-    private static readonly string[] Level4A_Dialog_Player1 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮如果双方总得分能够控制在15分以内...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
-    };
-
-    private static readonly string[] Level4A_Dialog_Player2 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮如果双方总得分能够达到20分...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
-    };
-
-    private static readonly string[] Level4B_Dialog_Player1 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮如果双方总得分能够达到20分...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
-    }; 
-
-    private static readonly string[] Level4B_Dialog_Player2 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮如果双方总得分能够控制在15分以内...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得10分的额外加分。</wave></shake>"
-    };
-
-//---------------------------Level5--------------------------------
-    private static readonly string[] Level5A_Dialog_Player1 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮要是你被打死了...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
-    };
-
-    private static readonly string[] Level5A_Dialog_Player2 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮要是对方分数比你高...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
-    };
-
-    private static readonly string[] Level5B_Dialog_Player1 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家1，本轮要是对方分数比你高...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
-
-    };
-
-    private static readonly string[] Level5B_Dialog_Player2 = new string[]
-    {   
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>玩家2，本轮要是你被打死了...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>你会获得15分作为补偿。</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>权衡利弊吧。</wave></shake>"
-    };
-
-//---------------------------LevelFinal--------------------------------
-
-    private static readonly string[] LevelFinal_Dialog_Player1 = new string[]
-    {  
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>最后一轮了...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>打死对方,获得双方总分。</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>别留情面。</wave></shake>"
-    };
-
-    private static readonly string[] LevelFinal_Dialog_Player2 = new string[]
-    {
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>最后一轮了...</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>打死对方,获得双方总分。</wave></shake>",
-        "<shake a=0.2 f=0.8><wave a=0.3 f=0.1>别留情面。</wave></shake>"
-    };
     
 
     private string[] currentDialog;
@@ -137,6 +40,7 @@ public class DialogManager : NetworkBehaviour
     private int endLineIndex;
     private bool isTyping;
     private Coroutine autoAdvanceCoroutine;
+    private Action dialogCompleteCallback; // 添加回调字段
 
     private TextAnimatorPlayer animatorPlayer;
 
@@ -203,6 +107,7 @@ public class DialogManager : NetworkBehaviour
         currentDialog = dialogLines;  // 使用教程对话内容
         currentLineIndex = startIndex;
         endLineIndex = endIndex;
+        dialogCompleteCallback = null; // 清除之前的回调
 
         dialogPanel.SetActive(true);
         DisplayCurrentLine();
@@ -216,6 +121,21 @@ public class DialogManager : NetworkBehaviour
             SoundManager.Instance.StopSFX(typeSoundName);
         }
         // ... 其他清理代码
+    }
+
+    public void PlayCustomDialog(string player1Text, string player2Text, Action onComplete = null)
+    {
+        // 创建临时对话数组
+        currentDialog = new string[] { player1Text, player2Text };
+        currentLineIndex = 0;
+        endLineIndex = 1;
+        
+        // 存储回调
+        dialogCompleteCallback = onComplete;
+        
+        // 显示对话面板
+        dialogPanel.SetActive(true);
+        DisplayCurrentLine();
     }
 
     #endregion
@@ -331,6 +251,14 @@ public class DialogManager : NetworkBehaviour
         }
 
         dialogPanel.SetActive(false);
+        
+        // 调用回调
+        if (dialogCompleteCallback != null)
+        {
+            Action callback = dialogCompleteCallback;
+            dialogCompleteCallback = null; // 清除引用
+            callback.Invoke();
+        }
     }
 
     private void OnDestroy()

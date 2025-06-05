@@ -90,16 +90,22 @@ public class UIManager : NetworkBehaviour
     public Vector2 cursorHotspot = Vector2.zero;  // 鼠标热点位置
 
     [Header("World Space UI")]
-    // public TextMeshProUGUI levelText1;  // 玩家1的关卡显示
-    // public TextMeshProUGUI levelText2;  // 玩家2的关卡显示
+    public TextMeshProUGUI levelText1;  // 玩家1的关卡显示
+    public TextMeshProUGUI levelText2;  // 玩家2的关卡显示
     public TextMeshProUGUI roundText1;  // 玩家1的回合显示
     public TextMeshProUGUI roundText2;  // 玩家2的回合显示
     public TextMeshProUGUI player1TargetText;
     public TextMeshProUGUI player2TargetText;
+    public TextMeshProUGUI player1TotalScoreText; // 玩家1的总分显示
+    public TextMeshProUGUI player2TotalScoreText; // 玩家2的总分显示
+    private TextAnimatorPlayer levelText1Animator;
+    private TextAnimatorPlayer levelText2Animator;
     private TextAnimatorPlayer roundText1Animator;
     private TextAnimatorPlayer roundText2Animator;
     private TextAnimatorPlayer player1TargetTextAnimator;
     private TextAnimatorPlayer player2TargetTextAnimator;
+    private TextAnimatorPlayer player1TotalScoreTextAnimator;
+    private TextAnimatorPlayer player2TotalScoreTextAnimator;
 
     private int lastDisplayedRound = -1; // 用于跟踪上一次显示的回合数
     private int lastDisplayedTotalRounds = -1; // 用于跟踪上一次显示的总回合数
@@ -132,6 +138,10 @@ public class UIManager : NetworkBehaviour
         networkManager = NetworkManager.Singleton;
 
         // 获取Text Animator组件
+        if (levelText1 != null)
+            levelText1Animator = levelText1.GetComponent<TextAnimatorPlayer>();
+        if (levelText2 != null)
+            levelText2Animator = levelText2.GetComponent<TextAnimatorPlayer>();
         if (roundText1 != null)
             roundText1Animator = roundText1.GetComponent<TextAnimatorPlayer>();
         if (roundText2 != null)
@@ -140,7 +150,10 @@ public class UIManager : NetworkBehaviour
             player1TargetTextAnimator = player1TargetText.GetComponent<TextAnimatorPlayer>();
         if (player2TargetText != null)
             player2TargetTextAnimator = player2TargetText.GetComponent<TextAnimatorPlayer>();
-
+        if (player1TotalScoreText != null)
+            player1TotalScoreTextAnimator = player1TotalScoreText.GetComponent<TextAnimatorPlayer>();
+        if (player2TotalScoreText != null)
+            player2TotalScoreTextAnimator = player2TotalScoreText.GetComponent<TextAnimatorPlayer>();
     }
 
     public override void OnNetworkSpawn()
@@ -224,6 +237,10 @@ public class UIManager : NetworkBehaviour
         }
 
         // 获取Text Animator组件
+        if (levelText1 != null)
+            levelText1Animator = levelText1.GetComponent<TextAnimatorPlayer>();
+        if (levelText2 != null)
+            levelText2Animator = levelText2.GetComponent<TextAnimatorPlayer>();
         if (roundText1 != null)
             roundText1Animator = roundText1.GetComponent<TextAnimatorPlayer>();
         if (roundText2 != null)
@@ -232,6 +249,10 @@ public class UIManager : NetworkBehaviour
             player1TargetTextAnimator = player1TargetText.GetComponent<TextAnimatorPlayer>();
         if (player2TargetText != null)
             player2TargetTextAnimator = player2TargetText.GetComponent<TextAnimatorPlayer>();
+        if (player1TotalScoreText != null)
+            player1TotalScoreTextAnimator = player1TotalScoreText.GetComponent<TextAnimatorPlayer>();
+        if (player2TotalScoreText != null)
+            player2TotalScoreTextAnimator = player2TotalScoreText.GetComponent<TextAnimatorPlayer>();
             
         // 获取DebugText的TextAnimator组件
         if (player1DebugText != null)
@@ -325,6 +346,18 @@ public class UIManager : NetworkBehaviour
             roundText2.gameObject.SetActive(true);
             
             Debug.Log($"[UIManager] 初始化回合显示为: {roundInfo}");
+        }
+
+        // 初始化Level文本
+        if (levelText1 != null && levelText2 != null && LevelManager.Instance != null)
+        {
+            UpdateLevelText(LevelManager.Instance.currentLevel.Value);
+        }
+
+        // 初始化玩家总分文本
+        if (player1TotalScoreText != null && player2TotalScoreText != null && LevelManager.Instance != null)
+        {
+            UpdatePlayerTotalScoreText();
         }
 
         // 强制UI可见性
@@ -1373,6 +1406,12 @@ public class UIManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void LoadNextSceneServerRpc()
     {
+        // 更新解锁的关卡
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.UpdateUnlockedLevelServerRpc();
+        }
+        
         // 在服务器端执行场景加载
         LoadNextSceneClientRpc();
     }
@@ -1382,7 +1421,7 @@ public class UIManager : NetworkBehaviour
     {
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.LoadScene("ModeScene");
+            GameManager.Instance.LoadScene("LevelScene");
         }
     }
 
@@ -1449,6 +1488,16 @@ public class UIManager : NetworkBehaviour
         {
             Debug.LogError("[UIManager] Settlement panel is null!");
         }
+
+        // 更新关卡显示
+        if (LevelManager.Instance != null)
+        {
+            UpdateLevelText(LevelManager.Instance.currentLevel.Value);
+        }
+
+        // 更新玩家总分和统计数据
+        UpdatePlayerTotalScoreText();
+        UpdatePlayerStatsText();
     }
 
     // 添加回合文本更新方法
@@ -1630,6 +1679,8 @@ public class UIManager : NetworkBehaviour
             case State.ScoreAndCoin:
                 Debug.Log("[UIManager State Machine] ScoreAndCoin: Updating score display");
                 UpdateScoreText();
+                // 更新玩家总分
+                UpdatePlayerTotalScoreText();
                 break;
             case State.FireAnimation:
                 Debug.Log("[UIManager State Machine] FireAnimation: Checking and executing gun firing");
@@ -1665,6 +1716,9 @@ public class UIManager : NetworkBehaviour
                     // 确保这里正确地更新回合显示，因为RoundManager不再直接更新UI
                     UpdateRoundText(roundManager.currentRound.Value, roundManager.totalRounds.Value);
                     Debug.Log($"[UIManager State Machine] Round updated to: {roundManager.currentRound.Value}/{roundManager.totalRounds.Value}");
+                    
+                    // 更新玩家统计数据
+                    UpdatePlayerStatsText();
                 }
                 break;
             case State.Settlement:
@@ -1814,42 +1868,179 @@ public class UIManager : NetworkBehaviour
 
     public void UpdatePlayerTargetText()
     {
-        if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
-        {
-            if (player1TargetText != null && player2TargetText != null)
-            {
-                player1TargetText.text = "...";
-                player2TargetText.text = "...";
-            }
-        }
-        else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
-        {
-            if (player1TargetText != null && player2TargetText != null)
-            {
-                player1TargetText.text = "本轮禁止使用枪";
-                player2TargetText.text = "本轮禁止使用枪";
-            }
-        }
+        UpdatePlayerStatsText();
     }
 
     [ClientRpc]
     public void UpdatePlayerTargetTextClientRpc()
     {
+        UpdatePlayerStatsText();
+    }
+
+    // 添加更新关卡文本的方法
+    public void UpdateLevelText(LevelManager.Level level)
+    {
+        if (levelText1 == null || levelText2 == null) return;
+
+        string levelNumber = "";
+        
+        // 确定关卡数字
+        switch (level)
+        {
+            case LevelManager.Level.Tutorial:
+                levelNumber = "教程";
+                break;
+            case LevelManager.Level.Level1:
+                levelNumber = "1";
+                break;
+            case LevelManager.Level.Level2:
+                levelNumber = "2";
+                break;
+            case LevelManager.Level.Level3A:
+            case LevelManager.Level.Level3B:
+                levelNumber = "3";
+                break;
+            case LevelManager.Level.Level4A:
+            case LevelManager.Level.Level4B:
+            case LevelManager.Level.Level4C:
+                levelNumber = "4";
+                break;
+            case LevelManager.Level.Level5A:
+            case LevelManager.Level.Level5B:
+                levelNumber = "5";
+                break;
+            case LevelManager.Level.Level6A:
+            case LevelManager.Level.Level6B:
+                levelNumber = "6";
+                break;
+        }
+
+        string levelInfo = $"关卡：<wave a=0.2 f=0.8>{levelNumber}</wave>";
+
+        // 更新玩家1的关卡显示
+        if (levelText1Animator != null)
+        {
+            levelText1.gameObject.SetActive(true);
+            levelText1Animator.ShowText(levelInfo);
+        }
+        else
+        {
+            levelText1.text = levelInfo;
+            levelText1.gameObject.SetActive(true);
+        }
+        
+        // 更新玩家2的关卡显示
+        if (levelText2Animator != null)
+        {
+            levelText2.gameObject.SetActive(true);
+            levelText2Animator.ShowText(levelInfo);
+        }
+        else
+        {
+            levelText2.text = levelInfo;
+            levelText2.gameObject.SetActive(true);
+        }
+    }
+
+    // 添加更新玩家总分的方法
+    public void UpdatePlayerTotalScoreText()
+    {
+        if (player1TotalScoreText == null || player2TotalScoreText == null || LevelManager.Instance == null) return;
+
+        float player1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
+        float player2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
+
+        string player1ScoreInfo = $"总分：<shake a=0.1 f=0.1>{player1TotalScore}</shake>";
+        string player2ScoreInfo = $"总分：<shake a=0.1 f=0.1>{player2TotalScore}</shake>";
+
+        // 更新玩家1的总分显示
+        if (player1TotalScoreTextAnimator != null)
+        {
+            player1TotalScoreText.gameObject.SetActive(true);
+            player1TotalScoreTextAnimator.ShowText(player1ScoreInfo);
+        }
+        else
+        {
+            player1TotalScoreText.text = player1ScoreInfo;
+            player1TotalScoreText.gameObject.SetActive(true);
+        }
+        
+        // 更新玩家2的总分显示
+        if (player2TotalScoreTextAnimator != null)
+        {
+            player2TotalScoreText.gameObject.SetActive(true);
+            player2TotalScoreTextAnimator.ShowText(player2ScoreInfo);
+        }
+        else
+        {
+            player2TotalScoreText.text = player2ScoreInfo;
+            player2TotalScoreText.gameObject.SetActive(true);
+        }
+    }
+
+    // 修改UpdatePlayerTargetText方法以显示玩家统计数据
+    public void UpdatePlayerStatsText()
+    {
+        if (player1TargetText == null || player2TargetText == null || LevelManager.Instance == null) return;
+
+        // 获取玩家欺骗和合作次数
+        int p1CoopCount = LevelManager.Instance.player1CoopTimes.Value;
+        int p1CheatCount = LevelManager.Instance.player1CheatTimes.Value;
+        int p2CoopCount = LevelManager.Instance.player2CoopTimes.Value;
+        int p2CheatCount = LevelManager.Instance.player2CheatTimes.Value;
+
+        // 准备显示文本
+        string player1StatsInfo = $"合作：{p1CoopCount} | 欺骗：{p1CheatCount}";
+        string player2StatsInfo = $"合作：{p2CoopCount} | 欺骗：{p2CheatCount}";
+
+        // 根据游戏模式决定是否显示统计数据
         if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
         {
-            if (player1TargetText != null && player2TargetText != null)
-            {
-                player1TargetText.text = "...";
-                player2TargetText.text = "...";
-            }
+            player1StatsInfo = "...";
+            player2StatsInfo = "...";
         }
         else if (LevelManager.Instance.currentMode.Value == LevelManager.Mode.OnlyCard)
         {
-            if (player1TargetText != null && player2TargetText != null)
-            {
-                player1TargetText.text = "本轮禁止使用枪";
-                player2TargetText.text = "本轮禁止使用枪";
-            }
+            player1StatsInfo = $"合作：{p1CoopCount} | 欺骗：{p1CheatCount} | 禁止使用枪";
+            player2StatsInfo = $"合作：{p2CoopCount} | 欺骗：{p2CheatCount} | 禁止使用枪";
         }
+
+        // 更新玩家1的统计显示
+        if (player1TargetTextAnimator != null)
+        {
+            player1TargetText.gameObject.SetActive(true);
+            player1TargetTextAnimator.ShowText(player1StatsInfo);
+        }
+        else
+        {
+            player1TargetText.text = player1StatsInfo;
+            player1TargetText.gameObject.SetActive(true);
+        }
+        
+        // 更新玩家2的统计显示
+        if (player2TargetTextAnimator != null)
+        {
+            player2TargetText.gameObject.SetActive(true);
+            player2TargetTextAnimator.ShowText(player2StatsInfo);
+        }
+        else
+        {
+            player2TargetText.text = player2StatsInfo;
+            player2TargetText.gameObject.SetActive(true);
+        }
+    }
+
+    // 添加更新关卡文本的RPC方法
+    [ClientRpc]
+    public void UpdateLevelTextClientRpc(LevelManager.Level level)
+    {
+        UpdateLevelText(level);
+    }
+
+    // 添加更新玩家总分的RPC方法
+    [ClientRpc]
+    public void UpdatePlayerTotalScoreTextClientRpc()
+    {
+        UpdatePlayerTotalScoreText();
     }
 } 
