@@ -644,9 +644,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 2
   level: 6
-  isLevelNode: 0
+  isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1 &81391194
 GameObject:
   m_ObjectHideFlags: 0
@@ -2554,6 +2556,8 @@ MonoBehaviour:
   isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1 &1006173062
 GameObject:
   m_ObjectHideFlags: 0
@@ -2914,9 +2918,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 1
   level: 11
-  isLevelNode: 0
+  isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!114 &1063954839
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3025,10 +3031,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cba717009f19ea4cbfecb407fe76b30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roundText: {fileID: 0}
-  scoreText: {fileID: 0}
-  resultText: {fileID: 0}
-  currentPlayerText: {fileID: 0}
 --- !u!4 &1079564574
 Transform:
   m_ObjectHideFlags: 0
@@ -3438,6 +3440,8 @@ MonoBehaviour:
   isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1001 &1167640377
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3657,6 +3661,8 @@ MonoBehaviour:
   isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1 &1196683913
 GameObject:
   m_ObjectHideFlags: 0
@@ -5194,9 +5200,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 3
   level: 10
-  isLevelNode: 0
+  isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1001 &1779890930
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5708,6 +5716,8 @@ MonoBehaviour:
   isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1 &1831880569
 GameObject:
   m_ObjectHideFlags: 0
@@ -5964,6 +5974,8 @@ MonoBehaviour:
   isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1001 &1891758368
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6110,9 +6122,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 3
   level: 8
-  isLevelNode: 0
+  isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1 &2027953278
 GameObject:
   m_ObjectHideFlags: 0
@@ -6406,9 +6420,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 3
   level: 7
-  isLevelNode: 0
+  isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!114 &2097544690
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6821,9 +6837,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 3
   level: 9
-  isLevelNode: 0
+  isLevelNode: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!114 &2125650640
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1896,7 +1896,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6B3A\u9A97\u6D3E\uFF1A\u6B3A\u9A97\u603B\u6570\u8FBE\u523012\u6B21\u5219\u83B7\u5F97\u989D\u5916\u52A0\u5206+15</>"
+  m_text: "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6B3A\u9A97\u6D3E\uFF1A\u6B3A\u9A97\u603B\u6570\u8FBE\u523013\u6B21\u5219\u83B7\u5F97\u989D\u5916\u52A0\u5206+15</>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
@@ -2800,7 +2800,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 63.043167, y: 0, z: 61.118996, w: 0}
+  m_margin: {x: 31.922867, y: -10.636288, z: 33.38455, w: -17.380209}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -13978,7 +13978,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 550, y: -50}
+  m_AnchoredPosition: {x: 600, y: -50}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &465624667
@@ -14590,8 +14590,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 200
-  m_fontSizeBase: 200
+  m_fontSize: 300
+  m_fontSizeBase: 300
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -20100,7 +20100,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -48.077232, w: 0}
+  m_margin: {x: -25.18782, y: 0, z: -66.96119, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -33202,7 +33202,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -69.69089, w: 0}
+  m_margin: {x: -20.11396, y: 0, z: -84.65234, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -38760,7 +38760,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 63.999474, y: 0, z: 65.25233, w: 0}
+  m_margin: {x: 24.660938, y: -11.217079, z: 30.556614, w: -14.867844}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -62127,7 +62127,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 550, y: -50}
+  m_AnchoredPosition: {x: 600, y: -50}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1279825906
@@ -62739,8 +62739,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 200
-  m_fontSizeBase: 200
+  m_fontSize: 300
+  m_fontSizeBase: 300
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -79403,14 +79403,14 @@ MonoBehaviour:
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6050\u6015\u4F60\u4EEC\u5DF2\u7ECF\u5FD8\u8BB0\u8FD9\u91CC\u7684\u89C4\u77E9\u4E86...</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u4E00\u4E2A\u68CB\u5B50\uFF0C\u4E24\u4E2A\u9009\u62E9\uFF1A\u5408\u4F5C\uFF0C\u6216\u8005\u6B3A\u9A97\u3002</>\n"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8BD5\u8BD5\uFF1F\u6211\u7ED9\u4F60\u4EEC\u4E24\u4E2A\u56DE\u5408\u7684\u673A\u4F1A\u3002</>"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5F88\u597D...\u771F\u662F\u8C01\u4E5F\u4E0D\u8BA9\u7740\u8C01\u554A...</>"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u54E6\u5BF9\u4E86\uFF0C\u5DEE\u70B9\u5FD8\u4E86\u8981\u7D27\u4E8B\u4E86\u3002</>"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6709\u610F\u601D\u7684\u9009\u62E9...</>"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u63A5\u4E0B\u6765\u4F1A\u53D1\u751F\u4EC0\u4E48...</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8FD9\u4E9B\u724C\uFF0C\u6BCF\u8F6E\u80FD\u4E14\u4EC5\u80FD\u6253\u51FA\u4E00\u5F20\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5173\u952E\u65F6\u523B\u5B83\u4EEC\u4F1A\u62EF\u6551\u4F60\u3002</>\n"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u5F53\u7136\uFF0C\u4E5F\u53EF\u80FD\u4F1A\u6BD2\u5BB3\u4F60\u3002\u98CE\u9669\u4E0E\u56DE\u62A5\u6210\u6B63\u6BD4\u3002</>\n"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8BD5\u8BD5\u5427\uFF1F\u8FD8\u662F\u4E24\u4E2A\u56DE\u5408\u3002</>"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8BB0\u5F97\u5728\u843D\u5B50\u4E4B\u524D\u6253\u51FA\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8F93\u8D62\u5DF2\u89C1\u5206\u6653\u3002</>"
-  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u4E0D\u8FC7\uFF0C\u522B\u62C5\u5FC3\u3002\u4E00\u5207\u90FD\u53EA\u662F\u6682\u65F6\u7684\u3002</>"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u4E0D\u8FC7\uFF0C\u522B\u62C5\u5FC3\u3002\u4E4B\u524D\u7684\u4E0D\u4F5C\u6570\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8DEF\u8FD8\u957F\u7740\u5462...</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u73B0\u5728\uFF0C\u6211\u4EEC\u5F00\u59CB\u52A8\u771F\u683C\u7684\u4E86\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u4E00\u5171\u516D\u5C40\uFF0C\u8D4C\u6CE8\u8D8A\u5927\uFF0C\u5956\u52B1\u8D8A\u591A\u3002</>"
@@ -79434,6 +79434,7 @@ MonoBehaviour:
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u6700\u540E\u4E00\u5C40\u4E86...</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u53EA\u6709\u4E00\u4E2A\u4EBA\u80FD\u5E26\u8D70\u6240\u5F97\u91D1\u5E01\u3002</>"
   - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u522B\u7559\u60C5\u9762\u3002</>"
+  - "<shake a=0.2 f=0.8><wave a=0.3 f=0.1><shake a=0.2 f=0.8><wave a=0.3 f=0.1>\u8BB0\u5F97\u5728\u843D\u5B50\u4E4B\u524D\u6253\u51FA\u3002</>"
   typeSoundName: Type
   typeConfirmSoundName: TypeConfirm
   useTypingSound: 1

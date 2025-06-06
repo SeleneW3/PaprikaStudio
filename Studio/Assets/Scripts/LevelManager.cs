@@ -3,6 +3,7 @@ using Unity.Netcode;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 public class LevelManager : NetworkBehaviour
 {
@@ -482,14 +483,14 @@ public class LevelManager : NetworkBehaviour
         bool player2Rewarded = false;
         
         // 欺骗派：欺骗总数达到14次则获得额外加分+15
-        if (player1Identity.Value == PlayerIdentity.Cheater && player1CheatTimes.Value >= 13)
+        if (player1Identity.Value == PlayerIdentity.Cheater && player1CheatTimes.Value == 13)
         {
             player1TotalPoint.Value += 15;
             player1Rewarded = true;
             Debug.Log($"[LevelManager] 玩家1(欺骗派)达成任务，奖励15分！当前欺骗次数：{player1CheatTimes.Value}");
         }
         
-        if (player2Identity.Value == PlayerIdentity.Cheater && player2CheatTimes.Value >= 13)
+        if (player2Identity.Value == PlayerIdentity.Cheater && player2CheatTimes.Value == 13)
         {
             player2TotalPoint.Value += 15;
             player2Rewarded = true;
@@ -497,14 +498,14 @@ public class LevelManager : NetworkBehaviour
         }
         
         // 合作派：合作总数达到9次则获得额外加分+15
-        if (player1Identity.Value == PlayerIdentity.Cooperator && player1CoopTimes.Value >= 8)
+        if (player1Identity.Value == PlayerIdentity.Cooperator && player1CoopTimes.Value == 8)
         {
             player1TotalPoint.Value += 15;
             player1Rewarded = true;
             Debug.Log($"[LevelManager] 玩家1(合作派)达成任务，奖励15分！当前合作次数：{player1CoopTimes.Value}");
         }
         
-        if (player2Identity.Value == PlayerIdentity.Cooperator && player2CoopTimes.Value >= 8)
+        if (player2Identity.Value == PlayerIdentity.Cooperator && player2CoopTimes.Value == 8)
         {
             player2TotalPoint.Value += 15;
             player2Rewarded = true;
@@ -547,41 +548,85 @@ public class LevelManager : NetworkBehaviour
     {
         if (!IsServer) return;
         
+        Debug.Log($"[LevelManager] 应用枪击规则，被击中玩家ID: {shotPlayerId}, 本轮分数: {roundPoints}");
+        
+        string player1BonusText = "";
+        string player2BonusText = "";
+        
         // 在Level5A中被打死获得10分作为补偿
         if (currentLevel.Value == Level.Level5A)
         {
             if (shotPlayerId == 0ul)
+            {
                 player1TotalPoint.Value += 10;
+                player1BonusText = "<color=yellow><shake a=0.3 f=0.8>+10!</shake></color>";
+                Debug.Log($"[LevelManager] Level5A规则: 玩家1被击中，获得10分补偿，当前总分: {player1TotalPoint.Value}");
+            }
             else if (shotPlayerId == 1ul)
+            {
                 player2TotalPoint.Value += 10;
+                player2BonusText = "<color=yellow><shake a=0.3 f=0.8>+10!</shake></color>";
+                Debug.Log($"[LevelManager] Level5A规则: 玩家2被击中，获得10分补偿，当前总分: {player2TotalPoint.Value}");
+            }
         }
         
         // 在Level5B中打死对方获得双方本轮总分
-        if (currentLevel.Value == Level.Level5B)
+        else if (currentLevel.Value == Level.Level5B)
         {
             ulong shooterId = shotPlayerId == 0ul ? 1ul : 0ul;
             
             if (shooterId == 0ul)
+            {
                 player1TotalPoint.Value += roundPoints;
+                player1BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{roundPoints}!</shake></color>";
+                Debug.Log($"[LevelManager] Level5B规则: 玩家1击中对手，获得本轮分数 {roundPoints}，当前总分: {player1TotalPoint.Value}");
+            }
             else if (shooterId == 1ul)
+            {
                 player2TotalPoint.Value += roundPoints;
+                player2BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{roundPoints}!</shake></color>";
+                Debug.Log($"[LevelManager] Level5B规则: 玩家2击中对手，获得本轮分数 {roundPoints}，当前总分: {player2TotalPoint.Value}");
+            }
         }
         
         // 在Level6A中打死对方获得双方全部总分
-        if (currentLevel.Value == Level.Level6A)
+        else if (currentLevel.Value == Level.Level6A)
         {
             ulong shooterId = shotPlayerId == 0ul ? 1ul : 0ul;
             
             if (shooterId == 0ul)
             {
-                player1TotalPoint.Value += player2TotalPoint.Value;
+                float stolenPoints = player2TotalPoint.Value;
+                player1TotalPoint.Value += stolenPoints;
+                player1BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{stolenPoints}!</shake></color>";
+                player2BonusText = "<color=red><shake a=0.3 f=0.8>归零!</shake></color>";
                 player2TotalPoint.Value = 0;
+                Debug.Log($"[LevelManager] Level6A规则: 玩家1击中对手，获得对方全部分数 {stolenPoints}，当前总分: {player1TotalPoint.Value}");
             }
             else if (shooterId == 1ul)
             {
-                player2TotalPoint.Value += player1TotalPoint.Value;
+                float stolenPoints = player1TotalPoint.Value;
+                player2TotalPoint.Value += stolenPoints;
+                player2BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{stolenPoints}!</shake></color>";
+                player1BonusText = "<color=red><shake a=0.3 f=0.8>归零!</shake></color>";
                 player1TotalPoint.Value = 0;
+                Debug.Log($"[LevelManager] Level6A规则: 玩家2击中对手，获得对方全部分数 {stolenPoints}，当前总分: {player2TotalPoint.Value}");
             }
+        }
+        
+        // 显示奖励提示
+        if (!string.IsNullOrEmpty(player1BonusText) || !string.IsNullOrEmpty(player2BonusText))
+        {
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.ShowBonusText(player1BonusText, player2BonusText);
+            }
+        }
+        
+        // 更新UI显示
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
         }
     }
 
@@ -632,8 +677,88 @@ public class LevelManager : NetworkBehaviour
     private void OnDialogComplete()
     {
         Debug.Log("[LevelManager] 对话完成回调被触发，准备显示身份选择面板");
-        // 通知所有客户端显示身份选择面板
-        ShowIdentityPanelClientRpc();
+        
+        // 只在关卡3A和3B显示身份选择面板
+        if (currentLevel.Value == Level.Level3A || currentLevel.Value == Level.Level3B)
+        {
+            // 通知所有客户端显示身份选择面板
+            ShowIdentityPanelClientRpc();
+        }
+        else
+        {
+            // 其他关卡直接进入游戏
+            Debug.Log("[LevelManager] 非身份选择关卡，直接进入游戏");
+        }
+    }
+    
+    /// <summary>
+    /// 当玩家完成身份选择后调用此方法
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void IdentitySelectionCompleteServerRpc(ulong clientId, PlayerIdentity identity)
+    {
+        if (!IsServer) return;
+        
+        Debug.Log($"[LevelManager] 玩家{clientId}选择了身份: {identity}");
+        
+        // 设置玩家身份
+        if (clientId == 0)
+            player1Identity.Value = identity;
+        else if (clientId == 1)
+            player2Identity.Value = identity;
+        
+        // 检查是否所有玩家都已选择身份
+        bool allPlayersSelected = (player1Identity.Value != PlayerIdentity.None && 
+                                  player2Identity.Value != PlayerIdentity.None);
+        
+        if (allPlayersSelected)
+        {
+            Debug.Log("[LevelManager] 所有玩家都已选择身份，继续游戏");
+            
+            // 通知所有客户端隐藏身份选择面板
+            HideIdentityPanelClientRpc();
+            
+            // 继续游戏流程
+            ContinueGameAfterIdentitySelectionClientRpc();
+        }
+    }
+    
+    [ClientRpc]
+    private void HideIdentityPanelClientRpc()
+    {
+        Debug.Log("[LevelManager] 隐藏身份选择面板");
+        if (IdentityPanelManager.Instance != null)
+        {
+            // 从IdentityPanelManager.cs的实现可以看出，它有一个identityPanel字段
+            // 在ShowPanel方法中使用identityPanel.SetActive(true)来显示面板
+            // 在OnIdentitySelected方法中使用identityPanel.SetActive(false)来隐藏面板
+            // 所以我们可以直接访问identityPanel并设置其活动状态为false
+            
+            // 但由于identityPanel是私有字段，我们无法直接访问
+            // 所以我们可以通过反射来访问它，或者简单地隐藏IdentityPanelManager的GameObject
+            
+            // 隐藏IdentityPanelManager的GameObject
+            GameObject panelObject = GameObject.Find("IdentityPanel");
+            if (panelObject != null)
+            {
+                panelObject.SetActive(false);
+            }
+        }
+    }
+    
+    [ClientRpc]
+    private void ContinueGameAfterIdentitySelectionClientRpc()
+    {
+        Debug.Log("[LevelManager] 身份选择完成，继续游戏");
+        
+        // 在这里可以添加继续游戏的逻辑
+        // 例如开始回合、显示UI等
+        
+        // 如果是服务器，更新游戏状态
+        if (IsServer)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        }
     }
     
     [ClientRpc]
@@ -660,31 +785,63 @@ public class LevelManager : NetworkBehaviour
         if (level == Level.Tutorial)
             return true;
             
-        // 第一层：只有在未解锁其他关卡时可选
-        if (level == Level.Level1)
-            return unlockedLevel.Value == Level.Level1;
+        // 当前解锁的关卡层级
+        int currentUnlockedTier = GetLevelTier(unlockedLevel.Value);
+        int targetLevelTier = GetLevelTier(level);
+        
+        // 只能选择当前解锁层级的关卡
+        if (targetLevelTier != currentUnlockedTier)
+            return false;
             
-        // 第二层
-        if (level == Level.Level2)
-            return unlockedLevel.Value == Level.Level2;
-            
-        // 第三层：只能选择3A或3B中的一个
-        if (level == Level.Level3A || level == Level.Level3B)
-            return unlockedLevel.Value == Level.Level3A;
-            
-        // 第四层：可以选择4A、4B或4C中的任意一个
-        if (level == Level.Level4A || level == Level.Level4B || level == Level.Level4C)
-            return unlockedLevel.Value == Level.Level4A;
-            
-        // 第五层：只能选择5A或5B中的一个
-        if (level == Level.Level5A || level == Level.Level5B)
-            return unlockedLevel.Value == Level.Level5A;
-            
-        // 第六层：只能选择6A或6B中的一个
-        if (level == Level.Level6A || level == Level.Level6B)
-            return unlockedLevel.Value == Level.Level6A;
-            
-        return false;
+        // 第三层：根据已完成路径选择3A或3B
+        if (targetLevelTier == 3)
+        {
+            // 如果尚未选择路径，两个关卡都可选
+            if (completedPath.Value == 0)
+                return true;
+                
+            // 如果已选择路径A，只能选择3A
+            if (completedPath.Value == 1)
+                return level == Level.Level3A;
+                
+            // 如果已选择路径B，只能选择3B
+            if (completedPath.Value == 2)
+                return level == Level.Level3B;
+        }
+        
+        // 对于其他层级（包括第四、五、六层），如果层级匹配当前解锁层级，则可选
+        return true;
+    }
+    
+    /// <summary>
+    /// 获取关卡所属的层级
+    /// </summary>
+    private int GetLevelTier(Level level)
+    {
+        switch (level)
+        {
+            case Level.Tutorial:
+                return 0;
+            case Level.Level1:
+                return 1;
+            case Level.Level2:
+                return 2;
+            case Level.Level3A:
+            case Level.Level3B:
+                return 3;
+            case Level.Level4A:
+            case Level.Level4B:
+            case Level.Level4C:
+                return 4;
+            case Level.Level5A:
+            case Level.Level5B:
+                return 5;
+            case Level.Level6A:
+            case Level.Level6B:
+                return 6;
+            default:
+                return -1;
+        }
     }
     
     /// <summary>
@@ -791,6 +948,91 @@ public class LevelManager : NetworkBehaviour
         {
             // 客户端只需要播放自己的对话
             PlayDialogForLevel(pendingDialogLevel);
+        }
+    }
+
+    /// <summary>
+    /// 完成当前关卡，自动解锁下一关卡
+    /// </summary>
+    public void CompleteCurrentLevel()
+    {
+        if (!IsServer) return;
+        
+        Debug.Log($"[LevelManager] 完成当前关卡: {currentLevel.Value}");
+        
+        // 更新解锁的关卡
+        UpdateUnlockedLevelServerRpc();
+        
+        // 通知UI更新关卡选择界面
+        UpdateLevelSelectionUIClientRpc();
+    }
+    
+    [ClientRpc]
+    private void UpdateLevelSelectionUIClientRpc()
+    {
+        Debug.Log("[LevelManager] 通知客户端更新关卡选择界面");
+        
+        // 移除对不存在的LevelSelectionUIManager的引用
+        // 如果有UI管理器，可以在这里添加对其更新方法的调用
+        // 例如：UIManager.Instance?.UpdateLevelSelectionUI();
+    }
+    
+    /// <summary>
+    /// 在关卡结束时调用，处理关卡完成逻辑
+    /// </summary>
+    public void OnLevelComplete()
+    {
+        if (!IsServer) return;
+        
+        // 完成当前关卡，解锁下一关卡
+        CompleteCurrentLevel();
+        
+        // 如果是最终关卡，触发游戏结束逻辑
+        if (currentLevel.Value == Level.Level6A || currentLevel.Value == Level.Level6B)
+        {
+            // 应用Level6规则
+            ApplyLevel6Rule();
+            
+            // 触发游戏结束
+            GameEndedClientRpc();
+        }
+    }
+    
+    [ClientRpc]
+    private void GameEndedClientRpc()
+    {
+        Debug.Log("[LevelManager] 游戏结束，显示结算界面");
+        
+        // 移除对不存在的GameEndUIManager的引用
+        // 如果有UI管理器，可以在这里添加对其显示结算界面方法的调用
+        // 例如：UIManager.Instance?.ShowGameEndUI();
+    }
+
+    /// <summary>
+    /// 当玩家被枪击中时调用此方法
+    /// 应该在检测到玩家被击中后调用，例如在UIManager或GunController中
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void PlayerShotServerRpc(ulong shotPlayerId, float roundPoints)
+    {
+        if (!IsServer) return;
+        
+        Debug.Log($"[LevelManager] 收到玩家被击中通知，被击中玩家ID: {shotPlayerId}, 本轮分数: {roundPoints}");
+        
+        // 应用枪击规则
+        ApplyShotPenalty(shotPlayerId, roundPoints);
+        
+        // 确保UI立即更新总分显示
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
+        }
+        
+        // 如果是最终关卡，可能需要提前结束游戏
+        if (currentLevel.Value == Level.Level6A)
+        {
+            // 最终关卡被击中直接结束游戏
+            OnLevelComplete();
         }
     }
 }

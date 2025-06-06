@@ -14,8 +14,15 @@ public class ModeNode : NetworkBehaviour
     public Color normalColor = Color.white;
     public Color lockedColor = Color.gray;
     
+    [Header("Hover Effect")]
+    public float hoverLiftHeight = 0.2f;  // 悬停时抬起的高度
+    public float hoverSpeed = 5f;         // 抬起和落下的速度
+    
     private SpriteRenderer _spriteRenderer;
     private bool _isSelectable = false;
+    private bool _isHovering = false;
+    private Vector3 _originalPosition;
+    private Vector3 _targetPosition;
 
     private void Start()
     {
@@ -24,6 +31,10 @@ public class ModeNode : NetworkBehaviour
         {
             _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
+        
+        // 保存原始位置
+        _originalPosition = transform.position;
+        _targetPosition = _originalPosition;
         
         // 初始化颜色
         UpdateVisuals();
@@ -36,6 +47,12 @@ public class ModeNode : NetworkBehaviour
         
         // 更新视觉效果
         UpdateVisuals();
+        
+        // 更新位置（平滑过渡）
+        if (Vector3.Distance(transform.position, _targetPosition) > 0.01f)
+        {
+            transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * hoverSpeed);
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -76,6 +93,22 @@ public class ModeNode : NetworkBehaviour
             // 锁定状态：灰色
             _spriteRenderer.color = lockedColor;
         }
+    }
+
+    private void OnMouseEnter()
+    {
+        // 只有可选择的节点才有悬停效果
+        if (_isSelectable)
+        {
+            _isHovering = true;
+            _targetPosition = _originalPosition + Vector3.up * hoverLiftHeight;
+        }
+    }
+    
+    private void OnMouseExit()
+    {
+        _isHovering = false;
+        _targetPosition = _originalPosition;
     }
 
     private void OnMouseDown()

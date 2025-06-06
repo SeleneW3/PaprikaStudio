@@ -13,12 +13,26 @@ public class AnimatorState : NetworkBehaviour
     public int element4Index = 17; // 假设 Element4 是对话的第4行（索引从0开始）
     private bool hasPlayedAddBullet = false;  // 确保动画只播放一次
     private bool isAnimating = false;  // 防止动画重复触发
+    
+    // 添加DeckLogic引用，用于检查卡牌展示状态
+    private DeckLogic deckLogic;
+    
+    // 添加标志，记录是否需要在卡牌展示结束后恢复摄像机
+    private bool needRestoreCameraAfterCardShow = false;
+    
+    // 添加字段记录摄像机切换前的状态
+    private CameraLogic cameraLogic;
+    private bool wasShowingCards = false;
 
     // Start is called before the first frame update
     void Start()
     {
         animator = GetComponent<Animator>();
         // 不在Start中获取DialogManager，因为它可能还没有被加载
+        
+        // 获取DeckLogic和CameraLogic引用
+        deckLogic = FindObjectOfType<DeckLogic>();
+        cameraLogic = FindObjectOfType<CameraLogic>();
     }
 
     // Update is called once per frame
@@ -30,6 +44,18 @@ public class AnimatorState : NetworkBehaviour
             dialogManager = DialogManager.Instance;
             if (dialogManager == null) return; // 如果还是找不到，直接返回
         }
+        
+        // 如果DeckLogic为空，尝试获取
+        if (deckLogic == null)
+        {
+            deckLogic = FindObjectOfType<DeckLogic>();
+        }
+        
+        // 如果CameraLogic为空，尝试获取
+        if (cameraLogic == null)
+        {
+            cameraLogic = FindObjectOfType<CameraLogic>();
+        }
 
         // 检查当前播放的对话行是否为 Element4，且尚未播放动画，且当前没有动画在播放
         if (dialogManager.currentLineIndex == element4Index && !hasPlayedAddBullet && !isAnimating)
@@ -38,6 +64,21 @@ public class AnimatorState : NetworkBehaviour
             // 播放 AddBullet 动画
             PlayAddBulletAnimation();
             hasPlayedAddBullet = true; // 确保动画只播放一次
+        }
+        
+        // 检查是否需要在卡牌展示结束后恢复摄像机
+        if (needRestoreCameraAfterCardShow && deckLogic != null)
+        {
+            // 如果DeckLogic之前在展示卡牌，但现在不再展示，则恢复摄像机
+            if (wasShowingCards && !deckLogic.hasShown)
+            {
+                Debug.Log("[AnimatorState] 检测到卡牌展示结束，恢复枪摄像机");
+                wasShowingCards = false;
+                needRestoreCameraAfterCardShow = false;
+                
+                // 重新切换到枪摄像机
+                SwitchToGunCamera();
+            }
         }
     }
 
@@ -71,8 +112,16 @@ public class AnimatorState : NetworkBehaviour
     // 切换到枪的摄像机
     private void SwitchToGunCamera()
     {
+        // 检查DeckLogic是否正在展示卡牌
+        if (deckLogic != null && deckLogic.hasShown)
+        {
+            Debug.Log("[AnimatorState] DeckLogic正在展示卡牌，暂时不切换摄像机");
+            wasShowingCards = true;
+            needRestoreCameraAfterCardShow = true;
+            return; // 如果正在展示卡牌，不切换摄像机
+        }
+        
         // 查找CameraLogic组件
-        CameraLogic cameraLogic = FindObjectOfType<CameraLogic>();
         if (cameraLogic != null)
         {
             Debug.Log("[AnimatorState] 切换到枪摄像机视角");
@@ -86,7 +135,14 @@ public class AnimatorState : NetworkBehaviour
                 // 玩家1的枪摄像机
                 if (cameraLogic.player1GunState != null)
                 {
-                    cameraLogic.player1GunState.Priority = 20; // 提高优先级使其激活
+                    // 激活玩家1的枪摄像机，禁用其他摄像机
+                    cameraLogic.player1GunState.gameObject.SetActive(true);
+                    cameraLogic.player1BalanceState.gameObject.SetActive(false);
+                    cameraLogic.player1ShowState.gameObject.SetActive(false);
+                    
+                    cameraLogic.player2CameraController_Gun.gameObject.SetActive(false);
+                    cameraLogic.player2CameraController_Balance.gameObject.SetActive(false);
+                    cameraLogic.player2ShowState.gameObject.SetActive(false);
                 }
             }
             else
@@ -94,7 +150,14 @@ public class AnimatorState : NetworkBehaviour
                 // 玩家2的枪摄像机
                 if (cameraLogic.player2CameraController_Gun != null)
                 {
-                    cameraLogic.player2CameraController_Gun.Priority = 20; // 提高优先级使其激活
+                    // 激活玩家2的枪摄像机，禁用其他摄像机
+                    cameraLogic.player2CameraController_Gun.gameObject.SetActive(true);
+                    cameraLogic.player2CameraController_Balance.gameObject.SetActive(false);
+                    cameraLogic.player2ShowState.gameObject.SetActive(false);
+                    
+                    cameraLogic.player1GunState.gameObject.SetActive(false);
+                    cameraLogic.player1BalanceState.gameObject.SetActive(false);
+                    cameraLogic.player1ShowState.gameObject.SetActive(false);
                 }
             }
         }
@@ -107,8 +170,15 @@ public class AnimatorState : NetworkBehaviour
     // 切回主摄像机
     private void SwitchToMainCamera()
     {
+        // 如果DeckLogic正在展示卡牌，不切换回主摄像机
+        if (deckLogic != null && deckLogic.hasShown)
+        {
+            Debug.Log("[AnimatorState] DeckLogic正在展示卡牌，不切换回主摄像机");
+            // 不设置isAnimating = false，因为我们还需要等待卡牌展示结束后恢复摄像机
+            return;
+        }
+        
         // 查找CameraLogic组件
-        CameraLogic cameraLogic = FindObjectOfType<CameraLogic>();
         if (cameraLogic != null)
         {
             Debug.Log("[AnimatorState] 切回主摄像机视角");
@@ -116,22 +186,16 @@ public class AnimatorState : NetworkBehaviour
             // 确定当前是哪个玩家
             ulong localClientId = NetworkManager.Singleton.LocalClientId;
             
-            // 重置所有摄像机状态优先级
+            // 根据玩家ID切换回对应的主摄像机
             if (localClientId == 0)
             {
-                // 重置玩家1的摄像机状态
-                if (cameraLogic.player1GunState != null)
-                {
-                    cameraLogic.player1GunState.Priority = 10; // 恢复默认优先级
-                }
+                // 切换回玩家1的主摄像机
+                cameraLogic.SwitchToPlayer1Camera();
             }
             else
             {
-                // 重置玩家2的摄像机状态
-                if (cameraLogic.player2CameraController_Gun != null)
-                {
-                    cameraLogic.player2CameraController_Gun.Priority = 10; // 恢复默认优先级
-                }
+                // 切换回玩家2的主摄像机
+                cameraLogic.SwitchToPlayer2Camera();
             }
         }
         else
@@ -189,6 +253,8 @@ public class AnimatorState : NetworkBehaviour
     {
         hasPlayedAddBullet = false;
         isAnimating = false;
+        needRestoreCameraAfterCardShow = false;
+        wasShowingCards = false;
         Debug.Log("[AnimatorState] 重置动画状态");
     }
 }

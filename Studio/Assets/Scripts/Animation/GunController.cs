@@ -188,8 +188,30 @@ public class GunController : NetworkBehaviour
         {
             Debug.Log("Bang! A real bullet! The enemy is dead.");
             gameEnded.Value = true;
-            // 触发真子弹震动效果和音效
-            TriggerRealBulletEffectsClientRpc();
+            
+            // 确定被击中的玩家ID
+            ulong shotPlayerId = 0;
+            if (gameObject.name == "Gun1")
+            {
+                shotPlayerId = 1; // Gun1是玩家1的枪，所以击中的是玩家2
+            }
+            else if (gameObject.name == "Gun2")
+            {
+                shotPlayerId = 0; // Gun2是玩家2的枪，所以击中的是玩家1
+            }
+            
+            // 计算当前回合总分（用于Level5B规则）
+            float roundPoints = 0;
+            PlayerLogic[] players = FindObjectsOfType<PlayerLogic>();
+            if (players.Length >= 2)
+            {
+                // 计算两个玩家的当前回合分数总和
+                roundPoints = players[0].point.Value + players[1].point.Value;
+                Debug.Log($"Current round points: {roundPoints}");
+            }
+            
+            // 触发真子弹震动效果和音效，同时传递被击中玩家ID和回合分数
+            TriggerRealBulletEffectsClientRpc(shotPlayerId, roundPoints);
         }
         else
         {
@@ -219,23 +241,48 @@ public class GunController : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void TriggerRealBulletEffectsClientRpc()
+    private void TriggerRealBulletEffectsClientRpc(ulong shotPlayerId, float roundPoints)
     {
-        // 触发震动效果
-        GunShake gunShake = GetComponent<GunShake>();
-        if (gunShake != null)
-        {
-            gunShake.OnSuccessfulShot();
-        }
-        
         // 延迟触发相机震动
         StartCoroutine(PlayCameraShakeWithDelay(2f));
 
         // 延迟触发血迹特效
         StartCoroutine(PlayHitScreenEffectWithDelay(2.5f));
         
-        // 延迟播放击中音效
-        StartCoroutine(PlaySoundWithDelay("BulletHit", 2f));
+        // 延迟播放击中音效和更新UI，确保它们同时发生
+        StartCoroutine(PlaySoundAndUpdateUIWithDelay("BulletHit", shotPlayerId, roundPoints, 2f));
+    }
+
+    // 新增方法：同时播放音效和更新UI
+    private IEnumerator PlaySoundAndUpdateUIWithDelay(string soundName, ulong shotPlayerId, float roundPoints, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // 播放音效
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX(soundName);
+            
+            // 当播放BulletHit音效时，延迟0.3秒后触发闪光效果
+            if (soundName == "BulletHit")
+            {
+                StartCoroutine(DelayedFlashLight(0.3f));
+            }
+        }
+        
+        // 同时更新UI（仅在服务器端执行）
+        if (IsServer && LevelManager.Instance != null)
+        {
+            Debug.Log($"Applying shot penalty with shotPlayerId: {shotPlayerId}, roundPoints: {roundPoints}");
+            // 直接调用ApplyShotPenalty方法而不是通过RPC，因为我们已经在服务器端
+            LevelManager.Instance.ApplyShotPenalty(shotPlayerId, roundPoints);
+        }
+        else if (!IsServer)
+        {
+            // 如果是客户端，则通过ServerRpc调用
+            Debug.Log($"Calling PlayerShotServerRpc from client with shotPlayerId: {shotPlayerId}, roundPoints: {roundPoints}");
+            LevelManager.Instance.PlayerShotServerRpc(shotPlayerId, roundPoints);
+        }
     }
 
     // 添加延迟相机震动的协程
@@ -591,17 +638,6 @@ public class GunController : NetworkBehaviour
     [ClientRpc]
     private void TriggerRealBulletShakeClientRpc()
     {
-        // 直接获取当前枪的 GunShake 组件
-        GunShake gunShake = GetComponent<GunShake>();
-        if (gunShake != null)
-        {
-            gunShake.OnSuccessfulShot();
-        }
-        else
-        {
-            Debug.LogError($"[{gameObject.name}] GunShake component not found!");
-        }
-        
         // 相机震动保持不变
         if (CameraShake.Instance != null)
         {

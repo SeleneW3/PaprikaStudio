@@ -131,12 +131,14 @@ public class RoundManager : NetworkBehaviour
             }
             else if(tutorState == 1)
             {
+                DialogManager.Instance.PlayRange(4, 5);
                 tutorState++;
+
             }
             else if(tutorState == 2)
             {
+                DialogManager.Instance.PlayRange(6, 9);
                 tutorState++;
-                DialogManager.Instance.PlayRange(4, 5);
 
                 CardManager cardManager = FindObjectOfType<CardManager>();
                 if (cardManager != null)
@@ -151,7 +153,7 @@ public class RoundManager : NetworkBehaviour
                 {
                     Debug.Log("CardManager not found!");
                 }
-                DialogManager.Instance.PlayRange(6, 9);
+
             }
             else if(tutorState == 3)
             {
@@ -159,10 +161,18 @@ public class RoundManager : NetworkBehaviour
             }
             else if(tutorState == 4)
             {
-                tutorState++;
-                StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
-            
-                Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
+                // 确保DialogManager存在
+                if (EnsureDialogManagerExists())
+                {
+                    StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
+                    tutorState++;
+                    
+                    Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
+                }
+                else
+                {
+                    Debug.LogError("[RoundManager] 无法播放对话，DialogManager不存在！");
+                }
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
         }
@@ -371,7 +381,16 @@ public class RoundManager : NetworkBehaviour
         }
         
         chessIsMoved = false;
-        GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
+        
+        // 根据当前游戏模式设置正确的状态
+        if(LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor)
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.TutorReady;
+        }
+        else
+        {
+            GameManager.Instance.currentGameState = GameManager.GameState.Ready;
+        }
     }
 
     void CalculatePointWithGun()
@@ -478,6 +497,10 @@ public class RoundManager : NetworkBehaviour
             }
         }
 
+        // 保存原始分数值
+        float originalPlayer1Point = player1.point.Value;
+        float originalPlayer2Point = player2.point.Value;
+
         // 计算得分
         if(player1Choice == PlayerLogic.playerChoice.Cooperate && player2Choice == PlayerLogic.playerChoice.Cooperate)
         {
@@ -503,8 +526,13 @@ public class RoundManager : NetworkBehaviour
         player1.point.Value += player1CurrentRoundPoint;
         player2.point.Value += player2CurrentRoundPoint;
 
-        LevelManager.Instance.AddPlayer1TotalPoint(player1CurrentRoundPoint);
-        LevelManager.Instance.AddPlayer2TotalPointServerRpc(player2CurrentRoundPoint);
+        // 计算实际增加的分数（考虑卡牌效果可能的修改）
+        float actualPlayer1Increase = player1.point.Value - originalPlayer1Point;
+        float actualPlayer2Increase = player2.point.Value - originalPlayer2Point;
+
+        // 更新总分，使用实际增加的分数
+        LevelManager.Instance.AddPlayer1TotalPoint(actualPlayer1Increase);
+        LevelManager.Instance.AddPlayer2TotalPointServerRpc(actualPlayer2Increase);
 
         string player1Debug = "+" + player1CurrentRoundPoint.ToString();
         string player2Debug = "+" + player2CurrentRoundPoint.ToString();
@@ -773,29 +801,89 @@ public class RoundManager : NetworkBehaviour
     // 延迟播放对话的协程
     private IEnumerator PlayDialogWithDelay(int startIndex, int endIndex, float delaySeconds)
     {
+        Debug.Log($"[RoundManager] PlayDialogWithDelay开始等待 {delaySeconds} 秒，将播放对话索引 {startIndex}-{endIndex}");
         yield return new WaitForSeconds(delaySeconds);
-        DialogManager.Instance.PlayRange(startIndex, endIndex);
+        
+        // 检查DialogManager是否存在
+        if (DialogManager.Instance == null)
+        {
+            Debug.LogError("[RoundManager] DialogManager.Instance为空，无法播放对话！");
+            yield break;
+        }
+        
+        Debug.Log($"[RoundManager] 延迟结束，准备调用PlayDelayedDialogServerRpc，DialogManager.Instance存在: {DialogManager.Instance != null}");
+        // 使用ServerRpc确保对话在所有客户端上播放
+        PlayDelayedDialogServerRpc(startIndex, endIndex, 0f);
     }
 
     [ServerRpc]
     private void PlayDelayedDialogServerRpc(int startIndex, int endIndex, float delaySeconds)
     {
+        Debug.Log($"[RoundManager] PlayDelayedDialogServerRpc被调用，startIndex={startIndex}, endIndex={endIndex}");
         // Schedule the dialog to play after the delay on all clients
         StartCoroutine(DelayedDialogClientRpcCoroutine(startIndex, endIndex, delaySeconds));
     }
 
     private IEnumerator DelayedDialogClientRpcCoroutine(int startIndex, int endIndex, float delaySeconds)
     {
+        Debug.Log($"[RoundManager] DelayedDialogClientRpcCoroutine开始等待 {delaySeconds} 秒");
         yield return new WaitForSeconds(delaySeconds);
+        
+        // 再次检查DialogManager是否存在
+        if (DialogManager.Instance == null)
+        {
+            Debug.LogError("[RoundManager] 在DelayedDialogClientRpcCoroutine中，DialogManager.Instance为空！");
+            yield break;
+        }
+        
+        Debug.Log($"[RoundManager] 准备调用PlayDialogClientRpc，DialogManager.Instance存在: {DialogManager.Instance != null}");
         PlayDialogClientRpc(startIndex, endIndex);
     }
 
     [ClientRpc]
     private void PlayDialogClientRpc(int startIndex, int endIndex)
     {
+        Debug.Log($"[RoundManager] PlayDialogClientRpc被调用，startIndex={startIndex}, endIndex={endIndex}, DialogManager.Instance存在: {DialogManager.Instance != null}");
+        
         if (DialogManager.Instance != null)
         {
+            Debug.Log($"[RoundManager] 调用DialogManager.PlayRange({startIndex}, {endIndex})");
             DialogManager.Instance.PlayRange(startIndex, endIndex);
         }
+        else
+        {
+            Debug.LogError("[RoundManager] DialogManager.Instance为空，无法播放对话！");
+        }
+    }
+
+    // 确保DialogManager实例存在
+    private bool EnsureDialogManagerExists()
+    {
+        if (DialogManager.Instance != null)
+        {
+            return true;
+        }
+        
+        Debug.LogWarning("[RoundManager] DialogManager.Instance为空，尝试查找或创建...");
+        
+        // 尝试查找场景中的DialogManager
+        DialogManager dialogManager = FindObjectOfType<DialogManager>();
+        if (dialogManager != null)
+        {
+            Debug.Log("[RoundManager] 在场景中找到了DialogManager");
+            return true;
+        }
+        
+        // 如果场景中没有DialogManager，尝试查找预制体并实例化
+        GameObject dialogManagerPrefab = Resources.Load<GameObject>("Prefabs/DialogManager");
+        if (dialogManagerPrefab != null)
+        {
+            Debug.Log("[RoundManager] 从Resources加载DialogManager预制体并实例化");
+            Instantiate(dialogManagerPrefab);
+            return DialogManager.Instance != null;
+        }
+        
+        Debug.LogError("[RoundManager] 无法找到或创建DialogManager实例！");
+        return false;
     }
 }
