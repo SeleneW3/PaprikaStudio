@@ -22,6 +22,7 @@ public class IPLogic : MonoBehaviour
     public static string GetLocalIPAddress()
     {
         var host = Dns.GetHostEntry(Dns.GetHostName());
+        GameManager.Instance.localIP = host.AddressList[0].ToString();
         foreach (var ip in host.AddressList)
         {
             if (ip.AddressFamily == AddressFamily.InterNetwork)

@@ -27,10 +27,7 @@ public class ButtonLogic : MonoBehaviour
 
     private void Start()
     {
-        if (joinIpLogic != null)
-        {
-            joinIpLogic.Initialize(this);
-        }
+        
     }
 
     private void OnMouseDown()
@@ -76,8 +73,9 @@ public class ButtonLogic : MonoBehaviour
 
     private async void CreateClick()
     {
-        string localIp = GameManager.Instance.localIP;
-        GameManager.Instance.localIP = localIp;
+        string localIp = GetLocalIPAddress();
+
+        Debug.Log($"Attempting to create lobby with local IP: {localIp}");
 
         // 配置 Transport
         var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as Unity.Netcode.Transports.UTP.UnityTransport;
@@ -103,6 +101,19 @@ public class ButtonLogic : MonoBehaviour
         {
             Debug.LogError("NotServerException: Only server can load scenes.");
         }
+    }
+    public static string GetLocalIPAddress()
+    {
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        GameManager.Instance.localIP = host.AddressList[0].ToString();
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                return ip.ToString();
+            }
+        }
+        throw new Exception("ϵͳ��û���ҵ�IPv4��ַ��������������");
     }
 
     // 新增：将原来的JoinClick改名并设为public，供JoinIpLogic调用

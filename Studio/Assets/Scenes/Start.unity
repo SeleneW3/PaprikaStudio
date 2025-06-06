@@ -220,6 +220,7 @@ MonoBehaviour:
   targetPos: {x: -0.85, y: -3.15, z: -6.88}
   targetRot: {x: -0.53107244, y: 0.016790105, z: -0.010526288, w: -0.8470946}
   transitionDuration: 0.5
+  cardMoveSound: CardMove
 --- !u!65 &71906186
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -255,6 +256,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buttonType: 1
   joinIpLogic: {fileID: 1366208714}
+  buttonClickSound: CardClick
 --- !u!1 &76046387 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 97687125f049d6149b23289f46a20e46, type: 3}
@@ -277,6 +279,7 @@ MonoBehaviour:
   targetPos: {x: 3.47, y: -2.98, z: -7.21}
   targetRot: {x: 0.42359486, y: 0.30591035, z: 0.27744335, w: 0.80623287}
   transitionDuration: 0.5
+  cardMoveSound: CardMove
 --- !u!65 &76046389
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -312,6 +315,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buttonType: 3
   joinIpLogic: {fileID: 0}
+  buttonClickSound: CardClick
 --- !u!1 &222069774
 GameObject:
   m_ObjectHideFlags: 0
@@ -372,7 +376,7 @@ MonoBehaviour:
   m_text: "\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -435,7 +439,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &222069777
@@ -735,6 +739,7 @@ GameObject:
   - component: {fileID: 414523172}
   - component: {fileID: 414523171}
   - component: {fileID: 414523170}
+  - component: {fileID: 414523173}
   m_Layer: 5
   m_Name: ConfirmButton
   m_TagString: Untagged
@@ -806,7 +811,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 414523171}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 414523173}
+        m_TargetAssemblyTypeName: ButtonLogic, Assembly-CSharp
+        m_MethodName: ExecuteJoin
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &414523171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -845,6 +862,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 414523168}
   m_CullTransparentMesh: 1
+--- !u!114 &414523173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414523168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7596750adedde79448fc4e2eb83338d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonType: 0
+  joinIpLogic: {fileID: 0}
+  buttonClickSound: CardClick
 --- !u!1 &518262461
 GameObject:
   m_ObjectHideFlags: 0
@@ -1420,7 +1452,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &949703200
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2555,6 +2587,8 @@ MonoBehaviour:
   joinPanel: {fileID: 949703199}
   confirmButton: {fileID: 414523170}
   exitButton: {fileID: 1049604981}
+  buttonLogic: {fileID: 0}
+  uiClickSound: ButtonClick
 --- !u!114 &1366208715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3293,7 +3327,7 @@ MonoBehaviour:
   m_text: Enter text...
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -6632567963737037237, guid: 15ad946c15930eb4a89d5d61c02bd0ae, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3356,7 +3390,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1570363574
@@ -4055,6 +4089,7 @@ MonoBehaviour:
   targetPos: {x: 1.575446, y: -3.080995, z: -6.681695}
   targetRot: {x: 0.39038762, y: 0.10816772, z: 0.024792273, w: 0.9139379}
   transitionDuration: 0.5
+  cardMoveSound: CardMove
 --- !u!65 &1801404103
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4090,6 +4125,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buttonType: 2
   joinIpLogic: {fileID: 0}
+  buttonClickSound: CardClick
 --- !u!1001 &1982675910
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4198,6 +4234,7 @@ MonoBehaviour:
   targetPos: {x: -2.64, y: -3.55, z: -7.53}
   targetRot: {x: -0.4754945, y: 0.13419743, z: 0.15410954, w: -0.8556555}
   transitionDuration: 0.5
+  cardMoveSound: CardMove
 --- !u!65 &2014737315
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4233,6 +4270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buttonType: 0
   joinIpLogic: {fileID: 0}
+  buttonClickSound: CardClick
 --- !u!1001 &207412576207445536
 PrefabInstance:
   m_ObjectHideFlags: 0
