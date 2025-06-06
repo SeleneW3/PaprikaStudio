@@ -289,7 +289,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc25291f52dc9224cb58f7eadec72519, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  unlockedLevel:
+    m_InternalValue: 1
+  completedPath:
+    m_InternalValue: 0
+  player1TotalPoint:
+    m_InternalValue: 0
+  player2TotalPoint:
+    m_InternalValue: 0
+  player1CheatTimes:
+    m_InternalValue: 0
+  player2CheatTimes:
+    m_InternalValue: 0
+  player1CoopTimes:
+    m_InternalValue: 0
+  player2CoopTimes:
+    m_InternalValue: 0
+  player1Identity:
+    m_InternalValue: 0
+  player2Identity:
+    m_InternalValue: 0
+  player1ReceivedIdentityBonus:
+    m_InternalValue: 0
+  player2ReceivedIdentityBonus:
+    m_InternalValue: 0
   currentMode:
+    m_InternalValue: 0
+  currentLevel:
     m_InternalValue: 0
 --- !u!4 &770477937
 Transform:

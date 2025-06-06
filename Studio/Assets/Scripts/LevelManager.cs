@@ -109,6 +109,19 @@ public class LevelManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    // 添加网络变量来跟踪是否已经获得过身份奖励
+    public NetworkVariable<bool> player1ReceivedIdentityBonus = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<bool> player2ReceivedIdentityBonus = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     [Header("当前模式 (同步用)")]
     public NetworkVariable<Mode> currentMode = new NetworkVariable<Mode>(
         Mode.Tutor,
@@ -482,33 +495,37 @@ public class LevelManager : NetworkBehaviour
         bool player1Rewarded = false;
         bool player2Rewarded = false;
         
-        // 欺骗派：欺骗总数达到14次则获得额外加分+15
-        if (player1Identity.Value == PlayerIdentity.Cheater && player1CheatTimes.Value == 13)
+        // 欺骗派：欺骗总数达到或超过14次则获得额外加分+15（如果尚未获得过奖励）
+        if (player1Identity.Value == PlayerIdentity.Cheater && player1CheatTimes.Value >= 13 && !player1ReceivedIdentityBonus.Value)
         {
             player1TotalPoint.Value += 15;
             player1Rewarded = true;
+            player1ReceivedIdentityBonus.Value = true;
             Debug.Log($"[LevelManager] 玩家1(欺骗派)达成任务，奖励15分！当前欺骗次数：{player1CheatTimes.Value}");
         }
         
-        if (player2Identity.Value == PlayerIdentity.Cheater && player2CheatTimes.Value == 13)
+        if (player2Identity.Value == PlayerIdentity.Cheater && player2CheatTimes.Value >= 13 && !player2ReceivedIdentityBonus.Value)
         {
             player2TotalPoint.Value += 15;
             player2Rewarded = true;
+            player2ReceivedIdentityBonus.Value = true;
             Debug.Log($"[LevelManager] 玩家2(欺骗派)达成任务，奖励15分！当前欺骗次数：{player2CheatTimes.Value}");
         }
         
-        // 合作派：合作总数达到9次则获得额外加分+15
-        if (player1Identity.Value == PlayerIdentity.Cooperator && player1CoopTimes.Value == 8)
+        // 合作派：合作总数达到或超过9次则获得额外加分+15（如果尚未获得过奖励）
+        if (player1Identity.Value == PlayerIdentity.Cooperator && player1CoopTimes.Value >= 8 && !player1ReceivedIdentityBonus.Value)
         {
             player1TotalPoint.Value += 15;
             player1Rewarded = true;
+            player1ReceivedIdentityBonus.Value = true;
             Debug.Log($"[LevelManager] 玩家1(合作派)达成任务，奖励15分！当前合作次数：{player1CoopTimes.Value}");
         }
         
-        if (player2Identity.Value == PlayerIdentity.Cooperator && player2CoopTimes.Value == 8)
+        if (player2Identity.Value == PlayerIdentity.Cooperator && player2CoopTimes.Value >= 8 && !player2ReceivedIdentityBonus.Value)
         {
             player2TotalPoint.Value += 15;
             player2Rewarded = true;
+            player2ReceivedIdentityBonus.Value = true;
             Debug.Log($"[LevelManager] 玩家2(合作派)达成任务，奖励15分！当前合作次数：{player2CoopTimes.Value}");
         }
         

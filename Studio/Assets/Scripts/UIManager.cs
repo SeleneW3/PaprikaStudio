@@ -127,6 +127,18 @@ public class UIManager : NetworkBehaviour
     private TextAnimatorPlayer player1BonusTextAnimator; // 添加TextAnimator引用
     private TextAnimatorPlayer player2BonusTextAnimator; // 添加TextAnimator引用
 
+    // 分数动画相关变量
+    private float displayedPlayer1Score = 0f;  // 当前显示的玩家1分数
+    private float displayedPlayer2Score = 0f;  // 当前显示的玩家2分数
+    private float displayedPlayer1TotalScore = 0f;  // 当前显示的玩家1总分数
+    private float displayedPlayer2TotalScore = 0f;  // 当前显示的玩家2总分数
+    private Coroutine player1ScoreAnimation = null;  // 玩家1分数动画协程
+    private Coroutine player2ScoreAnimation = null;  // 玩家2分数动画协程
+    private Coroutine player1TotalScoreAnimation = null;  // 玩家1总分数动画协程
+    private Coroutine player2TotalScoreAnimation = null;  // 玩家2总分数动画协程
+    [Range(1f, 10f)]
+    public float scoreAnimationSpeed = 7f;  // 分数变化速度，每秒增加/减少的分数
+
     private void Awake()
     {
         if (Instance == null)
@@ -234,6 +246,30 @@ public class UIManager : NetworkBehaviour
                 Debug.LogError("[UIManager] Cannot initialize UI: No Canvas found!");
                 return;
             }
+        }
+
+        // 初始化显示分数变量
+        if (GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
+        {
+            displayedPlayer1Score = GameManager.Instance.playerComponents[0].point.Value;
+            displayedPlayer2Score = GameManager.Instance.playerComponents[1].point.Value;
+        }
+        else
+        {
+            displayedPlayer1Score = 0f;
+            displayedPlayer2Score = 0f;
+        }
+
+        // 初始化总分显示
+        if (LevelManager.Instance != null)
+        {
+            displayedPlayer1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
+            displayedPlayer2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
+        }
+        else
+        {
+            displayedPlayer1TotalScore = 0f;
+            displayedPlayer2TotalScore = 0f;
         }
 
         // 获取RoundManager引用 - 移到方法开始处
@@ -389,6 +425,9 @@ public class UIManager : NetworkBehaviour
 
     public override void OnDestroy()
     {
+        // 确保停止所有分数动画
+        StopAllScoreAnimations();
+        
         // 取消订阅事件
         if (networkManager != null)
         {
@@ -663,52 +702,86 @@ public class UIManager : NetworkBehaviour
             float player2Score = player2Component.point.Value;
             
             // 检查分数是否发生变化
-            bool scoreChanged = Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f || 
-                               Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f;
+            bool player1ScoreChanged = Mathf.Abs(player1Score - lastPlayer1Score) > 0.01f;
+            bool player2ScoreChanged = Mathf.Abs(player2Score - lastPlayer2Score) > 0.01f;
+            bool scoreChanged = player1ScoreChanged || player2ScoreChanged;
             
-            // 更新分数显示
-            if (player1ScoreText != null)
+            // 更新Player 1的分数显示
+            if (player1ScoreText != null && player1ScoreChanged)
             {
-                string scoreText = $"玩家1: <shake a=0.1 f=0.1>{player1Score}</shake>";
+                // 如果有正在运行的动画，停止它
+                if (player1ScoreAnimation != null)
+                {
+                    StopCoroutine(player1ScoreAnimation);
+                    player1ScoreAnimation = null;
+                }
                 
-                // 使用TextAnimator显示文本
-                if (player1ScoreTextAnimator != null && scoreChanged)
-                {
-                    player1ScoreTextAnimator.ShowText(scoreText);
-                }
-                else
-                {
-                    player1ScoreText.text = scoreText;
-                }
+                // 启动新的动画
+                player1ScoreAnimation = StartCoroutine(AnimateScoreChange(
+                    displayedPlayer1Score, 
+                    player1Score, 
+                    (value) =>
+                    {
+                        displayedPlayer1Score = value;
+                        // 在累加动画过程中使用普通文本，不使用shake效果
+                        string scoreText = $"玩家1: {displayedPlayer1Score}";
+                        
+                        // 使用TextAnimator显示文本
+                        if (player1ScoreTextAnimator != null)
+                        {
+                            player1ScoreTextAnimator.ShowText(scoreText);
+                        }
+                        else
+                        {
+                            player1ScoreText.text = scoreText;
+                        }
+                    },
+                    null,  // 无需额外回调
+                    true   // 累加完成后播放放大特效
+                ));
             }
-            else
+            else if (player1ScoreText != null)
             {
                 Debug.LogWarning("[UIManager] UpdateScoreText: player1ScoreText is null");
             }
 
-            if (player2ScoreText != null)
+            // 更新Player 2的分数显示
+            if (player2ScoreText != null && player2ScoreChanged)
             {
-                string scoreText = $"玩家2: <shake a=0.1 f=0.1>{player2Score}</shake>";
+                // 如果有正在运行的动画，停止它
+                if (player2ScoreAnimation != null)
+                {
+                    StopCoroutine(player2ScoreAnimation);
+                    player2ScoreAnimation = null;
+                }
                 
-                // 使用TextAnimator显示文本
-                if (player2ScoreTextAnimator != null && scoreChanged)
-                {
-                    player2ScoreTextAnimator.ShowText(scoreText);
-                }
-                else
-                {
-                    player2ScoreText.text = scoreText;
-                }
+                // 启动新的动画
+                player2ScoreAnimation = StartCoroutine(AnimateScoreChange(
+                    displayedPlayer2Score, 
+                    player2Score, 
+                    (value) =>
+                    {
+                        displayedPlayer2Score = value;
+                        // 在累加动画过程中使用普通文本，不使用shake效果
+                        string scoreText = $"玩家2: {displayedPlayer2Score}";
+                        
+                        // 使用TextAnimator显示文本
+                        if (player2ScoreTextAnimator != null)
+                        {
+                            player2ScoreTextAnimator.ShowText(scoreText);
+                        }
+                        else
+                        {
+                            player2ScoreText.text = scoreText;
+                        }
+                    },
+                    null,  // 无需额外回调
+                    true   // 累加完成后播放放大特效
+                ));
             }
-            else
+            else if (player2ScoreText != null)
             {
                 Debug.LogWarning("[UIManager] UpdateScoreText: player2ScoreText is null");
-            }
-
-            // 如果分数发生变化，播放TotalScore音效
-            if (scoreChanged && SoundManager.Instance != null)
-            {
-                SoundManager.Instance.PlaySFX("TotalScore");
             }
 
             // 如果是服务器，更新天平
@@ -976,12 +1049,36 @@ public class UIManager : NetworkBehaviour
             Debug.LogError("Cannot force UI visibility: parentCanvas is null");
             return;
         }
+
+        // 初始化分数显示变量
+        if (GameManager.Instance != null && GameManager.Instance.playerComponents.Count >= 2)
+        {
+            displayedPlayer1Score = GameManager.Instance.playerComponents[0].point.Value;
+            displayedPlayer2Score = GameManager.Instance.playerComponents[1].point.Value;
+        }
+        else
+        {
+            displayedPlayer1Score = 0f;
+            displayedPlayer2Score = 0f;
+        }
+
+        // 初始化总分显示
+        if (LevelManager.Instance != null)
+        {
+            displayedPlayer1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
+            displayedPlayer2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
+        }
+        else
+        {
+            displayedPlayer1TotalScore = 0f;
+            displayedPlayer2TotalScore = 0f;
+        }
         
         // 初始化分数文本
         if (player1ScoreText != null)
         {
             player1ScoreText.gameObject.SetActive(true);
-            string scoreText = "玩家1: 0";
+            string scoreText = $"玩家1: {displayedPlayer1Score}";
             
             // 使用TextAnimator显示文本
             if (player1ScoreTextAnimator != null)
@@ -998,7 +1095,7 @@ public class UIManager : NetworkBehaviour
         if (player2ScoreText != null)
         {
             player2ScoreText.gameObject.SetActive(true);
-            string scoreText = "玩家2: 0";
+            string scoreText = $"玩家2: {displayedPlayer2Score}";
             
             // 使用TextAnimator显示文本
             if (player2ScoreTextAnimator != null)
@@ -1648,17 +1745,40 @@ public class UIManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        State nextState = currentState.Value switch
+        State nextState;
+
+        // 当前状态是ScoreAndCoin时，检查是否有人可以开枪
+        if (currentState.Value == State.ScoreAndCoin)
         {
-            State.Idle => State.DebugText,
-            State.DebugText => State.ScoreAndCoin,
-            State.ScoreAndCoin => State.FireAnimation,
-            State.FireAnimation => State.BulletUI,
-            State.BulletUI => State.RoundText,
-            State.RoundText => State.Settlement,
-            State.Settlement => State.Idle,
-            _ => State.Idle
-        };
+            // 确保引用已初始化
+            if (roundManager == null) roundManager = FindObjectOfType<RoundManager>();
+            
+            // 检查是否有人可以开枪
+            bool anyoneCanFire = false;
+            if (roundManager != null)
+            {
+                anyoneCanFire = roundManager.player1CanFire.Value || roundManager.player2CanFire.Value;
+            }
+            
+            // 如果没人可以开枪，直接跳到BulletUI状态
+            nextState = anyoneCanFire ? State.FireAnimation : State.BulletUI;
+            
+            Debug.Log($"[UIManager] State transition from ScoreAndCoin: anyoneCanFire={anyoneCanFire}, nextState={nextState}");
+        }
+        else
+        {
+            // 其他正常状态转换
+            nextState = currentState.Value switch
+            {
+                State.Idle => State.DebugText,
+                State.DebugText => State.ScoreAndCoin,
+                State.FireAnimation => State.BulletUI,
+                State.BulletUI => State.RoundText,
+                State.RoundText => State.Settlement,
+                State.Settlement => State.Idle,
+                _ => State.Idle
+            };
+        }
 
         currentState.Value = nextState;
         ExecuteStateLogicClientRpc();
@@ -1974,31 +2094,82 @@ public class UIManager : NetworkBehaviour
         float player1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
         float player2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
 
-        string player1ScoreInfo = $"金币数：<shake a=0.1 f=0.1>{player1TotalScore}</shake>";
-        string player2ScoreInfo = $"金币数：<shake a=0.1 f=0.1>{player2TotalScore}</shake>";
-
+        // 检查分数是否发生变化
+        bool player1TotalScoreChanged = Mathf.Abs(player1TotalScore - displayedPlayer1TotalScore) > 0.01f;
+        bool player2TotalScoreChanged = Mathf.Abs(player2TotalScore - displayedPlayer2TotalScore) > 0.01f;
+        
         // 更新玩家1的总分显示
-        if (player1TotalScoreTextAnimator != null)
+        if (player1TotalScoreChanged)
         {
-            player1TotalScoreText.gameObject.SetActive(true);
-            player1TotalScoreTextAnimator.ShowText(player1ScoreInfo);
-        }
-        else
-        {
-            player1TotalScoreText.text = player1ScoreInfo;
-            player1TotalScoreText.gameObject.SetActive(true);
+            // 如果有正在运行的动画，停止它
+            if (player1TotalScoreAnimation != null)
+            {
+                StopCoroutine(player1TotalScoreAnimation);
+                player1TotalScoreAnimation = null;
+            }
+            
+            // 启动新的动画
+            player1TotalScoreAnimation = StartCoroutine(AnimateScoreChange(
+                displayedPlayer1TotalScore, 
+                player1TotalScore, 
+                (value) =>
+                {
+                    displayedPlayer1TotalScore = value;
+                    // 在累加动画过程中使用普通文本，不使用shake效果
+                    string scoreText = $"金币数：{displayedPlayer1TotalScore}";
+                    
+                    // 使用TextAnimator显示文本
+                    if (player1TotalScoreTextAnimator != null)
+                    {
+                        player1TotalScoreText.gameObject.SetActive(true);
+                        player1TotalScoreTextAnimator.ShowText(scoreText);
+                    }
+                    else
+                    {
+                        player1TotalScoreText.text = scoreText;
+                        player1TotalScoreText.gameObject.SetActive(true);
+                    }
+                },
+                null,  // 无需额外回调
+                true   // 累加完成后播放放大特效
+            ));
         }
         
         // 更新玩家2的总分显示
-        if (player2TotalScoreTextAnimator != null)
-            {
-            player2TotalScoreText.gameObject.SetActive(true);
-            player2TotalScoreTextAnimator.ShowText(player2ScoreInfo);
-        }
-        else
+        if (player2TotalScoreChanged)
         {
-            player2TotalScoreText.text = player2ScoreInfo;
-            player2TotalScoreText.gameObject.SetActive(true);
+            // 如果有正在运行的动画，停止它
+            if (player2TotalScoreAnimation != null)
+            {
+                StopCoroutine(player2TotalScoreAnimation);
+                player2TotalScoreAnimation = null;
+            }
+            
+            // 启动新的动画
+            player2TotalScoreAnimation = StartCoroutine(AnimateScoreChange(
+                displayedPlayer2TotalScore, 
+                player2TotalScore, 
+                (value) =>
+                {
+                    displayedPlayer2TotalScore = value;
+                    // 在累加动画过程中使用普通文本，不使用shake效果
+                    string scoreText = $"金币数：{displayedPlayer2TotalScore}";
+                    
+                    // 使用TextAnimator显示文本
+                    if (player2TotalScoreTextAnimator != null)
+                    {
+                        player2TotalScoreText.gameObject.SetActive(true);
+                        player2TotalScoreTextAnimator.ShowText(scoreText);
+                    }
+                    else
+                    {
+                        player2TotalScoreText.text = scoreText;
+                        player2TotalScoreText.gameObject.SetActive(true);
+                    }
+                },
+                null,  // 无需额外回调
+                true   // 累加完成后播放放大特效
+            ));
         }
     }
 
@@ -2170,6 +2341,204 @@ public class UIManager : NetworkBehaviour
         {
             SetTextAlpha(player2BonusText, 0f);
             player2BonusText.gameObject.SetActive(false);
+        }
+    }
+
+    // 添加分数动画协程
+    private IEnumerator AnimateScoreChange(float startValue, float targetValue, System.Action<float> updateAction, System.Action onComplete = null, bool playScaleEffectAfter = true)
+    {
+        float currentValue = startValue;
+        float duration = Mathf.Abs(targetValue - startValue) / scoreAnimationSpeed;
+        float elapsedTime = 0f;
+
+        // 如果分数差异太小，直接设置为目标值
+        if (Mathf.Abs(targetValue - startValue) < 0.1f)
+        {
+            updateAction(targetValue);
+            if (onComplete != null) onComplete();
+            yield break;
+        }
+
+        // 播放增加金币音效
+        if (targetValue > startValue && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("AddScore");
+        }
+
+        // 先使用没有shake效果的纯数字
+        bool isPlayer1Score = false;
+        bool isPlayer2Score = false;
+        bool isPlayer1TotalScore = false;
+        bool isPlayer2TotalScore = false;
+        string originalText = "";
+        TextMeshProUGUI textToAnimate = null;
+        Vector3 originalScale = Vector3.one;
+        
+        // 确定是哪个分数文本
+        if (updateAction.Target is UIManager)
+        {
+            if (player1ScoreText != null && updateAction.Method.Name.Contains("player1"))
+            {
+                isPlayer1Score = true;
+                textToAnimate = player1ScoreText;
+                originalText = player1ScoreText.text;
+                originalScale = player1ScoreText.transform.localScale;
+            }
+            else if (player2ScoreText != null && updateAction.Method.Name.Contains("player2"))
+            {
+                isPlayer2Score = true;
+                textToAnimate = player2ScoreText;
+                originalText = player2ScoreText.text;
+                originalScale = player2ScoreText.transform.localScale;
+            }
+            else if (player1TotalScoreText != null && updateAction.Method.Name.Contains("player1TotalScore"))
+            {
+                isPlayer1TotalScore = true;
+                textToAnimate = player1TotalScoreText;
+                originalText = player1TotalScoreText.text;
+                originalScale = player1TotalScoreText.transform.localScale;
+            }
+            else if (player2TotalScoreText != null && updateAction.Method.Name.Contains("player2TotalScore"))
+            {
+                isPlayer2TotalScore = true;
+                textToAnimate = player2TotalScoreText;
+                originalText = player2TotalScoreText.text;
+                originalScale = player2TotalScoreText.transform.localScale;
+            }
+        }
+
+        // 数字递增动画
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / duration);
+            
+            // 使用线性插值计算当前值
+            currentValue = Mathf.Lerp(startValue, targetValue, t);
+            
+            // 对于整数显示，我们可以使用Mathf.Floor确保逐个整数显示
+            float displayValue = Mathf.Floor(currentValue);
+            updateAction(displayValue);
+            
+            yield return null;
+        }
+
+        // 确保最终值正确
+        updateAction(targetValue);
+        
+        // 在累加完成后，如果需要，播放放大特效
+        if (playScaleEffectAfter && (isPlayer1Score || isPlayer2Score || isPlayer1TotalScore || isPlayer2TotalScore) && textToAnimate != null)
+        {
+            // 播放放大缩小动画
+            float scaleAnimDuration = 0.3f;
+            float maxScale = 1.3f;
+            elapsedTime = 0f;
+            
+            // 放大阶段
+            while (elapsedTime < scaleAnimDuration / 2)
+            {
+                elapsedTime += Time.deltaTime;
+                float scale = Mathf.Lerp(1f, maxScale, elapsedTime / (scaleAnimDuration / 2));
+                textToAnimate.transform.localScale = originalScale * scale;
+                yield return null;
+            }
+            
+            // 缩小阶段
+            elapsedTime = 0f;
+            while (elapsedTime < scaleAnimDuration / 2)
+            {
+                elapsedTime += Time.deltaTime;
+                float scale = Mathf.Lerp(maxScale, 1f, elapsedTime / (scaleAnimDuration / 2));
+                textToAnimate.transform.localScale = originalScale * scale;
+                yield return null;
+            }
+            
+            // 确保恢复原始缩放
+            textToAnimate.transform.localScale = originalScale;
+            
+            // 放大特效结束后，应用带有shake效果的文本
+            if (isPlayer1Score)
+            {
+                string finalText = $"玩家1: <shake a=0.1 f=0.1>{targetValue}</shake>";
+                if (player1ScoreTextAnimator != null)
+                {
+                    player1ScoreTextAnimator.ShowText(finalText);
+                }
+                else
+                {
+                    player1ScoreText.text = finalText;
+                }
+            }
+            else if (isPlayer2Score)
+            {
+                string finalText = $"玩家2: <shake a=0.1 f=0.1>{targetValue}</shake>";
+                if (player2ScoreTextAnimator != null)
+                {
+                    player2ScoreTextAnimator.ShowText(finalText);
+                }
+                else
+                {
+                    player2ScoreText.text = finalText;
+                }
+            }
+            else if (isPlayer1TotalScore)
+            {
+                string finalText = $"金币数：<shake a=0.1 f=0.1>{targetValue}</shake>";
+                if (player1TotalScoreTextAnimator != null)
+                {
+                    player1TotalScoreTextAnimator.ShowText(finalText);
+                }
+                else
+                {
+                    player1TotalScoreText.text = finalText;
+                }
+            }
+            else if (isPlayer2TotalScore)
+            {
+                string finalText = $"金币数：<shake a=0.1 f=0.1>{targetValue}</shake>";
+                if (player2TotalScoreTextAnimator != null)
+                {
+                    player2TotalScoreTextAnimator.ShowText(finalText);
+                }
+                else
+                {
+                    player2TotalScoreText.text = finalText;
+                }
+            }
+        }
+        
+        if (onComplete != null) onComplete();
+    }
+
+    // 停止所有分数动画
+    private void StopAllScoreAnimations()
+    {
+        // 停止玩家1分数动画
+        if (player1ScoreAnimation != null)
+        {
+            StopCoroutine(player1ScoreAnimation);
+            player1ScoreAnimation = null;
+        }
+        
+        // 停止玩家2分数动画
+        if (player2ScoreAnimation != null)
+        {
+            StopCoroutine(player2ScoreAnimation);
+            player2ScoreAnimation = null;
+        }
+        
+        // 停止玩家1总分动画
+        if (player1TotalScoreAnimation != null)
+        {
+            StopCoroutine(player1TotalScoreAnimation);
+            player1TotalScoreAnimation = null;
+        }
+        
+        // 停止玩家2总分动画
+        if (player2TotalScoreAnimation != null)
+        {
+            StopCoroutine(player2TotalScoreAnimation);
+            player2TotalScoreAnimation = null;
         }
     }
 } 

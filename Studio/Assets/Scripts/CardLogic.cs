@@ -210,13 +210,13 @@ public class CardLogic : NetworkBehaviour
     {
         float p1Before = GameManager.Instance.playerComponents[0].point.Value;
         float p2Before = GameManager.Instance.playerComponents[1].point.Value;
-        //Debug.Log($"ReversePoint: Before Swap -> P1: {p1Before}, P2: {p2Before}");
+        Debug.Log($"ReversePoint: Before Swap -> P1: {p1Before}, P2: {p2Before}");
 
-        float temp = p2Before;
+        // 交换双方得分
         GameManager.Instance.playerComponents[1].point.Value = p1Before;
-        GameManager.Instance.playerComponents[0].point.Value = temp;
+        GameManager.Instance.playerComponents[0].point.Value = p2Before;
 
-        //Debug.Log($"ReversePoint: After Swap -> P1: {GameManager.Instance.playerComponents[0].point.Value}, P2: {GameManager.Instance.playerComponents[1].point.Value}");
+        Debug.Log($"ReversePoint: After Swap -> P1: {GameManager.Instance.playerComponents[0].point.Value}, P2: {GameManager.Instance.playerComponents[1].point.Value}");
     }
 
 

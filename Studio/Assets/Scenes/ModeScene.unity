@@ -2941,6 +2941,7 @@ MonoBehaviour:
   settingsButton: {fileID: 50665488}
   settingsPanel: {fileID: 1831880569}
   backFromSettingsButton: {fileID: 0}
+  buttonClickSound: ButtonClick
 --- !u!4 &1134533219
 Transform:
   m_ObjectHideFlags: 0
@@ -3150,6 +3151,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 3
+  level: 0
+  isLevelNode: 0
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!65 &1177842152
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5048,6 +5055,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 2
+  level: 0
+  isLevelNode: 0
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!65 &1830360293
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5321,6 +5334,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 1
+  level: 0
+  isLevelNode: 0
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  hoverLiftHeight: 0.2
+  hoverSpeed: 5
 --- !u!1 &2027953278
 GameObject:
   m_ObjectHideFlags: 0

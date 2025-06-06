@@ -164,14 +164,15 @@ public class RoundManager : NetworkBehaviour
                 // 确保DialogManager存在
                 if (EnsureDialogManagerExists())
                 {
-                    StartCoroutine(PlayDialogWithDelay(10, 12, 2f));
-                    tutorState++;
-                    
-                    Debug.Log($"[RoundManager] Tutor模式回合信息: 当前回合 {currentRound.Value}/{totalRounds.Value}");
+                    Debug.Log($"[RoundManager] 准备播放教程对话10-12，当前回合 {currentRound.Value}/{totalRounds.Value}");
+                    // 先启动协程，在协程完成后再增加状态
+                    StartCoroutine(PlayDialogWithDelayAndIncrementState(10, 12, 2f));
                 }
                 else
                 {
                     Debug.LogError("[RoundManager] 无法播放对话，DialogManager不存在！");
+                    // 即使对话无法播放，也要增加状态以避免卡住
+                    tutorState++;
                 }
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
@@ -534,8 +535,9 @@ public class RoundManager : NetworkBehaviour
         LevelManager.Instance.AddPlayer1TotalPoint(actualPlayer1Increase);
         LevelManager.Instance.AddPlayer2TotalPointServerRpc(actualPlayer2Increase);
 
-        string player1Debug = "+" + player1CurrentRoundPoint.ToString();
-        string player2Debug = "+" + player2CurrentRoundPoint.ToString();
+        // 修改这里：使用actualPlayerIncrease作为显示的分数
+        string player1Debug = "+" + actualPlayer1Increase.ToString();
+        string player2Debug = "+" + actualPlayer2Increase.ToString();
 
         if (uiManager != null)
         {
@@ -802,21 +804,40 @@ public class RoundManager : NetworkBehaviour
     private IEnumerator PlayDialogWithDelay(int startIndex, int endIndex, float delaySeconds)
     {
         Debug.Log($"[RoundManager] PlayDialogWithDelay开始等待 {delaySeconds} 秒，将播放对话索引 {startIndex}-{endIndex}");
-        yield return new WaitForSeconds(delaySeconds);
         
-        // 检查DialogManager是否存在
-        if (DialogManager.Instance == null)
+        // 增加延迟时间，确保所有组件都已初始化
+        yield return new WaitForSeconds(delaySeconds + 0.5f);
+        
+        // 确保DialogManager实例存在
+        if (!EnsureDialogManagerExists())
         {
-            Debug.LogError("[RoundManager] DialogManager.Instance为空，无法播放对话！");
-            yield break;
+            Debug.LogError("[RoundManager] DialogManager.Instance为空，无法播放对话！尝试重新创建...");
+            
+            // 再次尝试确保DialogManager存在
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForSeconds(0.5f);
+                if (EnsureDialogManagerExists())
+                {
+                    break;
+                }
+            }
+            
+            // 如果仍然无法找到DialogManager，则退出
+            if (DialogManager.Instance == null)
+            {
+                Debug.LogError("[RoundManager] 多次尝试后仍无法找到DialogManager实例，放弃播放对话！");
+                yield break;
+            }
         }
         
         Debug.Log($"[RoundManager] 延迟结束，准备调用PlayDelayedDialogServerRpc，DialogManager.Instance存在: {DialogManager.Instance != null}");
+        
         // 使用ServerRpc确保对话在所有客户端上播放
-        PlayDelayedDialogServerRpc(startIndex, endIndex, 0f);
+        PlayDelayedDialogServerRpc(startIndex, endIndex, 0.5f);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void PlayDelayedDialogServerRpc(int startIndex, int endIndex, float delaySeconds)
     {
         Debug.Log($"[RoundManager] PlayDelayedDialogServerRpc被调用，startIndex={startIndex}, endIndex={endIndex}");
@@ -829,10 +850,25 @@ public class RoundManager : NetworkBehaviour
         Debug.Log($"[RoundManager] DelayedDialogClientRpcCoroutine开始等待 {delaySeconds} 秒");
         yield return new WaitForSeconds(delaySeconds);
         
-        // 再次检查DialogManager是否存在
-        if (DialogManager.Instance == null)
+        // 再次检查DialogManager是否存在，如果不存在则尝试创建
+        bool dialogManagerExists = false;
+        
+        for (int i = 0; i < 3; i++) // 尝试最多3次
         {
-            Debug.LogError("[RoundManager] 在DelayedDialogClientRpcCoroutine中，DialogManager.Instance为空！");
+            if (DialogManager.Instance != null)
+            {
+                dialogManagerExists = true;
+                break;
+            }
+            
+            Debug.LogWarning($"[RoundManager] 尝试第{i+1}次确保DialogManager存在");
+            EnsureDialogManagerExists();
+            yield return new WaitForSeconds(0.3f);
+        }
+        
+        if (!dialogManagerExists)
+        {
+            Debug.LogError("[RoundManager] 在DelayedDialogClientRpcCoroutine中，多次尝试后DialogManager.Instance仍为空！");
             yield break;
         }
         
@@ -853,6 +889,47 @@ public class RoundManager : NetworkBehaviour
         else
         {
             Debug.LogError("[RoundManager] DialogManager.Instance为空，无法播放对话！");
+        }
+    }
+    
+    // 播放对话并在完成后增加教程状态
+    private IEnumerator PlayDialogWithDelayAndIncrementState(int startIndex, int endIndex, float delaySeconds)
+    {
+        // 创建一个完成标志
+        bool dialogCompleted = false;
+        
+        // 启动对话协程
+        StartCoroutine(PlayDialogWithDelayAndNotify(startIndex, endIndex, delaySeconds, () => {
+            dialogCompleted = true;
+        }));
+        
+        // 等待对话完成或超时
+        float timeoutSeconds = 10f; // 最长等待10秒
+        float elapsedTime = 0f;
+        
+        while (!dialogCompleted && elapsedTime < timeoutSeconds)
+        {
+            yield return null;
+            elapsedTime += Time.deltaTime;
+        }
+        
+        // 无论对话是否成功完成，都增加状态以避免游戏卡住
+        Debug.Log($"[RoundManager] 对话{startIndex}-{endIndex}播放{(dialogCompleted ? "完成" : "超时")}，增加tutorState");
+        tutorState++;
+    }
+    
+    // 播放对话并通知完成
+    private IEnumerator PlayDialogWithDelayAndNotify(int startIndex, int endIndex, float delaySeconds, System.Action onComplete)
+    {
+        yield return StartCoroutine(PlayDialogWithDelay(startIndex, endIndex, delaySeconds));
+        
+        // 额外等待一段时间，确保对话有足够时间显示
+        yield return new WaitForSeconds(3f);
+        
+        // 通知完成
+        if (onComplete != null)
+        {
+            onComplete();
         }
     }
 
