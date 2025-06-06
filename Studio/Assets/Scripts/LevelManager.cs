@@ -192,6 +192,9 @@ public class LevelManager : NetworkBehaviour
         // 记录待播放对话的关卡，但不立即播放
         pendingDialogLevel = current;
         
+        // 更新背景音乐
+        UpdateBackgroundMusic(current);
+        
         // 触发关卡改变事件
         OnLevelChanged?.Invoke(previous, current);
     }
@@ -239,6 +242,27 @@ public class LevelManager : NetworkBehaviour
             case Level.Level6B:
                 currentMode.Value = Mode.OnlyCard;
                 break;
+        }
+    }
+
+    // 根据关卡更新背景音乐
+    private void UpdateBackgroundMusic(Level level)
+    {
+        // 确保SoundManager实例存在
+        if (SoundManager.Instance == null) return;
+        
+        // 根据关卡决定播放的音乐
+        if (level == Level.Tutorial)
+        {
+            SoundManager.Instance.PlayMusic("GameTutor");
+        }
+        else if (level >= Level.Level5A) // Level5和Level6
+        {
+            SoundManager.Instance.PlayMusic("GameGun");
+        }
+        else // Level1到Level4
+        {
+            SoundManager.Instance.PlayMusic("Game");
         }
     }
 

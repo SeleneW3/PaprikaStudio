@@ -60,6 +60,13 @@ public class GameManager : NetworkBehaviour
         levelManager = FindObjectOfType<LevelManager>();
         // 你也可以加DialogManager等
         dialogManager = FindObjectOfType<DialogManager>();
+        
+        // 如果是Game场景，检查是否需要播放特定音乐
+        if (scene.name == "Game" && SoundManager.Instance != null)
+        {
+            // 通知SoundManager播放Game场景音乐
+            SoundManager.Instance.PlayGameSceneMusic();
+        }
     }
 
     void Start()

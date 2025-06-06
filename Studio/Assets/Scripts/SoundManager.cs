@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SoundManager : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class SoundManager : MonoBehaviour
 
     [Header("Audio Sources")]
     [SerializeField] private AudioSource musicSource;  // 用于播放背景音乐
+    [SerializeField] private AudioSource musicCrossfadeSource; // 用于音乐淡入淡出切换
     [SerializeField] private AudioSource sfxSource;    // 用于播放音效
     private Dictionary<string, AudioSource> activeSfxSources = new Dictionary<string, AudioSource>(); // 用于跟踪正在播放的音效
 
@@ -28,10 +30,15 @@ public class SoundManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float musicVolume = 1f;
     [SerializeField] private float sfxVolume = 1f;
+    [SerializeField] private float crossfadeDuration = 1.5f; // 音乐淡入淡出持续时间
     
     private Dictionary<string, AudioClip> musicDict = new Dictionary<string, AudioClip>();
     private Dictionary<string, AudioClip> sfxDict = new Dictionary<string, AudioClip>();
     private Dictionary<string, float> sfxVolumeDict = new Dictionary<string, float>(); // 用于存储每个音效的单独音量
+    
+    // 当前播放的音乐名称
+    private string currentMusic = "";
+    private bool isCrossfading = false; // 是否正在进行淡入淡出
 
     private void Awake()
     {
@@ -52,6 +59,13 @@ public class SoundManager : MonoBehaviour
         {
             musicSource = gameObject.AddComponent<AudioSource>();
             musicSource.loop = true;
+        }
+        
+        if (musicCrossfadeSource == null)
+        {
+            musicCrossfadeSource = gameObject.AddComponent<AudioSource>();
+            musicCrossfadeSource.loop = true;
+            musicCrossfadeSource.volume = 0f; // 初始音量为0
         }
         
         if (sfxSource == null)
@@ -77,6 +91,170 @@ public class SoundManager : MonoBehaviour
                 sfxVolumeDict[s.name] = savedVolume;
             }
         }
+        
+        // 注册场景加载事件
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    
+    private void OnDestroy()
+    {
+        // 取消注册场景加载事件
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        
+        // 停止所有活跃的音效
+        foreach (var kvp in activeSfxSources)
+        {
+            if (kvp.Value != null)
+            {
+                Destroy(kvp.Value);
+            }
+        }
+        activeSfxSources.Clear();
+    }
+
+    // 场景加载时的处理
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 根据场景名称播放对应音乐
+        string sceneName = scene.name;
+        Debug.Log($"[SoundManager] 场景加载: {sceneName}");
+        
+        switch (sceneName)
+        {
+            case "Start":
+            case "Lobby":
+                PlaySceneMusic("LevelChoose");
+                break;
+                
+            case "LevelScene":
+                PlaySceneMusic("LevelChoose");
+                break;
+                
+            case "Game":
+                // Game场景的音乐在LevelManager中根据关卡决定
+                PlayGameSceneMusic();
+                break;
+                
+            default:
+                // 其他场景暂停音乐
+                StopMusic();
+                break;
+        }
+    }
+    
+    // 播放Game场景音乐（基于当前关卡）
+    public void PlayGameSceneMusic()
+    {
+        // 检查LevelManager是否存在
+        if (LevelManager.Instance == null)
+        {
+            Debug.LogWarning("[SoundManager] LevelManager.Instance为空，无法确定当前关卡音乐");
+            return;
+        }
+        
+        // 根据当前关卡和模式决定音乐
+        LevelManager.Level currentLevel = LevelManager.Instance.currentLevel.Value;
+        
+        if (currentLevel == LevelManager.Level.Tutorial)
+        {
+            PlaySceneMusic("GameTutor");
+        }
+        else if (currentLevel >= LevelManager.Level.Level5A)
+        {
+            // Level5和Level6播放GameGun
+            PlaySceneMusic("GameGun");
+        }
+        else
+        {
+            // Level1-4播放Game
+            PlaySceneMusic("Game");
+        }
+    }
+    
+    // 播放场景音乐（如果与当前不同）
+    private void PlaySceneMusic(string musicName)
+    {
+        // 如果已经在播放相同的音乐，则不重复播放
+        if (currentMusic == musicName && musicSource.isPlaying && !isCrossfading)
+        {
+            return;
+        }
+        
+        // 使用淡入淡出方式播放新音乐
+        CrossfadeToNewMusic(musicName);
+        currentMusic = musicName;
+    }
+
+    // 淡入淡出切换到新音乐
+    private void CrossfadeToNewMusic(string newMusicName)
+    {
+        // 如果新音乐不存在，则直接返回
+        if (!musicDict.ContainsKey(newMusicName))
+        {
+            Debug.LogWarning($"[SoundManager] 音乐 {newMusicName} 未找到！");
+            return;
+        }
+        
+        // 如果正在淡入淡出，先停止当前的淡入淡出
+        if (isCrossfading)
+        {
+            StopAllCoroutines();
+        }
+        
+        // 如果当前没有音乐在播放，直接播放新音乐
+        if (!musicSource.isPlaying)
+        {
+            PlayMusic(newMusicName);
+            return;
+        }
+        
+        // 开始淡入淡出
+        StartCoroutine(CrossfadeMusicCoroutine(newMusicName, crossfadeDuration));
+    }
+    
+    // 淡入淡出协程
+    private IEnumerator CrossfadeMusicCoroutine(string newMusicName, float duration)
+    {
+        isCrossfading = true;
+        
+        // 设置淡出源（当前正在播放的）
+        AudioSource fadeOutSource = musicSource;
+        AudioSource fadeInSource = musicCrossfadeSource;
+        
+        // 设置淡入源（将要播放的新音乐）
+        fadeInSource.clip = musicDict[newMusicName];
+        fadeInSource.volume = 0f;
+        fadeInSource.Play();
+        
+        float startVolume = fadeOutSource.volume;
+        float timer = 0f;
+        
+        // 执行淡入淡出
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+            float t = timer / duration;
+            
+            // 线性淡入淡出
+            fadeOutSource.volume = Mathf.Lerp(startVolume, 0f, t);
+            fadeInSource.volume = Mathf.Lerp(0f, musicVolume, t);
+            
+            yield return null;
+        }
+        
+        // 确保最终状态
+        fadeOutSource.Stop();
+        fadeOutSource.volume = 0f;
+        fadeInSource.volume = musicVolume;
+        
+        // 交换音源，使主音源始终是当前播放的音乐
+        AudioSource temp = musicSource;
+        musicSource = musicCrossfadeSource;
+        musicCrossfadeSource = temp;
+        
+        isCrossfading = false;
+        
+        Debug.Log($"[SoundManager] 音乐淡入淡出完成: {newMusicName}");
     }
 
     // 播放背景音乐
@@ -87,10 +265,11 @@ public class SoundManager : MonoBehaviour
             musicSource.clip = musicDict[name];
             musicSource.volume = musicVolume;
             musicSource.Play();
+            Debug.Log($"[SoundManager] 播放音乐: {name}");
         }
         else
         {
-            //Debug.LogWarning($"Music clip {name} not found!");
+            Debug.LogWarning($"[SoundManager] 音乐 {name} 未找到！");
         }
     }
 
@@ -149,7 +328,7 @@ public class SoundManager : MonoBehaviour
         }
         else
         {
-            //Debug.LogWarning($"SFX clip {name} not found! Available clips: {string.Join(", ", sfxDict.Keys)}");
+            Debug.LogWarning($"[SoundManager] 音效 {name} 未找到！可用音效: {string.Join(", ", sfxDict.Keys)}");
         }
     }
     
@@ -170,10 +349,20 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    // 停止背景音乐
+    // 停止背景音乐（带淡出效果）
     public void StopMusic()
     {
-        musicSource.Stop();
+        StopMusic(crossfadeDuration);
+    }
+    
+    // 停止背景音乐（带淡出效果，指定持续时间）
+    public void StopMusic(float fadeOutDuration)
+    {
+        if (musicSource.isPlaying)
+        {
+            StartCoroutine(FadeOutMusicCoroutine(fadeOutDuration));
+        }
+        currentMusic = "";
     }
 
     // 暂停背景音乐
@@ -192,7 +381,12 @@ public class SoundManager : MonoBehaviour
     public void SetMusicVolume(float volume)
     {
         musicVolume = Mathf.Clamp01(volume);
-        musicSource.volume = musicVolume;
+        
+        // 如果正在淡入淡出，不直接修改音量
+        if (!isCrossfading)
+        {
+            musicSource.volume = musicVolume;
+        }
     }
 
     // 设置音效音量
@@ -234,12 +428,18 @@ public class SoundManager : MonoBehaviour
             musicSource.volume = Mathf.Lerp(0, musicVolume, timer / duration);
             yield return null;
         }
+        
+        // 确保最终音量正确
+        musicSource.volume = musicVolume;
     }
 
     // 淡出音乐
     public void FadeOutMusic(float duration)
     {
-        StartCoroutine(FadeOutMusicCoroutine(duration));
+        if (musicSource.isPlaying)
+        {
+            StartCoroutine(FadeOutMusicCoroutine(duration));
+        }
     }
 
     private System.Collections.IEnumerator FadeOutMusicCoroutine(float duration)
@@ -255,6 +455,7 @@ public class SoundManager : MonoBehaviour
         }
 
         musicSource.Stop();
+        musicSource.volume = 0;
     }
 
     // 设置单个音效的音量
@@ -290,31 +491,5 @@ public class SoundManager : MonoBehaviour
             return sfxVolumeDict[name];
         }
         return 1f; // 默认音量
-    }
-
-    // 清理函数，处理场景切换或应用退出时的资源释放
-    private void OnDestroy()
-    {
-        // 停止所有活跃的音效
-        foreach (var kvp in activeSfxSources)
-        {
-            if (kvp.Value != null)
-            {
-                Destroy(kvp.Value);
-            }
-        }
-        activeSfxSources.Clear();
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
