@@ -685,17 +685,40 @@ public class LevelManager : NetworkBehaviour
     {
         Debug.Log($"[LevelManager] 客户端收到击中奖励更新: 玩家1=\"{player1BonusText}\", 玩家2=\"{player2BonusText}\"");
         
-        // 先更新总分显示
+        // 先显示奖励提示
         if (UIManager.Instance != null)
         {
-            // 立即更新玩家总分
-            UIManager.Instance.UpdatePlayerTotalScoreText();
-            
             // 显示奖励提示
             if (!string.IsNullOrEmpty(player1BonusText) || !string.IsNullOrEmpty(player2BonusText))
             {
                 UIManager.Instance.ShowBonusText(player1BonusText, player2BonusText);
             }
+            
+            // 强制立即更新玩家总分UI
+            // 延迟一帧后更新总分显示，确保网络变量已经同步
+            StartCoroutine(DelayedTotalScoreUpdate());
+        }
+    }
+    
+    // 延迟更新总分的协程
+    private IEnumerator DelayedTotalScoreUpdate()
+    {
+        // 等待一帧，确保网络变量已同步
+        yield return null;
+        
+        // 更新一次
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdatePlayerTotalScoreText();
+        }
+        
+        // 再等待短暂时间
+        yield return new WaitForSeconds(0.2f);
+        
+        // 再次更新，确保显示最新的值
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdatePlayerTotalScoreText();
         }
     }
 
@@ -858,12 +881,6 @@ public class LevelManager : NetworkBehaviour
         int currentUnlockedTier = GetLevelTier(unlockedLevel.Value);
         int targetLevelTier = GetLevelTier(level);
         
-        // 添加调试日志
-        if (targetLevelTier == 5)
-        {
-            Debug.Log($"[LevelManager] 检查第五层关卡 {level} 是否可选: currentUnlockedTier={currentUnlockedTier}, targetLevelTier={targetLevelTier}, unlockedLevel={unlockedLevel.Value}");
-        }
-        
         // 只能选择当前解锁层级的关卡
         if (targetLevelTier != currentUnlockedTier)
             return false;
@@ -884,14 +901,7 @@ public class LevelManager : NetworkBehaviour
                 return level == Level.Level3B;
         }
         
-        // 第五层：确保Level5A和Level5B都可选
-        if (targetLevelTier == 5 && (unlockedLevel.Value == Level.Level5A || unlockedLevel.Value == Level.Level5B))
-        {
-            Debug.Log($"[LevelManager] 第五层关卡 {level} 判定为可选");
-            return true;
-        }
-        
-        // 对于其他层级（包括第四、六层），如果层级匹配当前解锁层级，则可选
+        // 对于其他层级（包括第四、五、六层），如果层级匹配当前解锁层级，则可选
         return true;
     }
     

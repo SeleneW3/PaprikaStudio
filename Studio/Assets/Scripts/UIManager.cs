@@ -394,18 +394,18 @@ public class UIManager : NetworkBehaviour
         if (gun2Obj) gun2 = gun2Obj.GetComponent<GunController>();
         
 
-        // 初始化选择状态文本
+                    // 初始化选择状态文本
         if (player1ChoiceStatusText != null)
         {
             player1ChoiceStatusText.gameObject.SetActive(true);
-            player1ChoiceStatusText.text = "...";
+            player1ChoiceStatusText.text = "决策中...";
             player1ChoiceStatusText.color = Color.white;
         }
         
         if (player2ChoiceStatusText != null)
         {
             player2ChoiceStatusText.gameObject.SetActive(true);
-            player2ChoiceStatusText.text = "...";
+            player2ChoiceStatusText.text = "决策中...";
             player2ChoiceStatusText.color = Color.white;
         }
 
@@ -1357,13 +1357,13 @@ public class UIManager : NetworkBehaviour
     {
         if (player1ChoiceStatusText != null)
         {
-            player1ChoiceStatusText.text = player1Selected ? "✓" : "...";
+            player1ChoiceStatusText.text = player1Selected ? "已选择" : "决策中...";
             player1ChoiceStatusText.color = player1Selected ? Color.green : Color.white;
         }
         
         if (player2ChoiceStatusText != null)
         {
-            player2ChoiceStatusText.text = player2Selected ? "✓" : "...";
+            player2ChoiceStatusText.text = player2Selected ? "已选择" : "决策中...";
             player2ChoiceStatusText.color = player2Selected ? Color.green : Color.white;
         }
     }
@@ -1497,6 +1497,17 @@ public class UIManager : NetworkBehaviour
             {
                 int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
                 int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
+                float player1TotalScore = 0f;
+                float player2TotalScore = 0f;
+                
+                // 获取总分（如果是最终关卡，使用总分；否则使用本轮分数）
+                bool isFinalLevel = false;
+                if (LevelManager.Instance != null)
+                {
+                    player1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
+                    player2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
+                    isFinalLevel = LevelManager.Instance.IsFinalLevel();
+                }
                 
                 string winner;
                 
@@ -1539,31 +1550,68 @@ public class UIManager : NetworkBehaviour
                 else
                 {
                     // 没有玩家被击中，比较分数
-                    if (player1Score > player2Score)
+                    if (isFinalLevel)
                     {
-                        winner = "玩家1";
-                    }
-                    else if (player2Score > player1Score)
-                    {
-                        winner = "玩家2";
+                        // 最终关卡使用总分比较
+                        if (player1TotalScore > player2TotalScore)
+                        {
+                            winner = "玩家1";
+                        }
+                        else if (player2TotalScore > player1TotalScore)
+                        {
+                            winner = "玩家2";
+                        }
+                        else
+                        {
+                            winner = "无人"; // 平局
+                        }
                     }
                     else
                     {
-                        winner = "无人"; // 平局
+                        // 非最终关卡使用本轮分数比较
+                        if (player1Score > player2Score)
+                        {
+                            winner = "玩家1";
+                        }
+                        else if (player2Score > player1Score)
+                        {
+                            winner = "玩家2";
+                        }
+                        else
+                        {
+                            winner = "无人"; // 平局
+                        }
                     }
                     isSettlementFromDeath = false;
                     resultMessage = $"本局{winner}胜利！";
                     Debug.Log("[UIManager] Game ended normally, winner: " + winner);
                 }
                 
-                settlementScoreText.text = $"本局游戏结束\n\n" +
-                                         $"玩家1: {player1Score}\n" +
-                                         $"玩家2: {player2Score}\n\n" +
-                                         $"{resultMessage}\n\n" +
-                                         "玩家们，要继续加大赌注吗？\n\n" +
-                                         "注意：继续或退出需要双方都确认";
-
-                Debug.Log($"[UIManager] 结算面板文本已更新 - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
+                // 根据是否是最终关卡，显示不同的结算面板内容
+                if (isFinalLevel)
+                {
+                    // 在最终关卡显示总分
+                    settlementScoreText.text = $"游戏结束！\n\n" +
+                                              $"玩家1最终金币: {player1TotalScore}\n" +
+                                              $"玩家2最终金币: {player2TotalScore}\n\n" +
+                                              $"{resultMessage}\n\n" +
+                                              "是否要继续游戏？\n\n" +
+                                              "注意：继续或退出需要双方都确认";
+                    
+                    Debug.Log($"[UIManager] 最终结算面板文本已更新 - P1总分: {player1TotalScore}, P2总分: {player2TotalScore}, Winner: {winner}");
+                }
+                else
+                {
+                    // 在非最终关卡显示本轮分数
+                    settlementScoreText.text = $"本局游戏结束\n\n" +
+                                              $"玩家1: {player1Score}\n" +
+                                              $"玩家2: {player2Score}\n\n" +
+                                              $"{resultMessage}\n\n" +
+                                              "玩家们，要继续加大赌注吗？\n\n" +
+                                              "注意：继续或退出需要双方都确认";
+                    
+                    Debug.Log($"[UIManager] 结算面板文本已更新 - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
+                }
             }
             catch (System.Exception e)
             {
@@ -1954,7 +2002,7 @@ public class UIManager : NetworkBehaviour
         {
             State.Idle => 1.2f,
             State.DebugText => 0.5f,
-            State.ScoreAndCoin => 1.7f,
+            State.ScoreAndCoin => 1.2f,
             State.FireAnimation => 2.5f,
             State.BulletUI => 0.5f,
             State.RoundText => 0.5f,
@@ -2116,6 +2164,9 @@ public class UIManager : NetworkBehaviour
     [ClientRpc]
     private void HideSettlementPanelClientRpc()
     {
+        Debug.Log("[UIManager] 隐藏结算面板，客户端ID: " + NetworkManager.Singleton.LocalClientId);
+        
+        // 在所有客户端都隐藏结算面板
         if (settlementPanel != null)
         {
             settlementPanel.SetActive(false);
@@ -2431,6 +2482,9 @@ public class UIManager : NetworkBehaviour
         
         Debug.Log($"[UIManager] 显示奖励文本：玩家1='{player1Text}', 玩家2='{player2Text}'");
         
+        // 首先更新玩家总分显示
+        UpdatePlayerTotalScoreText();
+        
         // 更新玩家1的奖励文本
         if (player1BonusText != null && !string.IsNullOrEmpty(player1Text))
         {
@@ -2467,6 +2521,19 @@ public class UIManager : NetworkBehaviour
         
         // 播放动画
         StartCoroutine(PlayBonusTextAnimation());
+        
+        // 在动画播放完成后再次更新总分显示
+        StartCoroutine(UpdateTotalScoreAfterDelay());
+    }
+    
+    // 在延迟后更新总分显示
+    private IEnumerator UpdateTotalScoreAfterDelay()
+    {
+        // 等待足够长的时间，确保动画和网络变量同步都已完成
+        yield return new WaitForSeconds(showDuration + 0.5f);
+        
+        // 再次更新总分显示
+        UpdatePlayerTotalScoreText();
     }
     
     // 播放奖励文本动画
@@ -2475,6 +2542,9 @@ public class UIManager : NetworkBehaviour
         // 保存原始缩放值
         Vector3 originalScale1 = player1BonusText != null ? player1BonusText.transform.localScale : Vector3.one;
         Vector3 originalScale2 = player2BonusText != null ? player2BonusText.transform.localScale : Vector3.one;
+        
+        // 在动画开始时更新玩家总分
+        UpdatePlayerTotalScoreText();
         
         // 缩放动画
         float elapsed = 0f;
@@ -2498,9 +2568,15 @@ public class UIManager : NetworkBehaviour
             player1BonusText.transform.localScale = originalScale1;
         if (player2BonusText != null && player2BonusText.gameObject.activeSelf)
             player2BonusText.transform.localScale = originalScale2;
+        
+        // 在缩放动画结束后再次更新总分显示
+        UpdatePlayerTotalScoreText();
             
         // 等待显示时间
         yield return new WaitForSeconds(showDuration);
+        
+        // 在显示结束前再次更新总分
+        UpdatePlayerTotalScoreText();
         
         // 淡出动画
         elapsed = 0f;
@@ -2528,6 +2604,9 @@ public class UIManager : NetworkBehaviour
             SetTextAlpha(player2BonusText, 0f);
             player2BonusText.gameObject.SetActive(false);
         }
+        
+        // 动画完全结束后再次更新总分
+        UpdatePlayerTotalScoreText();
     }
 
     // 添加分数动画协程
@@ -2820,11 +2899,8 @@ public class UIManager : NetworkBehaviour
             // 重置点击状态
             ResetButtonClickStates();
             
-            // 隐藏结算面板
-            if (settlementPanel != null)
-            {
-                settlementPanel.SetActive(false);
-            }
+            // 通知所有客户端隐藏结算面板
+            HideSettlementPanelClientRpc();
             
             // 检查是否是最终关卡
             if (LevelManager.Instance != null && LevelManager.Instance.isFinalLevel.Value)
