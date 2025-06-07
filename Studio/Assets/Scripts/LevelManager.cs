@@ -644,20 +644,34 @@ public class LevelManager : NetworkBehaviour
             
             if (shooterId == 0ul)
             {
+                // 在设置奖励文本前先保存对方当前的总分
                 float stolenPoints = player2TotalPoint.Value;
-                player1TotalPoint.Value += stolenPoints;
-                player1BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{stolenPoints}!</shake></color>";
+                
+                // 对方总分可能为0，所以显示至少+1分
+                string bonusAmount = stolenPoints > 0 ? stolenPoints.ToString() : "对方所有金币";
+                player1BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{bonusAmount}!</shake></color>";
                 player2BonusText = "<color=red><shake a=0.3 f=0.8>归零!</shake></color>";
+                
+                // 然后更新玩家分数
+                player1TotalPoint.Value += stolenPoints;
                 player2TotalPoint.Value = 0;
+                
                 Debug.Log($"[LevelManager] Level6A规则: 玩家1击中对手，获得对方全部分数 {stolenPoints}，当前总分: {player1TotalPoint.Value}");
             }
             else if (shooterId == 1ul)
             {
+                // 在设置奖励文本前先保存对方当前的总分
                 float stolenPoints = player1TotalPoint.Value;
-                player2TotalPoint.Value += stolenPoints;
-                player2BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{stolenPoints}!</shake></color>";
+                
+                // 对方总分可能为0，所以显示至少+1分
+                string bonusAmount = stolenPoints > 0 ? stolenPoints.ToString() : "对方所有金币";
+                player2BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{bonusAmount}!</shake></color>";
                 player1BonusText = "<color=red><shake a=0.3 f=0.8>归零!</shake></color>";
+                
+                // 然后更新玩家分数
+                player2TotalPoint.Value += stolenPoints;
                 player1TotalPoint.Value = 0;
+                
                 Debug.Log($"[LevelManager] Level6A规则: 玩家2击中对手，获得对方全部分数 {stolenPoints}，当前总分: {player2TotalPoint.Value}");
             }
         }
@@ -844,6 +858,12 @@ public class LevelManager : NetworkBehaviour
         int currentUnlockedTier = GetLevelTier(unlockedLevel.Value);
         int targetLevelTier = GetLevelTier(level);
         
+        // 添加调试日志
+        if (targetLevelTier == 5)
+        {
+            Debug.Log($"[LevelManager] 检查第五层关卡 {level} 是否可选: currentUnlockedTier={currentUnlockedTier}, targetLevelTier={targetLevelTier}, unlockedLevel={unlockedLevel.Value}");
+        }
+        
         // 只能选择当前解锁层级的关卡
         if (targetLevelTier != currentUnlockedTier)
             return false;
@@ -864,7 +884,14 @@ public class LevelManager : NetworkBehaviour
                 return level == Level.Level3B;
         }
         
-        // 对于其他层级（包括第四、五、六层），如果层级匹配当前解锁层级，则可选
+        // 第五层：确保Level5A和Level5B都可选
+        if (targetLevelTier == 5 && (unlockedLevel.Value == Level.Level5A || unlockedLevel.Value == Level.Level5B))
+        {
+            Debug.Log($"[LevelManager] 第五层关卡 {level} 判定为可选");
+            return true;
+        }
+        
+        // 对于其他层级（包括第四、六层），如果层级匹配当前解锁层级，则可选
         return true;
     }
     

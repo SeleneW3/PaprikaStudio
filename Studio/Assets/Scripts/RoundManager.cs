@@ -164,8 +164,7 @@ public class RoundManager : NetworkBehaviour
             else if(tutorState == 3)
             {
                 Debug.Log($"[RoundManager] 从tutorState 3准备进入状态4，确保DialogManager存在");
-                // 在进入状态4前先确保DialogManager存在
-                EnsureDialogManagerExists();
+                
                 tutorState++;
             }
             else if(tutorState == 4)
@@ -182,8 +181,8 @@ public class RoundManager : NetworkBehaviour
                 {
                     Debug.LogError("[RoundManager] 无法播放对话，DialogManager不存在！");
                     // 即使对话无法播放，也要增加状态以避免卡住
-                    tutorState++;
                 }
+                tutorState++;
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
         }

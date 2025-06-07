@@ -1663,7 +1663,7 @@ public class UIManager : NetworkBehaviour
             Debug.Log("[UIManager] 播放最终对话");
             
             // 播放ID为35-40的对话
-            DialogManager.Instance.PlayRange(35, 40, OnFinalDialogComplete);
+            DialogManager.Instance.PlayRange(36, 38, OnFinalDialogComplete);
         }
         else
         {
