@@ -122,6 +122,12 @@ public class RoundManager : NetworkBehaviour
 
     void Update()
     {
+        // 添加日志输出当前tutorState和游戏状态
+        if (IsServer && LevelManager.Instance.currentMode.Value == LevelManager.Mode.Tutor && Time.frameCount % 300 == 0)
+        {
+            Debug.Log($"[RoundManager] 当前tutorState = {tutorState}, 游戏状态 = {GameManager.Instance.currentGameState}, 回合 = {currentRound.Value}/{totalRounds.Value}");
+        }
+        
         if(GameManager.Instance.currentGameState == GameManager.GameState.TutorReady)
         {
             if(tutorState == 0)
@@ -157,10 +163,13 @@ public class RoundManager : NetworkBehaviour
             }
             else if(tutorState == 3)
             {
+                Debug.Log($"[RoundManager] 从tutorState 3准备进入状态4，确保DialogManager存在");
+                
                 tutorState++;
             }
             else if(tutorState == 4)
             {
+                Debug.Log($"[RoundManager] 进入tutorState=4分支，当前回合 {currentRound.Value}/{totalRounds.Value}");
                 // 确保DialogManager存在
                 if (EnsureDialogManagerExists())
                 {
@@ -172,8 +181,8 @@ public class RoundManager : NetworkBehaviour
                 {
                     Debug.LogError("[RoundManager] 无法播放对话，DialogManager不存在！");
                     // 即使对话无法播放，也要增加状态以避免卡住
-                    tutorState++;
                 }
+                tutorState++;
             }
             GameManager.Instance.currentGameState = GameManager.GameState.TutorPlayerTurn;
         }
@@ -894,27 +903,35 @@ public class RoundManager : NetworkBehaviour
     // 播放对话并在完成后增加教程状态
     private IEnumerator PlayDialogWithDelayAndIncrementState(int startIndex, int endIndex, float delaySeconds)
     {
+        Debug.Log($"[RoundManager] PlayDialogWithDelayAndIncrementState开始执行，对话{startIndex}-{endIndex}，游戏状态={GameManager.Instance.currentGameState}");
+        
         // 创建一个完成标志
         bool dialogCompleted = false;
         
         // 启动对话协程
         StartCoroutine(PlayDialogWithDelayAndNotify(startIndex, endIndex, delaySeconds, () => {
             dialogCompleted = true;
+            Debug.Log($"[RoundManager] 对话完成回调被触发，dialogCompleted = true");
         }));
         
         // 等待对话完成或超时
-        float timeoutSeconds = 10f; // 最长等待10秒
+        float timeoutSeconds = 15f; // 增加到15秒
         float elapsedTime = 0f;
         
         while (!dialogCompleted && elapsedTime < timeoutSeconds)
         {
+            if (elapsedTime > 0 && elapsedTime % 3 < 0.1f) 
+            {
+                Debug.Log($"[RoundManager] 等待对话完成中... 已等待{elapsedTime:F1}秒，DialogManager存在={DialogManager.Instance != null}");
+            }
             yield return null;
             elapsedTime += Time.deltaTime;
         }
         
         // 无论对话是否成功完成，都增加状态以避免游戏卡住
-        Debug.Log($"[RoundManager] 对话{startIndex}-{endIndex}播放{(dialogCompleted ? "完成" : "超时")}，增加tutorState");
+        Debug.Log($"[RoundManager] 对话{startIndex}-{endIndex}播放{(dialogCompleted ? "完成" : "超时")}，增加tutorState，当前状态={tutorState}");
         tutorState++;
+        Debug.Log($"[RoundManager] tutorState已增加到{tutorState}");
     }
     
     // 播放对话并通知完成

@@ -136,6 +136,13 @@ public class LevelManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    // 添加网络变量 - 是否是最终关卡
+    public NetworkVariable<bool> isFinalLevel = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     // 事件 - 当关卡改变时
     public event Action<Level, Level> OnLevelChanged;
 
@@ -192,6 +199,9 @@ public class LevelManager : NetworkBehaviour
         // 记录待播放对话的关卡，但不立即播放
         pendingDialogLevel = current;
         
+        // 更新背景音乐
+        UpdateBackgroundMusic(current);
+        
         // 触发关卡改变事件
         OnLevelChanged?.Invoke(previous, current);
     }
@@ -239,6 +249,27 @@ public class LevelManager : NetworkBehaviour
             case Level.Level6B:
                 currentMode.Value = Mode.OnlyCard;
                 break;
+        }
+    }
+
+    // 根据关卡更新背景音乐
+    private void UpdateBackgroundMusic(Level level)
+    {
+        // 确保SoundManager实例存在
+        if (SoundManager.Instance == null) return;
+        
+        // 根据关卡决定播放的音乐
+        if (level == Level.Tutorial)
+        {
+            SoundManager.Instance.PlayMusic("GameTutor");
+        }
+        else if (level >= Level.Level5A) // Level5和Level6
+        {
+            SoundManager.Instance.PlayMusic("GameGun");
+        }
+        else // Level1到Level4
+        {
+            SoundManager.Instance.PlayMusic("Game");
         }
     }
 
@@ -613,37 +644,81 @@ public class LevelManager : NetworkBehaviour
             
             if (shooterId == 0ul)
             {
+                // 在设置奖励文本前先保存对方当前的总分
                 float stolenPoints = player2TotalPoint.Value;
-                player1TotalPoint.Value += stolenPoints;
-                player1BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{stolenPoints}!</shake></color>";
+                
+                // 对方总分可能为0，所以显示至少+1分
+                string bonusAmount = stolenPoints > 0 ? stolenPoints.ToString() : "对方所有金币";
+                player1BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{bonusAmount}!</shake></color>";
                 player2BonusText = "<color=red><shake a=0.3 f=0.8>归零!</shake></color>";
+                
+                // 然后更新玩家分数
+                player1TotalPoint.Value += stolenPoints;
                 player2TotalPoint.Value = 0;
+                
                 Debug.Log($"[LevelManager] Level6A规则: 玩家1击中对手，获得对方全部分数 {stolenPoints}，当前总分: {player1TotalPoint.Value}");
             }
             else if (shooterId == 1ul)
             {
+                // 在设置奖励文本前先保存对方当前的总分
                 float stolenPoints = player1TotalPoint.Value;
-                player2TotalPoint.Value += stolenPoints;
-                player2BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{stolenPoints}!</shake></color>";
+                
+                // 对方总分可能为0，所以显示至少+1分
+                string bonusAmount = stolenPoints > 0 ? stolenPoints.ToString() : "对方所有金币";
+                player2BonusText = $"<color=yellow><shake a=0.3 f=0.8>+{bonusAmount}!</shake></color>";
                 player1BonusText = "<color=red><shake a=0.3 f=0.8>归零!</shake></color>";
+                
+                // 然后更新玩家分数
+                player2TotalPoint.Value += stolenPoints;
                 player1TotalPoint.Value = 0;
+                
                 Debug.Log($"[LevelManager] Level6A规则: 玩家2击中对手，获得对方全部分数 {stolenPoints}，当前总分: {player2TotalPoint.Value}");
             }
         }
         
-        // 显示奖励提示
-        if (!string.IsNullOrEmpty(player1BonusText) || !string.IsNullOrEmpty(player2BonusText))
+        // 立即通知UI更新 - 先更新总分，再显示奖励文本
+        ApplyShotPenaltyClientRpc(player1BonusText, player2BonusText);
+    }
+    
+    [ClientRpc]
+    private void ApplyShotPenaltyClientRpc(string player1BonusText, string player2BonusText)
+    {
+        Debug.Log($"[LevelManager] 客户端收到击中奖励更新: 玩家1=\"{player1BonusText}\", 玩家2=\"{player2BonusText}\"");
+        
+        // 先显示奖励提示
+        if (UIManager.Instance != null)
         {
-            if (UIManager.Instance != null)
+            // 显示奖励提示
+            if (!string.IsNullOrEmpty(player1BonusText) || !string.IsNullOrEmpty(player2BonusText))
             {
                 UIManager.Instance.ShowBonusText(player1BonusText, player2BonusText);
             }
+            
+            // 强制立即更新玩家总分UI
+            // 延迟一帧后更新总分显示，确保网络变量已经同步
+            StartCoroutine(DelayedTotalScoreUpdate());
         }
+    }
+    
+    // 延迟更新总分的协程
+    private IEnumerator DelayedTotalScoreUpdate()
+    {
+        // 等待一帧，确保网络变量已同步
+        yield return null;
         
-        // 更新UI显示
+        // 更新一次
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
+            UIManager.Instance.UpdatePlayerTotalScoreText();
+        }
+        
+        // 再等待短暂时间
+        yield return new WaitForSeconds(0.2f);
+        
+        // 再次更新，确保显示最新的值
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdatePlayerTotalScoreText();
         }
     }
 
@@ -1007,12 +1082,23 @@ public class LevelManager : NetworkBehaviour
         // 如果是最终关卡，触发游戏结束逻辑
         if (currentLevel.Value == Level.Level6A || currentLevel.Value == Level.Level6B)
         {
+            // 设置最终关卡标志
+            isFinalLevel.Value = true;
+            
             // 应用Level6规则
             ApplyLevel6Rule();
             
             // 触发游戏结束
             GameEndedClientRpc();
         }
+    }
+    
+    /// <summary>
+    /// 检查当前是否是最终关卡
+    /// </summary>
+    public bool IsFinalLevel()
+    {
+        return currentLevel.Value == Level.Level6A || currentLevel.Value == Level.Level6B;
     }
     
     [ClientRpc]
@@ -1036,14 +1122,8 @@ public class LevelManager : NetworkBehaviour
         
         Debug.Log($"[LevelManager] 收到玩家被击中通知，被击中玩家ID: {shotPlayerId}, 本轮分数: {roundPoints}");
         
-        // 应用枪击规则
+        // 应用枪击规则 - 已包含更新UI的逻辑
         ApplyShotPenalty(shotPlayerId, roundPoints);
-        
-        // 确保UI立即更新总分显示
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
-        }
         
         // 如果是最终关卡，可能需要提前结束游戏
         if (currentLevel.Value == Level.Level6A)

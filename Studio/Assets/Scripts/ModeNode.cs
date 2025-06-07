@@ -134,27 +134,15 @@ public class ModeNode : NetworkBehaviour
         {
             Debug.Log($"[ModeNode] 点击了关卡节点: {level}");
             
-            if (LevelManager.Instance.IsServer)
-            {
-                LevelManager.Instance.SetLevelOnServer(level);
-            }
-            else
-            {
-                LevelManager.Instance.ChangeLevelServerRpc(level);
-            }
+            // 无论是主机还是客户端，都使用ServerRpc方法
+            LevelManager.Instance.ChangeLevelServerRpc(level);
         }
         else
         {
             Debug.Log($"[ModeNode] 点击了模式节点: {type}");
             
-            if (LevelManager.Instance.IsServer)
-            {
-                LevelManager.Instance.SetModeOnServer(type);
-            }
-            else
-            {
-                LevelManager.Instance.ChangeModeServerRpc(type);
-            }
+            // 无论是主机还是客户端，都使用ServerRpc方法
+            LevelManager.Instance.ChangeModeServerRpc(type);
         }
         
         // 播放选择音效

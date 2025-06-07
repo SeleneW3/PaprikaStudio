@@ -153,8 +153,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   musicSource: {fileID: 0}
+  musicCrossfadeSource: {fileID: 0}
   sfxSource: {fileID: 0}
-  musicClips: []
+  musicClips:
+  - name: GameTutor
+    clip: {fileID: 8300000, guid: 61eb46e993ad7ae49861c99a9406fbae, type: 3}
+    volume: 0.2
+  - name: GameGun
+    clip: {fileID: 8300000, guid: d0924a0e30a837747a23bc79a09d7354, type: 3}
+    volume: 0.2
+  - name: LevelChoose
+    clip: {fileID: 8300000, guid: e6500b9341cee2c4c9ae0f900ebc7406, type: 3}
+    volume: 0.4
+  - name: Game
+    clip: {fileID: 8300000, guid: b36e41fc531099048851c10addba9579, type: 3}
+    volume: 0.2
   sfxClips:
   - name: GunAddBullet
     clip: {fileID: 8300000, guid: 24c19b3ec9732b6489f0e94f0dd8303f, type: 3}
@@ -222,8 +235,9 @@ MonoBehaviour:
   - name: TotalScore
     clip: {fileID: 8300000, guid: 4aea490cbcd13834a880eaa6d228b28a, type: 3}
     volume: 1
-  musicVolume: 1
+  musicVolume: 0.3
   sfxVolume: 1
+  crossfadeDuration: 1.5
 --- !u!4 &580606961
 Transform:
   m_ObjectHideFlags: 0

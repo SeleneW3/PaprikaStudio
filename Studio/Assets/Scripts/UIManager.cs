@@ -139,6 +139,36 @@ public class UIManager : NetworkBehaviour
     [Range(1f, 10f)]
     public float scoreAnimationSpeed = 7f;  // 分数变化速度，每秒增加/减少的分数
 
+    private bool showingFinalDialog = false;  // 添加标记，表示是否正在显示最终对话
+
+    // 添加网络变量来跟踪玩家点击状态
+    public NetworkVariable<bool> player1ClickedContinue = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<bool> player2ClickedContinue = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<bool> player1ClickedExit = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<bool> player2ClickedExit = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    // 添加用于显示等待对方确认的文本
+    public TextMeshProUGUI waitingConfirmationText;
+
     private void Awake()
     {
         if (Instance == null)
@@ -198,6 +228,15 @@ public class UIManager : NetworkBehaviour
             // 订阅事件
             ChessLogic.OnBothChessAnimationComplete += OnChessAnimationComplete;
         }
+
+        // 添加网络变量更改监听
+        if (IsClient)
+        {
+            player1ClickedContinue.OnValueChanged += OnPlayerContinueStatusChanged;
+            player2ClickedContinue.OnValueChanged += OnPlayerContinueStatusChanged;
+            player1ClickedExit.OnValueChanged += OnPlayerExitStatusChanged;
+            player2ClickedExit.OnValueChanged += OnPlayerExitStatusChanged;
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -208,6 +247,12 @@ public class UIManager : NetworkBehaviour
         {
             // 取消订阅事件
             ChessLogic.OnBothChessAnimationComplete -= OnChessAnimationComplete;
+
+            // 移除网络变量监听
+            player1ClickedContinue.OnValueChanged -= OnPlayerContinueStatusChanged;
+            player2ClickedContinue.OnValueChanged -= OnPlayerContinueStatusChanged;
+            player1ClickedExit.OnValueChanged -= OnPlayerExitStatusChanged;
+            player2ClickedExit.OnValueChanged -= OnPlayerExitStatusChanged;
         }
     }
 
@@ -332,9 +377,12 @@ public class UIManager : NetworkBehaviour
             player2BonusText.gameObject.SetActive(false);
 
         // 初始化时隐藏World Space回合文本
-        if (roundText1 != null || roundText2 != null)
+        if (roundText1 != null)
         {
             roundText1.gameObject.SetActive(false);
+        }
+        if (roundText2 != null)
+        {
             roundText2.gameObject.SetActive(false);
         }
         
@@ -346,18 +394,18 @@ public class UIManager : NetworkBehaviour
         if (gun2Obj) gun2 = gun2Obj.GetComponent<GunController>();
         
 
-        // 初始化选择状态文本
+                    // 初始化选择状态文本
         if (player1ChoiceStatusText != null)
         {
             player1ChoiceStatusText.gameObject.SetActive(true);
-            player1ChoiceStatusText.text = "...";
+            player1ChoiceStatusText.text = "决策中...";
             player1ChoiceStatusText.color = Color.white;
         }
         
         if (player2ChoiceStatusText != null)
         {
             player2ChoiceStatusText.gameObject.SetActive(true);
-            player2ChoiceStatusText.text = "...";
+            player2ChoiceStatusText.text = "决策中...";
             player2ChoiceStatusText.color = Color.white;
         }
 
@@ -377,8 +425,7 @@ public class UIManager : NetworkBehaviour
         SetDefaultCursor();
 
         // 初始化World Space回合文本
-        if (roundText1 != null && roundText2 != null)
-        {
+        try {
             // 从RoundManager获取总回合数，如果可用
             int initialTotalRounds = 5; // 默认值
             
@@ -399,18 +446,40 @@ public class UIManager : NetworkBehaviour
             }
             
             string roundInfo = $"回合：1/{initialTotalRounds}";
-            roundText1.text = roundInfo;
-            roundText2.text = roundInfo;
-            roundText1.gameObject.SetActive(true);
-            roundText2.gameObject.SetActive(true);
+            
+            if (roundText1 != null) 
+            {
+                roundText1.text = roundInfo;
+                roundText1.gameObject.SetActive(true);
+            }
+            
+            if (roundText2 != null)
+            {
+                roundText2.text = roundInfo;
+                roundText2.gameObject.SetActive(true);
+            }
             
             Debug.Log($"[UIManager] 初始化回合显示为: {roundInfo}");
+        } 
+        catch (System.Exception e) 
+        {
+            Debug.LogError($"[UIManager] 初始化回合文本时出错: {e.Message}\n{e.StackTrace}");
         }
 
         // 初始化Level文本
-        if (levelText1 != null && levelText2 != null && LevelManager.Instance != null)
+        try {
+            if (LevelManager.Instance != null)
+            {
+                // 只有当LevelText对象存在时才更新它们
+                if (levelText1 != null || levelText2 != null)
+                {
+                    UpdateLevelText(LevelManager.Instance.currentLevel.Value);
+                }
+            }
+        }
+        catch (System.Exception e)
         {
-            UpdateLevelText(LevelManager.Instance.currentLevel.Value);
+            Debug.LogError($"[UIManager] 初始化Level文本时出错: {e.Message}");
         }
 
         // 初始化玩家总分文本
@@ -1288,13 +1357,13 @@ public class UIManager : NetworkBehaviour
     {
         if (player1ChoiceStatusText != null)
         {
-            player1ChoiceStatusText.text = player1Selected ? "✓" : "...";
+            player1ChoiceStatusText.text = player1Selected ? "已选择" : "决策中...";
             player1ChoiceStatusText.color = player1Selected ? Color.green : Color.white;
         }
         
         if (player2ChoiceStatusText != null)
         {
-            player2ChoiceStatusText.text = player2Selected ? "✓" : "...";
+            player2ChoiceStatusText.text = player2Selected ? "已选择" : "决策中...";
             player2ChoiceStatusText.color = player2Selected ? Color.green : Color.white;
         }
     }
@@ -1400,12 +1469,26 @@ public class UIManager : NetworkBehaviour
         settlementPanel.SetActive(true);
         Debug.Log("[UIManager] 结算面板激活后状态: " + settlementPanel.activeSelf);
 
+        // 重置按钮点击状态
+        if (IsServer)
+        {
+            ResetButtonClickStates();
+        }
+        else
+        {
+            ResetButtonClickStatesServerRpc();
+        }
+
         // 启用按钮
         if (continueButton != null)
             continueButton.interactable = true;
             
         if (exitButton != null)
             exitButton.interactable = true;
+
+        // 隐藏等待确认文本
+        if (waitingConfirmationText != null)
+            waitingConfirmationText.gameObject.SetActive(false);
 
         // 更新结算面板显示
         if (settlementScoreText != null && GameManager.Instance != null)
@@ -1414,6 +1497,17 @@ public class UIManager : NetworkBehaviour
             {
                 int player1Score = (int)GameManager.Instance.playerComponents[0].point.Value;
                 int player2Score = (int)GameManager.Instance.playerComponents[1].point.Value;
+                float player1TotalScore = 0f;
+                float player2TotalScore = 0f;
+                
+                // 获取总分（如果是最终关卡，使用总分；否则使用本轮分数）
+                bool isFinalLevel = false;
+                if (LevelManager.Instance != null)
+                {
+                    player1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
+                    player2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
+                    isFinalLevel = LevelManager.Instance.IsFinalLevel();
+                }
                 
                 string winner;
                 
@@ -1421,57 +1515,103 @@ public class UIManager : NetworkBehaviour
                 GunController gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
                 GunController gun2 = GameObject.Find("Gun2")?.GetComponent<GunController>();
                 
-                // 改进的获胜者判断逻辑
-                bool player1Shot = gun1 != null && gun1.gameEnded.Value;
-                bool player2Shot = gun2 != null && gun2.gameEnded.Value;
+                // 修复被击中者判断逻辑
+                // gun1是玩家1的枪，gun1.gameEnded.Value为true表示玩家1的枪射出了真子弹，击中了玩家2
+                // gun2是玩家2的枪，gun2.gameEnded.Value为true表示玩家2的枪射出了真子弹，击中了玩家1
+                bool gun1FiredRealBullet = gun1 != null && gun1.gameEnded.Value; // 玩家1的枪射出真子弹（击中玩家2）
+                bool gun2FiredRealBullet = gun2 != null && gun2.gameEnded.Value; // 玩家2的枪射出真子弹（击中玩家1）
                 
-                if (player1Shot && player2Shot)
+                string resultMessage = "";
+                
+                if (gun1FiredRealBullet && gun2FiredRealBullet)
                 {
                     // 两名玩家都被击中
                     winner = "无人";
                     isSettlementFromDeath = true;
+                    resultMessage = "双方都被击中！";
                     Debug.Log("[UIManager] Game ended with both players shot, no winner");
                 }
-                else if (player1Shot)
+                else if (gun2FiredRealBullet) // 玩家2的枪射出真子弹，击中了玩家1
                 {
                     // 玩家1被击中，玩家2获胜
                     winner = "玩家2";
                     isSettlementFromDeath = true;
-                    Debug.Log("[UIManager] Game ended due to Player 1 being shot");
+                    resultMessage = "玩家2击中了玩家1！";
+                    Debug.Log("[UIManager] Game ended due to Player 1 being shot by Player 2");
                 }
-                else if (player2Shot)
+                else if (gun1FiredRealBullet) // 玩家1的枪射出真子弹，击中了玩家2
                 {
                     // 玩家2被击中，玩家1获胜
                     winner = "玩家1";
                     isSettlementFromDeath = true;
-                    Debug.Log("[UIManager] Game ended due to Player 2 being shot");
+                    resultMessage = "玩家1击中了玩家2！";
+                    Debug.Log("[UIManager] Game ended due to Player 2 being shot by Player 1");
                 }
                 else
                 {
                     // 没有玩家被击中，比较分数
-                    if (player1Score > player2Score)
+                    if (isFinalLevel)
                     {
-                        winner = "玩家1";
-                    }
-                    else if (player2Score > player1Score)
-                    {
-                        winner = "玩家2";
+                        // 最终关卡使用总分比较
+                        if (player1TotalScore > player2TotalScore)
+                        {
+                            winner = "玩家1";
+                        }
+                        else if (player2TotalScore > player1TotalScore)
+                        {
+                            winner = "玩家2";
+                        }
+                        else
+                        {
+                            winner = "无人"; // 平局
+                        }
                     }
                     else
                     {
-                        winner = "无人"; // 平局
+                        // 非最终关卡使用本轮分数比较
+                        if (player1Score > player2Score)
+                        {
+                            winner = "玩家1";
+                        }
+                        else if (player2Score > player1Score)
+                        {
+                            winner = "玩家2";
+                        }
+                        else
+                        {
+                            winner = "无人"; // 平局
+                        }
                     }
                     isSettlementFromDeath = false;
+                    resultMessage = $"本局{winner}胜利！";
                     Debug.Log("[UIManager] Game ended normally, winner: " + winner);
                 }
                 
-                settlementScoreText.text = $"本局游戏结束\n\n" +
-                                         $"玩家1: {player1Score}\n" +
-                                         $"玩家2: {player2Score}\n\n" +
-                                         $"本局{winner}胜利！\n\n" +
-                                         "玩家们，要继续加大赌注吗？";
-
-                Debug.Log($"[UIManager] 结算面板文本已更新 - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
+                // 根据是否是最终关卡，显示不同的结算面板内容
+                if (isFinalLevel)
+                {
+                    // 在最终关卡显示总分
+                    settlementScoreText.text = $"游戏结束！\n\n" +
+                                              $"玩家1最终金币: {player1TotalScore}\n" +
+                                              $"玩家2最终金币: {player2TotalScore}\n\n" +
+                                              $"{resultMessage}\n\n" +
+                                              "是否要继续游戏？\n\n" +
+                                              "注意：继续或退出需要双方都确认";
+                    
+                    Debug.Log($"[UIManager] 最终结算面板文本已更新 - P1总分: {player1TotalScore}, P2总分: {player2TotalScore}, Winner: {winner}");
+                }
+                else
+                {
+                    // 在非最终关卡显示本轮分数
+                    settlementScoreText.text = $"本局游戏结束\n\n" +
+                                              $"玩家1: {player1Score}\n" +
+                                              $"玩家2: {player2Score}\n\n" +
+                                              $"{resultMessage}\n\n" +
+                                              "玩家们，要继续加大赌注吗？\n\n" +
+                                              "注意：继续或退出需要双方都确认";
+                    
+                    Debug.Log($"[UIManager] 结算面板文本已更新 - P1: {player1Score}, P2: {player2Score}, Winner: {winner}");
+                }
             }
             catch (System.Exception e)
             {
@@ -1505,16 +1645,12 @@ public class UIManager : NetworkBehaviour
             }
         }
 
-        if (IsServer)
-        {
-            // 服务器端发起场景加载
-            LoadNextSceneServerRpc();
-        }
-        else
-        {
-            // 客户端请求服务器加载场景
-            RequestLoadNextSceneServerRpc();
-        }
+        // 获取本地玩家ID和当前点击状态
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        bool currentStatus = localClientId == 0 ? player1ClickedContinue.Value : player2ClickedContinue.Value;
+        
+        // 更新按钮状态 - 切换选中状态
+        PlayerClickedContinueServerRpc(localClientId, !currentStatus);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -1544,6 +1680,72 @@ public class UIManager : NetworkBehaviour
         {
             GameManager.Instance.LoadScene("LevelScene");
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPlayFinalDialogServerRpc(ServerRpcParams serverRpcParams = default)
+    {
+        // 服务器收到客户端请求后，执行播放最终对话
+        PlayFinalDialogServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void PlayFinalDialogServerRpc()
+    {
+        // 标记正在显示最终对话
+        showingFinalDialog = true;
+        
+        // 通知所有客户端播放最终对话
+        PlayFinalDialogClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayFinalDialogClientRpc()
+    {
+        // 标记正在显示最终对话
+        showingFinalDialog = true;
+        
+        // 播放最终对话
+        if (DialogManager.Instance != null)
+        {
+            Debug.Log("[UIManager] 播放最终对话");
+            
+            // 播放ID为35-40的对话
+            DialogManager.Instance.PlayRange(36, 38, OnFinalDialogComplete);
+        }
+        else
+        {
+            Debug.LogError("[UIManager] DialogManager实例不存在，无法播放最终对话");
+            // 如果找不到DialogManager，直接退出游戏
+            ExitGame();
+        }
+    }
+
+    // 最终对话完成后的回调
+    private void OnFinalDialogComplete()
+    {
+        Debug.Log("[UIManager] 最终对话播放完成，准备退出游戏");
+        
+        // 延迟2秒后退出游戏，给玩家时间阅读最后的对话
+        StartCoroutine(DelayedExit(2.0f));
+    }
+
+    private IEnumerator DelayedExit(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ExitGame();
+    }
+
+    // 退出游戏
+    private void ExitGame()
+    {
+        Debug.Log("[UIManager] 退出游戏");
+        Application.Quit();
+        
+        // 在编辑器中，以下代码会在运行时关闭Play模式
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #endif
     }
 
     private void PullInitialValues()
@@ -1800,7 +2002,7 @@ public class UIManager : NetworkBehaviour
         {
             State.Idle => 1.2f,
             State.DebugText => 0.5f,
-            State.ScoreAndCoin => 1.7f,
+            State.ScoreAndCoin => 1.2f,
             State.FireAnimation => 2.5f,
             State.BulletUI => 0.5f,
             State.RoundText => 0.5f,
@@ -1808,7 +2010,7 @@ public class UIManager : NetworkBehaviour
             _ => 0f
         };
 
-        Debug.Log($"[UIManager State Machine] Entering state: {currentState.Value}, Wait time: {waitTime}s");
+        // Debug.Log($"[UIManager State Machine] Entering state: {currentState.Value}, Wait time: {waitTime}s");
         
         // 在状态机开始时获取引用
         if (gun1 == null) gun1 = GameObject.Find("Gun1")?.GetComponent<GunController>();
@@ -1818,16 +2020,16 @@ public class UIManager : NetworkBehaviour
         switch (currentState.Value)
         {
             case State.DebugText:
-                Debug.Log("[UIManager State Machine] DebugText: Starting debug text animation");
+                // Debug.Log("[UIManager State Machine] DebugText: Starting debug text animation");
                 break;
             case State.ScoreAndCoin:
-                Debug.Log("[UIManager State Machine] ScoreAndCoin: Updating score display");
+                // Debug.Log("[UIManager State Machine] ScoreAndCoin: Updating score display");
                 UpdateScoreText();
                 // 更新玩家总分
                 UpdatePlayerTotalScoreText();
                 break;
             case State.FireAnimation:
-                Debug.Log("[UIManager State Machine] FireAnimation: Checking and executing gun firing");
+                //Debug.Log("[UIManager State Machine] FireAnimation: Checking and executing gun firing");
                 if (roundManager != null)
                 {
                     // 检查并执行开枪
@@ -1844,7 +2046,7 @@ public class UIManager : NetworkBehaviour
                 }
                 break;
             case State.BulletUI:
-                Debug.Log("[UIManager State Machine] BulletUI: Updating bullet count display");
+                //Debug.Log("[UIManager State Machine] BulletUI: Updating bullet count display");
                 // 只在非Tutor和非OnlyCard模式下更新子弹UI
                 if (LevelManager.Instance == null || 
                     (LevelManager.Instance.currentMode.Value != LevelManager.Mode.Tutor && 
@@ -1854,7 +2056,7 @@ public class UIManager : NetworkBehaviour
                 }
                 break;
             case State.RoundText:
-                Debug.Log("[UIManager State Machine] RoundText: Updating round information");
+                //Debug.Log("[UIManager State Machine] RoundText: Updating round information");
                 if (roundManager != null)
                 {
                     // 确保这里正确地更新回合显示，因为RoundManager不再直接更新UI
@@ -1866,49 +2068,52 @@ public class UIManager : NetworkBehaviour
                 }
                 break;
             case State.Settlement:
-                Debug.Log("[UIManager State Machine] Settlement: Checking settlement conditions");
+                //Debug.Log("[UIManager State Machine] Settlement: Checking settlement conditions");
                 bool shouldShowSettlement = false;
                 
                 // 检查是否有玩家被枪打死
-                if ((gun1 != null && gun1.gameEnded.Value) || (gun2 != null && gun2.gameEnded.Value))
+                bool gun1FiredRealBullet = gun1 != null && gun1.gameEnded.Value; // 玩家1的枪射出真子弹（击中玩家2）
+                bool gun2FiredRealBullet = gun2 != null && gun2.gameEnded.Value; // 玩家2的枪射出真子弹（击中玩家1）
+                
+                if (gun1FiredRealBullet || gun2FiredRealBullet)
                 {
-                    Debug.Log("[UIManager State Machine] Settlement: Game ended due to gunshot");
+                    //Debug.Log("[UIManager State Machine] Settlement: Game ended due to gunshot");
                     shouldShowSettlement = true;
                     isSettlementFromDeath = true;
                 }
                 // 再检查是否达到总回合数
                 else if (roundManager != null && roundManager.currentRound.Value > roundManager.totalRounds.Value)
                 {
-                    Debug.Log($"[UIManager State Machine] Settlement: Game ended due to round limit. Current round: {roundManager.currentRound.Value}, Total rounds: {roundManager.totalRounds.Value}");
+                    //Debug.Log($"[UIManager State Machine] Settlement: Game ended due to round limit. Current round: {roundManager.currentRound.Value}, Total rounds: {roundManager.totalRounds.Value}");
                     shouldShowSettlement = true;
                     isSettlementFromDeath = false;
                 }
                 else
                 {
-                    Debug.Log($"[UIManager State Machine] Settlement: No end condition met. Current round: {roundManager?.currentRound.Value}, Total rounds: {roundManager?.totalRounds.Value}");
+                    //Debug.Log($"[UIManager State Machine] Settlement: No end condition met. Current round: {roundManager?.currentRound.Value}, Total rounds: {roundManager?.totalRounds.Value}");
                 }
 
                 if (shouldShowSettlement && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                 {
-                    Debug.Log("[UIManager State Machine] Settlement: Starting DelayShowSettlement coroutine");
+                    //Debug.Log("[UIManager State Machine] Settlement: Starting DelayShowSettlement coroutine");
                     StartCoroutine(DelayShowSettlement());
                 }
                 break;
         }
 
         yield return new WaitForSeconds(waitTime);
-        Debug.Log($"[UIManager State Machine] Completed state: {currentState.Value}");
+        //Debug.Log($"[UIManager State Machine] Completed state: {currentState.Value}");
 
         if (IsServer)
         {
             if (currentState.Value != State.Settlement)
             {
-                Debug.Log($"[UIManager State Machine] Transitioning from {currentState.Value} to next state");
+                //Debug.Log($"[UIManager State Machine] Transitioning from {currentState.Value} to next state");
                 TransitionToNextState();
             }
             else if (roundManager != null && roundManager.currentRound.Value < roundManager.totalRounds.Value)
             {
-                Debug.Log("[UIManager State Machine] Resetting state machine for next round");
+                //Debug.Log("[UIManager State Machine] Resetting state machine for next round");
                 ResetStateMachine();
             }
         }
@@ -1917,7 +2122,7 @@ public class UIManager : NetworkBehaviour
     // 添加延迟显示结算面板的协程
     private IEnumerator DelayShowSettlement()
     {
-        Debug.Log("[UIManager] DelayShowSettlement: 等待1秒后显示结算面板");
+        //Debug.Log("[UIManager] DelayShowSettlement: 等待1秒后显示结算面板");
         yield return new WaitForSeconds(1f);
         ShowSettlementPanel();
     }
@@ -1925,10 +2130,10 @@ public class UIManager : NetworkBehaviour
     // 显示结算面板的方法
     public void ShowSettlementPanel()
     {
-        Debug.Log("[UIManager] ShowSettlementPanel: 准备显示结算面板");
+        //Debug.Log("[UIManager] ShowSettlementPanel: 准备显示结算面板");
         if (!IsServer) 
         {
-            Debug.LogWarning("[UIManager] ShowSettlementPanel: 非服务器端调用，已忽略");
+            //Debug.LogWarning("[UIManager] ShowSettlementPanel: 非服务器端调用，已忽略");
             return;
         }
         ShowSettlementPanelClientRpc();
@@ -1959,6 +2164,9 @@ public class UIManager : NetworkBehaviour
     [ClientRpc]
     private void HideSettlementPanelClientRpc()
     {
+        Debug.Log("[UIManager] 隐藏结算面板，客户端ID: " + NetworkManager.Singleton.LocalClientId);
+        
+        // 在所有客户端都隐藏结算面板
         if (settlementPanel != null)
         {
             settlementPanel.SetActive(false);
@@ -1998,16 +2206,20 @@ public class UIManager : NetworkBehaviour
 
     public void OnExitButtonClick()
     {
-        if (IsClient)
+        if (!IsClient) return;
+
+        // 播放按钮点击音效
+        if (SoundManager.Instance != null)
         {
-            // 播放按钮点击音效
-            if (SoundManager.Instance != null)
-            {
-                SoundManager.Instance.PlaySFX("ButtonClick");
-            }
-            
-            Application.Quit();
+            SoundManager.Instance.PlaySFX("ButtonClick");
         }
+
+        // 获取本地玩家ID和当前点击状态
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        bool currentStatus = localClientId == 0 ? player1ClickedExit.Value : player2ClickedExit.Value;
+        
+        // 更新按钮状态 - 切换选中状态
+        PlayerClickedExitServerRpc(localClientId, !currentStatus);
     }
 
     public void UpdatePlayerTargetText()
@@ -2024,65 +2236,76 @@ public class UIManager : NetworkBehaviour
     // 添加更新关卡文本的方法
     public void UpdateLevelText(LevelManager.Level level)
     {
-        if (levelText1 == null || levelText2 == null) return;
-
-        string levelNumber = "";
-        
-        // 确定关卡数字
-        switch (level)
+        try
         {
-            case LevelManager.Level.Tutorial:
-                levelNumber = "零";
-                break;
-            case LevelManager.Level.Level1:
-                levelNumber = "一";
-                break;
-            case LevelManager.Level.Level2:
-                levelNumber = "二";
-                break;
-            case LevelManager.Level.Level3A:
-            case LevelManager.Level.Level3B:
-                levelNumber = "三";
-                break;
-            case LevelManager.Level.Level4A:
-            case LevelManager.Level.Level4B:
-            case LevelManager.Level.Level4C:
-                levelNumber = "四";
-                break;
-            case LevelManager.Level.Level5A:
-            case LevelManager.Level.Level5B:
-                levelNumber = "五";
-                break;
-            case LevelManager.Level.Level6A:
-            case LevelManager.Level.Level6B:
-                levelNumber = "六";
-                break;
-        }
-
-        string levelInfo = $"关卡<wave a=0.2 f=0.8>{levelNumber}</wave>";
-
-        // 更新玩家1的关卡显示
-        if (levelText1Animator != null)
-        {
-            levelText1.gameObject.SetActive(true);
-            levelText1Animator.ShowText(levelInfo);
-        }
-        else
-        {
-            levelText1.text = levelInfo;
-            levelText1.gameObject.SetActive(true);
-        }
-        
-        // 更新玩家2的关卡显示
-        if (levelText2Animator != null)
+            string levelNumber = "";
+            
+            // 确定关卡数字
+            switch (level)
             {
-            levelText2.gameObject.SetActive(true);
-            levelText2Animator.ShowText(levelInfo);
+                case LevelManager.Level.Tutorial:
+                    levelNumber = "零";
+                    break;
+                case LevelManager.Level.Level1:
+                    levelNumber = "一";
+                    break;
+                case LevelManager.Level.Level2:
+                    levelNumber = "二";
+                    break;
+                case LevelManager.Level.Level3A:
+                case LevelManager.Level.Level3B:
+                    levelNumber = "三";
+                    break;
+                case LevelManager.Level.Level4A:
+                case LevelManager.Level.Level4B:
+                case LevelManager.Level.Level4C:
+                    levelNumber = "四";
+                    break;
+                case LevelManager.Level.Level5A:
+                case LevelManager.Level.Level5B:
+                    levelNumber = "五";
+                    break;
+                case LevelManager.Level.Level6A:
+                case LevelManager.Level.Level6B:
+                    levelNumber = "六";
+                    break;
+            }
+
+            string levelInfo = $"关卡<wave a=0.2 f=0.8>{levelNumber}</wave>";
+
+            // 更新玩家1的关卡显示
+            if (levelText1 != null)
+            {
+                if (levelText1Animator != null)
+                {
+                    levelText1.gameObject.SetActive(true);
+                    levelText1Animator.ShowText(levelInfo);
+                }
+                else
+                {
+                    levelText1.text = levelInfo;
+                    levelText1.gameObject.SetActive(true);
+                }
+            }
+            
+            // 更新玩家2的关卡显示
+            if (levelText2 != null)
+            {
+                if (levelText2Animator != null)
+                {
+                    levelText2.gameObject.SetActive(true);
+                    levelText2Animator.ShowText(levelInfo);
+                }
+                else
+                {
+                    levelText2.text = levelInfo;
+                    levelText2.gameObject.SetActive(true);
+                }
+            }
         }
-        else
+        catch (System.Exception e)
         {
-            levelText2.text = levelInfo;
-            levelText2.gameObject.SetActive(true);
+            Debug.LogError($"[UIManager] 更新关卡文本时出错: {e.Message}");
         }
     }
 
@@ -2093,6 +2316,8 @@ public class UIManager : NetworkBehaviour
 
         float player1TotalScore = LevelManager.Instance.player1TotalPoint.Value;
         float player2TotalScore = LevelManager.Instance.player2TotalPoint.Value;
+
+        Debug.Log($"[UIManager] 更新玩家总分：玩家1={player1TotalScore}，玩家2={player2TotalScore}，当前显示：玩家1={displayedPlayer1TotalScore}，玩家2={displayedPlayer2TotalScore}");
 
         // 检查分数是否发生变化
         bool player1TotalScoreChanged = Mathf.Abs(player1TotalScore - displayedPlayer1TotalScore) > 0.01f;
@@ -2106,6 +2331,12 @@ public class UIManager : NetworkBehaviour
             {
                 StopCoroutine(player1TotalScoreAnimation);
                 player1TotalScoreAnimation = null;
+            }
+            
+            // 播放得分音效
+            if (SoundManager.Instance != null && player1TotalScore > displayedPlayer1TotalScore)
+            {
+                SoundManager.Instance.PlaySFX("AddScore");
             }
             
             // 启动新的动画
@@ -2143,6 +2374,12 @@ public class UIManager : NetworkBehaviour
             {
                 StopCoroutine(player2TotalScoreAnimation);
                 player2TotalScoreAnimation = null;
+            }
+            
+            // 播放得分音效
+            if (SoundManager.Instance != null && player2TotalScore > displayedPlayer2TotalScore)
+            {
+                SoundManager.Instance.PlaySFX("AddScore");
             }
             
             // 启动新的动画
@@ -2245,6 +2482,9 @@ public class UIManager : NetworkBehaviour
         
         Debug.Log($"[UIManager] 显示奖励文本：玩家1='{player1Text}', 玩家2='{player2Text}'");
         
+        // 首先更新玩家总分显示
+        UpdatePlayerTotalScoreText();
+        
         // 更新玩家1的奖励文本
         if (player1BonusText != null && !string.IsNullOrEmpty(player1Text))
         {
@@ -2281,6 +2521,19 @@ public class UIManager : NetworkBehaviour
         
         // 播放动画
         StartCoroutine(PlayBonusTextAnimation());
+        
+        // 在动画播放完成后再次更新总分显示
+        StartCoroutine(UpdateTotalScoreAfterDelay());
+    }
+    
+    // 在延迟后更新总分显示
+    private IEnumerator UpdateTotalScoreAfterDelay()
+    {
+        // 等待足够长的时间，确保动画和网络变量同步都已完成
+        yield return new WaitForSeconds(showDuration + 0.5f);
+        
+        // 再次更新总分显示
+        UpdatePlayerTotalScoreText();
     }
     
     // 播放奖励文本动画
@@ -2289,6 +2542,9 @@ public class UIManager : NetworkBehaviour
         // 保存原始缩放值
         Vector3 originalScale1 = player1BonusText != null ? player1BonusText.transform.localScale : Vector3.one;
         Vector3 originalScale2 = player2BonusText != null ? player2BonusText.transform.localScale : Vector3.one;
+        
+        // 在动画开始时更新玩家总分
+        UpdatePlayerTotalScoreText();
         
         // 缩放动画
         float elapsed = 0f;
@@ -2312,9 +2568,15 @@ public class UIManager : NetworkBehaviour
             player1BonusText.transform.localScale = originalScale1;
         if (player2BonusText != null && player2BonusText.gameObject.activeSelf)
             player2BonusText.transform.localScale = originalScale2;
+        
+        // 在缩放动画结束后再次更新总分显示
+        UpdatePlayerTotalScoreText();
             
         // 等待显示时间
         yield return new WaitForSeconds(showDuration);
+        
+        // 在显示结束前再次更新总分
+        UpdatePlayerTotalScoreText();
         
         // 淡出动画
         elapsed = 0f;
@@ -2342,6 +2604,9 @@ public class UIManager : NetworkBehaviour
             SetTextAlpha(player2BonusText, 0f);
             player2BonusText.gameObject.SetActive(false);
         }
+        
+        // 动画完全结束后再次更新总分
+        UpdatePlayerTotalScoreText();
     }
 
     // 添加分数动画协程
@@ -2357,12 +2622,6 @@ public class UIManager : NetworkBehaviour
             updateAction(targetValue);
             if (onComplete != null) onComplete();
             yield break;
-        }
-
-        // 播放增加金币音效
-        if (targetValue > startValue && SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySFX("AddScore");
         }
 
         // 先使用没有shake效果的纯数字
@@ -2540,5 +2799,236 @@ public class UIManager : NetworkBehaviour
             StopCoroutine(player2TotalScoreAnimation);
             player2TotalScoreAnimation = null;
         }
+    }
+
+    // 监听玩家Continue状态变化
+    private void OnPlayerContinueStatusChanged(bool oldValue, bool newValue)
+    {
+        UpdateSettlementButtonsState();
+    }
+
+    // 监听玩家Exit状态变化
+    private void OnPlayerExitStatusChanged(bool oldValue, bool newValue)
+    {
+        UpdateSettlementButtonsState();
+    }
+
+    // 更新结算面板按钮状态和文本
+    private void UpdateSettlementButtonsState()
+    {
+        if (!IsClient || settlementPanel == null) return;
+
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        bool isPlayer1 = localClientId == 0;
+        bool localPlayerClickedContinue = isPlayer1 ? player1ClickedContinue.Value : player2ClickedContinue.Value;
+        bool otherPlayerClickedContinue = isPlayer1 ? player2ClickedContinue.Value : player1ClickedContinue.Value;
+        bool localPlayerClickedExit = isPlayer1 ? player1ClickedExit.Value : player2ClickedExit.Value;
+        bool otherPlayerClickedExit = isPlayer1 ? player2ClickedExit.Value : player1ClickedExit.Value;
+
+        // 更新等待确认文本
+        if (waitingConfirmationText != null)
+        {
+            if (localPlayerClickedContinue && !otherPlayerClickedContinue)
+            {
+                waitingConfirmationText.text = "等待对方玩家确认继续...\n(再次点击可取消)";
+                waitingConfirmationText.gameObject.SetActive(true);
+            }
+            else if (localPlayerClickedExit && !otherPlayerClickedExit)
+            {
+                waitingConfirmationText.text = "等待对方玩家确认退出...\n(再次点击可取消)";
+                waitingConfirmationText.gameObject.SetActive(true);
+            }
+            else
+            {
+                waitingConfirmationText.gameObject.SetActive(false);
+            }
+        }
+
+        // 根据状态更新按钮外观
+        if (continueButton != null)
+        {
+            // 保持按钮可交互，但改变视觉状态
+            continueButton.interactable = true;
+            
+            // 获取按钮的颜色组件
+            ColorBlock colors = continueButton.colors;
+            
+            if (localPlayerClickedContinue)
+            {
+                // 设置为选中状态的颜色
+                colors.normalColor = new Color(0.7f, 1.0f, 0.7f); // 淡绿色表示选中
+            }
+            else
+            {
+                // 恢复默认颜色
+                colors.normalColor = new Color(1.0f, 1.0f, 1.0f);
+            }
+            
+            continueButton.colors = colors;
+        }
+        
+        if (exitButton != null)
+        {
+            // 保持按钮可交互，但改变视觉状态
+            exitButton.interactable = true;
+            
+            // 获取按钮的颜色组件
+            ColorBlock colors = exitButton.colors;
+            
+            if (localPlayerClickedExit)
+            {
+                // 设置为选中状态的颜色
+                colors.normalColor = new Color(1.0f, 0.7f, 0.7f); // 淡红色表示选中
+            }
+            else
+            {
+                // 恢复默认颜色
+                colors.normalColor = new Color(1.0f, 1.0f, 1.0f);
+            }
+            
+            exitButton.colors = colors;
+        }
+
+        // 检查是否两个玩家都点击了同一按钮
+        bool bothClickedContinue = player1ClickedContinue.Value && player2ClickedContinue.Value;
+        bool bothClickedExit = player1ClickedExit.Value && player2ClickedExit.Value;
+
+        // 如果双方都点了Continue按钮，继续游戏
+        if (bothClickedContinue && IsServer)
+        {
+            // 重置点击状态
+            ResetButtonClickStates();
+            
+            // 通知所有客户端隐藏结算面板
+            HideSettlementPanelClientRpc();
+            
+            // 检查是否是最终关卡
+            if (LevelManager.Instance != null && LevelManager.Instance.isFinalLevel.Value)
+            {
+                // 播放最终对话
+                PlayFinalDialogServerRpc();
+            }
+            else
+            {
+                // 加载下一个场景
+                LoadNextSceneServerRpc();
+            }
+        }
+        
+        // 如果双方都点了Exit按钮，退出游戏
+        if (bothClickedExit && IsServer)
+        {
+            // 重置点击状态
+            ResetButtonClickStates();
+            
+            // 退出游戏
+            ExitGameClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void ExitGameClientRpc()
+    {
+        // 在所有客户端执行退出游戏
+        ExitGame();
+    }
+
+    // 重置按钮点击状态
+    [ServerRpc(RequireOwnership = false)]
+    private void ResetButtonClickStatesServerRpc()
+    {
+        if (!IsServer) return;
+        
+        player1ClickedContinue.Value = false;
+        player2ClickedContinue.Value = false;
+        player1ClickedExit.Value = false;
+        player2ClickedExit.Value = false;
+    }
+
+    // 在服务器端重置按钮点击状态
+    private void ResetButtonClickStates()
+    {
+        if (!IsServer) return;
+        
+        player1ClickedContinue.Value = false;
+        player2ClickedContinue.Value = false;
+        player1ClickedExit.Value = false;
+        player2ClickedExit.Value = false;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void PlayerClickedContinueServerRpc(ulong clientId, bool newStatus, ServerRpcParams serverRpcParams = default)
+    {
+        if (!IsServer) return;
+        
+        if (clientId == 0)
+        {
+            player1ClickedContinue.Value = newStatus;
+            // 如果取消选中Continue，确保Exit也是未选中状态
+            if (!newStatus)
+            {
+                player1ClickedExit.Value = false;
+            }
+            else if (newStatus)
+            {
+                // 如果选中Continue，确保Exit是未选中状态
+                player1ClickedExit.Value = false;
+            }
+        }
+        else if (clientId == 1)
+        {
+            player2ClickedContinue.Value = newStatus;
+            // 如果取消选中Continue，确保Exit也是未选中状态
+            if (!newStatus)
+            {
+                player2ClickedExit.Value = false;
+            }
+            else if (newStatus)
+            {
+                // 如果选中Continue，确保Exit是未选中状态
+                player2ClickedExit.Value = false;
+            }
+        }
+        
+        string action = newStatus ? "选中" : "取消选中";
+        Debug.Log($"[UIManager] 玩家 {clientId} {action}了Continue按钮。P1状态: {player1ClickedContinue.Value}, P2状态: {player2ClickedContinue.Value}");
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void PlayerClickedExitServerRpc(ulong clientId, bool newStatus, ServerRpcParams serverRpcParams = default)
+    {
+        if (!IsServer) return;
+        
+        if (clientId == 0)
+        {
+            player1ClickedExit.Value = newStatus;
+            // 如果取消选中Exit，确保Continue也是未选中状态
+            if (!newStatus)
+            {
+                player1ClickedContinue.Value = false;
+            }
+            else if (newStatus)
+            {
+                // 如果选中Exit，确保Continue是未选中状态
+                player1ClickedContinue.Value = false;
+            }
+        }
+        else if (clientId == 1)
+        {
+            player2ClickedExit.Value = newStatus;
+            // 如果取消选中Exit，确保Continue也是未选中状态
+            if (!newStatus)
+            {
+                player2ClickedContinue.Value = false;
+            }
+            else if (newStatus)
+            {
+                // 如果选中Exit，确保Continue是未选中状态
+                player2ClickedContinue.Value = false;
+            }
+        }
+        
+        string action = newStatus ? "选中" : "取消选中";
+        Debug.Log($"[UIManager] 玩家 {clientId} {action}了Exit按钮。P1状态: {player1ClickedExit.Value}, P2状态: {player2ClickedExit.Value}");
     }
 } 

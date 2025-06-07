@@ -201,67 +201,70 @@ public class DialogManager : NetworkBehaviour
 
     #region Public API
     /// <summary>
-    /// 播放对话行区间 [startIndex, endIndex]，闭区间
-    /// 当两者相等时仅播放单句。
-    /// </summary>
-    public void PlayRange(int startIndex, int endIndex)
+/// 播放对话行区间 [startIndex, endIndex]，闭区间
+/// 当两者相等时仅播放单句。
+/// </summary>
+public void PlayRange(int startIndex, int endIndex, Action onComplete = null)
+{
+    Debug.Log($"[DialogManager] PlayRange({startIndex}, {endIndex})被调用，IsServer={IsServer}, IsClient={IsClient}");
+    
+    if (dialogLines == null || dialogLines.Length == 0)
     {
-        Debug.Log($"[DialogManager] PlayRange({startIndex}, {endIndex})被调用，IsServer={IsServer}, IsClient={IsClient}");
-        
-        if (dialogLines == null || dialogLines.Length == 0)
-        {
-            Debug.LogError("DialogManager: dialogLines 为空！");
-            return;
-        }
-
-        // 边界检查
-        if (startIndex < 0 || endIndex >= dialogLines.Length || startIndex > endIndex)
-        {
-            Debug.LogError($"DialogManager: 无效区间 [{startIndex}, {endIndex}]，范围 0‑{dialogLines.Length - 1}");
-            return;
-        }
-
-        // 如果是服务器，同步到所有客户端
-        if (IsServer)
-        {
-            PlayRangeClientRpc(startIndex, endIndex);
-        }
-
-        // 本地播放对话
-        PlayRangeLocal(startIndex, endIndex);
+        Debug.LogError("DialogManager: dialogLines 为空！");
+        return;
     }
+
+    // 边界检查
+    if (startIndex < 0 || endIndex >= dialogLines.Length || startIndex > endIndex)
+    {
+        Debug.LogError($"DialogManager: 无效区间 [{startIndex}, {endIndex}]，范围 0‑{dialogLines.Length - 1}");
+        return;
+    }
+
+    // 如果是服务器，同步到所有客户端
+    if (IsServer)
+    {
+        PlayRangeClientRpc(startIndex, endIndex);
+    }
+
+    // 保存回调函数
+    dialogCompleteCallback = onComplete;
+
+    // 本地播放对话
+    PlayRangeLocal(startIndex, endIndex);
+}
 
     // 本地播放对话的方法
-    private void PlayRangeLocal(int startIndex, int endIndex)
-    {
-        Debug.Log($"[DialogManager] PlayRangeLocal({startIndex}, {endIndex})被调用");
-        
-        currentDialog = dialogLines;  // 使用教程对话内容
-        currentLineIndex = startIndex;
-        endLineIndex = endIndex;
-        dialogCompleteCallback = null; // 清除之前的回调
+private void PlayRangeLocal(int startIndex, int endIndex)
+{
+    Debug.Log($"[DialogManager] PlayRangeLocal({startIndex}, {endIndex})被调用");
+    
+    currentDialog = dialogLines;  // 使用教程对话内容
+    currentLineIndex = startIndex;
+    endLineIndex = endIndex;
+    // 不再在这里清除回调，而是在PlayRange中设置
 
-        // 确保找到UI元素
-        FindDialogUIElements();
-        
-        // 检查dialogPanel是否可用
-        if (dialogPanel == null)
-        {
-            Debug.LogError("[DialogManager] PlayRangeLocal: dialogPanel为空！");
-            return;
-        }
-        
-        // 检查dialogText是否可用
-        if (dialogText == null)
-        {
-            Debug.LogError("[DialogManager] PlayRangeLocal: dialogText为空！");
-            return;
-        }
-        
-        Debug.Log($"[DialogManager] 显示对话面板，当前行内容: \"{currentDialog[currentLineIndex]}\"");
-        dialogPanel.SetActive(true);
-        DisplayCurrentLine();
+    // 确保找到UI元素
+    FindDialogUIElements();
+    
+    // 检查dialogPanel是否可用
+    if (dialogPanel == null)
+    {
+        Debug.LogError("[DialogManager] PlayRangeLocal: dialogPanel为空！");
+        return;
     }
+    
+    // 检查dialogText是否可用
+    if (dialogText == null)
+    {
+        Debug.LogError("[DialogManager] PlayRangeLocal: dialogText为空！");
+        return;
+    }
+    
+    Debug.Log($"[DialogManager] 显示对话面板，当前行内容: \"{currentDialog[currentLineIndex]}\"");
+    dialogPanel.SetActive(true);
+    DisplayCurrentLine();
+}
 
     // 同步对话内容到所有客户端
     [ClientRpc]
