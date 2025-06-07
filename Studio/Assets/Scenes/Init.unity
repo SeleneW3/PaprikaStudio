@@ -378,7 +378,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localIP: 127.0.0.1
-  joinIP: 127.0.0.1
+  joinIP: 26.26.26.1
   currentGameState: 0
   playerObjs:
   - {fileID: 0}

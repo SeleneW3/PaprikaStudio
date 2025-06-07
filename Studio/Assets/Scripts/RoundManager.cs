@@ -182,7 +182,7 @@ public class RoundManager : NetworkBehaviour
             if(showCard == false)
             {
                 showCard = true;
-                deckLogic.ShowSentCards();
+                deckLogic.Invoke("ShowSentCards", 1f);
             }
             else
             {
@@ -277,8 +277,7 @@ public class RoundManager : NetworkBehaviour
             if (showCard == false)
             {
                 showCard = true;
-                Debug.Log("I've got here");
-                deckLogic.ShowSentCards();
+                deckLogic.Invoke("ShowSentCards", 1f);
             }
             else
             {
