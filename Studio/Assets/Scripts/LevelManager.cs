@@ -136,6 +136,13 @@ public class LevelManager : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    // 添加网络变量 - 是否是最终关卡
+    public NetworkVariable<bool> isFinalLevel = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     // 事件 - 当关卡改变时
     public event Action<Level, Level> OnLevelChanged;
 
@@ -655,19 +662,26 @@ public class LevelManager : NetworkBehaviour
             }
         }
         
-        // 显示奖励提示
-        if (!string.IsNullOrEmpty(player1BonusText) || !string.IsNullOrEmpty(player2BonusText))
+        // 立即通知UI更新 - 先更新总分，再显示奖励文本
+        ApplyShotPenaltyClientRpc(player1BonusText, player2BonusText);
+    }
+    
+    [ClientRpc]
+    private void ApplyShotPenaltyClientRpc(string player1BonusText, string player2BonusText)
+    {
+        Debug.Log($"[LevelManager] 客户端收到击中奖励更新: 玩家1=\"{player1BonusText}\", 玩家2=\"{player2BonusText}\"");
+        
+        // 先更新总分显示
+        if (UIManager.Instance != null)
         {
-            if (UIManager.Instance != null)
+            // 立即更新玩家总分
+            UIManager.Instance.UpdatePlayerTotalScoreText();
+            
+            // 显示奖励提示
+            if (!string.IsNullOrEmpty(player1BonusText) || !string.IsNullOrEmpty(player2BonusText))
             {
                 UIManager.Instance.ShowBonusText(player1BonusText, player2BonusText);
             }
-        }
-        
-        // 更新UI显示
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
         }
     }
 
@@ -1031,12 +1045,23 @@ public class LevelManager : NetworkBehaviour
         // 如果是最终关卡，触发游戏结束逻辑
         if (currentLevel.Value == Level.Level6A || currentLevel.Value == Level.Level6B)
         {
+            // 设置最终关卡标志
+            isFinalLevel.Value = true;
+            
             // 应用Level6规则
             ApplyLevel6Rule();
             
             // 触发游戏结束
             GameEndedClientRpc();
         }
+    }
+    
+    /// <summary>
+    /// 检查当前是否是最终关卡
+    /// </summary>
+    public bool IsFinalLevel()
+    {
+        return currentLevel.Value == Level.Level6A || currentLevel.Value == Level.Level6B;
     }
     
     [ClientRpc]
@@ -1060,14 +1085,8 @@ public class LevelManager : NetworkBehaviour
         
         Debug.Log($"[LevelManager] 收到玩家被击中通知，被击中玩家ID: {shotPlayerId}, 本轮分数: {roundPoints}");
         
-        // 应用枪击规则
+        // 应用枪击规则 - 已包含更新UI的逻辑
         ApplyShotPenalty(shotPlayerId, roundPoints);
-        
-        // 确保UI立即更新总分显示
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.UpdatePlayerTotalScoreTextClientRpc();
-        }
         
         // 如果是最终关卡，可能需要提前结束游戏
         if (currentLevel.Value == Level.Level6A)
